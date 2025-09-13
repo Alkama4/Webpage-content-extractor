@@ -1,31 +1,36 @@
--- Needs still work, this is just the layout that we planned initially
-
-DROP TABLE IF EXISTS websites;
-CREATE TABLE IF NOT EXISTS websites (
-    website_id INT AUTO_INCREMENT PRIMARY KEY,
-    url VARCHAR(512) NOT NULL,
-    name VARCHAR(128) 
+-- Stores webpages to be scraped
+CREATE TABLE IF NOT EXISTS webpages (
+    webpage_id INT AUTO_INCREMENT PRIMARY KEY,
+    url VARCHAR(512) NOT NULL UNIQUE,
+    page_name VARCHAR(128)
 );
 
+-- Defines scraping jobs linked to webpages and target elements
+CREATE TABLE IF NOT EXISTS scrapes (
+    scrape_id INT AUTO_INCREMENT PRIMARY KEY,
+    webpage_id INT NOT NULL,
+    target_element_id INT NOT NULL,
+    metric_name VARCHAR(128),
+    FOREIGN KEY (webpage_id) REFERENCES webpages(webpage_id) ON DELETE CASCADE,
+    FOREIGN KEY (target_element_id) REFERENCES webpage_elements(element_id),
+    UNIQUE (webpage_id, target_element_id)
+);
 
-DROP TABLE IF EXISTS website_elements;
-CREATE TABLE IF NOT EXISTS website_elements (
+-- Represents DOM elements and their hierarchy
+CREATE TABLE IF NOT EXISTS webpage_elements (
     element_id INT AUTO_INCREMENT PRIMARY KEY,
-    website_id INT NOT NULL,
     parent_element_id INT NULL,
     dom_class VARCHAR(256),
     dom_id VARCHAR(256),
     dom_element VARCHAR(32),
-    FOREIGN KEY (website_id) REFERENCES websites(website_id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_element_id) REFERENCES website_elements(element_id) ON DELETE CASCADE
+    FOREIGN KEY (parent_element_id) REFERENCES webpage_elements(element_id) ON DELETE CASCADE
 );
 
-
-DROP TABLE IF EXISTS element_data;
-CREATE TABLE IF NOT EXISTS data (
+-- Stores scraped data values over time
+CREATE TABLE IF NOT EXISTS scrape_data (
     data_id INT AUTO_INCREMENT PRIMARY KEY,
-    website_id INT NOT NULL,
-    value INT,
+    scrape_id INT NOT NULL,
+    value FLOAT,
     datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (website_id) REFERENCES websites(website_id) ON DELETE CASCADE
+    FOREIGN KEY (scrape_id) REFERENCES scrapes(scrape_id) ON DELETE CASCADE
 );
