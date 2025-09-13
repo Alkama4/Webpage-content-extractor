@@ -1,4 +1,5 @@
 import requests
+from bs4 import BeautifulSoup
 
 class WebPageScraper:
     def __init__(self, url, element):
@@ -6,11 +7,32 @@ class WebPageScraper:
         self.element = element
         self.robots_txt = None
 
-    def check_access(self, user_agent='*', path='/'):
+    def get_content(self):
+        disallowed_paths = self._check_access()
+        access = None
+
+        if disallowed_paths == []:
+            access = True
+        else:
+            for path in disallowed_paths:
+                if path in self.url:
+                    print(f"Access to {self.url} is disallowed by robots.txt")
+                    access = False
+                    break
+            else:
+                access = True
+            
+        if access:
+            self.content = self._fetch_content()
+            self.result = self._parse_html()
+            return self.result
+        else:
+            return None
+
+    def _check_access(self, user_agent='*', path='/'):
         disallowed_paths = []
         robots_txt = self._fetch_robots_txt()
         lines = robots_txt.splitlines()
-        
         for line in lines:
             if line.startswith('User-agent:'):
                 current_user_agent = line.split(':')[1].strip()
@@ -37,9 +59,17 @@ class WebPageScraper:
 
         return self.robots_txt
     
-    def fetch_content(self):
+    def _fetch_content(self):
         response = requests.get(self.url)
         if response.status_code == 200:
-            print(response.text)
+            return response.text
         else:
-            print(response)
+            return None
+
+    def _parse_html(self):
+        if not self.content:
+            return None
+
+        soup = BeautifulSoup(self.content, 'html.parser')
+        parsed_content = soup.select_one("#content > div.section > table > tbody > tr")
+        return parsed_content

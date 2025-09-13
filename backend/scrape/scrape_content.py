@@ -1,30 +1,16 @@
 from utils import WebPageScraper
 
-
-url = 'https://www.lme.com/en/Metals/Non-ferrous/LME-Aluminium-Alloy#Summary'
+url = 'https://www.westmetall.com/en/markdaten.php?action=table&field=LME_Al_cash'
 
 def main(url, element):
     scraper = WebPageScraper(url, element)
-    disallowed_paths = scraper.check_access()
-    access = None
-
-    if disallowed_paths == []:
-        access = True
-    else:
-        for path in disallowed_paths:
-            if path in url:
-                access = False
-            else:
-                access = True
-
-    if access:
-        print(f"Access granted to {url}")
-
-        content = scraper.fetch_content()
+    content = scraper.get_content()
+    if content:
+        print('Some content was fetched')
         print(content)
-
     else:
-        print(f"Access denied to {url}")
+        print("Access to the content is disallowed")
+        print(content)
 
 
 if __name__ == "__main__":
