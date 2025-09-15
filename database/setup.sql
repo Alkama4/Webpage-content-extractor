@@ -9,21 +9,10 @@ CREATE TABLE IF NOT EXISTS webpages (
 CREATE TABLE IF NOT EXISTS scrapes (
     scrape_id INT AUTO_INCREMENT PRIMARY KEY,
     webpage_id INT NOT NULL,
-    target_element_id INT NOT NULL,
+    locator VARCHAR(512) NOT NULL,
     metric_name VARCHAR(128),
     FOREIGN KEY (webpage_id) REFERENCES webpages(webpage_id) ON DELETE CASCADE,
-    FOREIGN KEY (target_element_id) REFERENCES webpage_elements(element_id),
-    UNIQUE (webpage_id, target_element_id)
-);
-
--- Represents DOM elements and their hierarchy
-CREATE TABLE IF NOT EXISTS webpage_elements (
-    element_id INT AUTO_INCREMENT PRIMARY KEY,
-    parent_element_id INT NULL,
-    dom_class VARCHAR(256),
-    dom_id VARCHAR(256),
-    dom_element VARCHAR(32),
-    FOREIGN KEY (parent_element_id) REFERENCES webpage_elements(element_id) ON DELETE CASCADE
+    UNIQUE(webpage_id, locator)
 );
 
 -- Stores scraped data values over time
