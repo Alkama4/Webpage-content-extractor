@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 3. **Start development server**
 ```
-uvicorn main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8000
 ```
 
 4. **Open API docs**
