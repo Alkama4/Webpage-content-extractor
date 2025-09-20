@@ -4,7 +4,7 @@ from fastapi import APIRouter
 router = APIRouter()
 
 @router.get("/")
-def get_webpages():
+async def get_webpages():
     '''
     Return an array of all webpages
     '''
@@ -12,7 +12,7 @@ def get_webpages():
 
 
 @router.post("/")
-def post_webpages():
+async def post_webpages():
     '''
     Create a new webpage record.
     '''
@@ -20,7 +20,7 @@ def post_webpages():
 
 
 @router.get("/{id}")
-def get_webpage(id: int):
+async def get_webpage(id: int):
     '''
     Return the single webpage with that ID.
     '''
@@ -28,7 +28,7 @@ def get_webpage(id: int):
 
 
 @router.put("/{id}")
-def put_webpage(id: int):
+async def put_webpage(id: int):
     '''
     Replace or patch the webpage (full update).
     '''
@@ -36,7 +36,7 @@ def put_webpage(id: int):
 
 
 @router.delete("/{id}")
-def delete_webpage(id: int):
+async def delete_webpage(id: int):
     '''
     Remove the webpage - all associated scrapes and data are deleted automatically via FK cascade.
     '''
@@ -44,7 +44,7 @@ def delete_webpage(id: int):
 
 
 @router.get("/{id}/scrapes")
-def get_webpage(id: int):
+async def get_webpage(id: int):
     '''
     Return the scrapes of a webpage
     '''
@@ -52,7 +52,7 @@ def get_webpage(id: int):
 
 
 @router.get("/{id}/scrapes/data")
-def get_webpage(id: int):
+async def get_webpage(id: int):
     '''
     Return the data that has been scraped from a webpage
     '''

@@ -1,4 +1,4 @@
-# scrapes/routers.py
+# app/routers/scrapes.py
 from fastapi import APIRouter
 from app.utils import get_aiomysql_connection, execute_mysql_query
 
@@ -13,7 +13,7 @@ async def get_scrapes():
 
 
 @router.post("/")
-def create_scrape():
+async def create_scrape():
     '''
     Create a new scrape job
     '''
@@ -21,7 +21,7 @@ def create_scrape():
 
 
 @router.get("/data")
-def get_all_scrape_data():
+async def get_all_scrape_data():
     '''
     Retrieve all of the scraped data.
     '''
@@ -67,7 +67,7 @@ async def run_all_scrapes():
 
 
 @router.get("/{id}")
-def get_scrape(id: int):
+async def get_scrape(id: int):
     '''
     List the details of a scrape
     '''
@@ -75,7 +75,7 @@ def get_scrape(id: int):
 
 
 @router.put("/{id}")
-def update_scrape(id: int):
+async def update_scrape(id: int):
     '''
     Update the given scrape
     '''
@@ -83,7 +83,7 @@ def update_scrape(id: int):
 
 
 @router.put("/{id}")
-def delete_scrape(id: int):
+async def delete_scrape(id: int):
     '''
     Update the given scrape
     '''
@@ -91,7 +91,7 @@ def delete_scrape(id: int):
 
 
 @router.delete("/{id}")
-def delete_scrape(id: int):
+async def delete_scrape(id: int):
     '''
     Delete the scrape with its scrape_id. Assosiated data is deleted via cascade.
     '''
@@ -99,7 +99,7 @@ def delete_scrape(id: int):
 
 
 @router.post("/{id}/run")
-def run_scrape(id: int):
+async def run_scrape(id: int):
     '''
     Execute the scraper for this job once, store a new row in scrape_data.
     '''
@@ -107,7 +107,7 @@ def run_scrape(id: int):
 
 
 @router.get("/{id}/data")
-def run_scrape(id: int):
+async def run_scrape(id: int):
     '''
     Retrieve the data acquired form a certain scrape.
     '''
