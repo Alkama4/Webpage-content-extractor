@@ -6,7 +6,7 @@ class WebpageBase(BaseModel):
     page_name: Optional[str] = Field(
         None,
         max_length=128,
-        description="Human‑readable name for the page (optional)",
+        description="Human-readable name for the page (optional)",
     )
 
 class WebpageCreate(WebpageBase):

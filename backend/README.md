@@ -1,31 +1,42 @@
-## How to Run
+# Setup dev environment
 
-### 1. Create & activate virtualenv
+## 1. Create & activate a virtual environment
 ```bash
-# Open terminal in backend folder
-cd .\backend\
+# Open a terminal in the `backend` directory
+cd backend/
 
-# Create a virtual enviroment
+# Create a virtual environment named `venv`
 python -m venv venv
 
-# Activate virtual enviroment
-venv\Scripts\activate
+# Activate it
+venv\Scripts\activate       # Windows
+source venv/bin/activate    # macOS/Linux
 ```
 
-### 2. Install dependencies
-```
+
+## 2. Install dependencies
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Add database credentils
-Create a copy of the `.env.example` file inside the `backend/app` directory, rename it to `.env.local`, and then edit this new file to include your database connection details.
+## 3. Configure the database
+1. Copy the example environment file:
+   ```bash
+   copy .env.example .env.local   # Windows
+   cp .env.example .env.local     # macOS/Linux
+   ```
+2. Edit `backend/app/.env.local` and set your database credentials (e.g., `DB_HOST`, `DB_USER`, etc.).
 
-### 4. Start development server
-```
+
+## 4. Run the development server
+```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 5. Open API docs
-- Manual requests -> [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- Swagger UI -> [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- ReDoc -> [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+## 5. Access the API & docs
+
+| URL | What it shows |
+|-----|---------------|
+| <http://127.0.0.1:8000/docs> | Swagger UI (interactive docs, recommended) |
+| <http://127.0.0.1:8000/redoc> | ReDoc (alternative docs) |
+| <http://127.0.0.1:8000> | Make manual requests |

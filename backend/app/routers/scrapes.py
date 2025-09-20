@@ -1,5 +1,3 @@
-# app/routers/scrapes.py
-
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 

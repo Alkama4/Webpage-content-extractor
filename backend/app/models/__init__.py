@@ -1,4 +1,3 @@
-# app/models/__init__.py
 from .webpage import WebpageBase, WebpageCreate, WebpageInDB
 from .scrape import ScrapeBase, ScrapeCreate, ScrapeInDB
 from .scrape_data import ScrapeData

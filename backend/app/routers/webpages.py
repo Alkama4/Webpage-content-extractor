@@ -1,4 +1,3 @@
-# app/routers/webpages.py
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 

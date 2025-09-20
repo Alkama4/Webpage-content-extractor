@@ -5,7 +5,7 @@ class ScrapeData(BaseModel):
     data_id: int
     scrape_id: int
     value: Optional[float]
-    datetime: str   # keep as string for simplicity; you can use datetime.datetime
+    datetime: str
 
     class Config:
         orm_mode = True
