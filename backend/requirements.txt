@@ -1,6 +1,7 @@
-# Python packages to install listed one per row
-
 mysql-connector-python
-requests==2.32.3
-beautifulsoup4==4.13.5
-bs4==0.0.2
+aiomysql
+cryptography
+dotenv
+requests
+beautifulsoup4
+bs4
