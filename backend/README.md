@@ -20,12 +20,8 @@ pip install -r requirements.txt
 ```
 
 ## 3. Configure the database
-1. Copy the example environment file:
-   ```bash
-   copy .env.example .env.local   # Windows
-   cp .env.example .env.local     # macOS/Linux
-   ```
-2. Edit `backend/app/.env.local` and set your database credentials (e.g., `DB_HOST`, `DB_USER`, etc.).
+1. Create a copy of the `.env.example` called `.env.local`.
+2. Edit the `backend/app/.env.local` and set your database credentials (e.g., `DB_HOST`, `DB_USER`, etc.).
 
 
 ## 4. Run the development server

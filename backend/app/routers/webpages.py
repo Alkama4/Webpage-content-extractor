@@ -6,7 +6,7 @@ from app.models.webpage import WebpageCreate, WebpageInDB
 from app.models.scrape import ScrapeInDB
 from app.models.scrape_data import ScrapeData
 
-# Helpers
+# Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
 
 router = APIRouter(prefix="/webpages", tags=["webpages"])
@@ -18,8 +18,8 @@ async def _fetch_all_webpages() -> List[dict]:
     async with get_aiomysql_connection() as conn:
         query = """
             SELECT webpage_id, url, page_name
-              FROM webpages
-           ORDER BY webpage_id;
+            FROM webpages
+            ORDER BY webpage_id;
         """
         return await execute_mysql_query(conn, query)
 
@@ -28,8 +28,8 @@ async def _fetch_webpage_by_id(webpage_id: int) -> Optional[dict]:
     async with get_aiomysql_connection() as conn:
         query = """
             SELECT webpage_id, url, page_name
-              FROM webpages
-             WHERE webpage_id = %s;
+            FROM webpages
+            WHERE webpage_id = %s;
         """
         rows = await execute_mysql_query(conn, query, (webpage_id,))
         return rows[0] if rows else None
@@ -54,9 +54,9 @@ async def _update_webpage(webpage_id: int, data: WebpageCreate) -> bool:
     async with get_aiomysql_connection() as conn:
         query = """
             UPDATE webpages
-               SET url = %s,
-                   page_name = %s
-             WHERE webpage_id = %s;
+            SET url = %s,
+                page_name = %s
+            WHERE webpage_id = %s;
         """
         rowcount = await execute_mysql_query(
             conn,
@@ -85,9 +85,9 @@ async def _fetch_scrapes_by_webpage(webpage_id: int) -> List[dict]:
     async with get_aiomysql_connection() as conn:
         query = """
             SELECT scrape_id, locator, metric_name
-              FROM scrapes
-             WHERE webpage_id = %s
-           ORDER BY scrape_id;
+            FROM scrapes
+            WHERE webpage_id = %s
+            ORDER BY scrape_id;
         """
         return await execute_mysql_query(conn, query, (webpage_id,))
 
@@ -99,11 +99,11 @@ async def _fetch_scrape_data_by_webpage(webpage_id: int) -> List[dict]:
             SELECT sd.data_id,
                    sd.scrape_id,
                    sd.value,
-                   sd.datetime
-              FROM scrape_data AS sd
-              JOIN scrapes AS s ON sd.scrape_id = s.scrape_id
-             WHERE s.webpage_id = %s
-           ORDER BY sd.datetime DESC;
+                   sd.createda_at
+            FROM scrape_data AS sd
+            JOIN scrapes AS s ON sd.scrape_id = s.scrape_id
+            WHERE s.webpage_id = %s
+            ORDER BY sd.createda_at DESC;
         """
         return await execute_mysql_query(conn, query, (webpage_id,))
 
@@ -138,32 +138,32 @@ async def create_webpage(page: WebpageCreate):
     return new_record
 
 
-@router.get("/{id}", response_model=WebpageInDB)
-async def get_webpage(id: int):
+@router.get("/{webpage_id}", response_model=WebpageInDB)
+async def get_webpage(webpage_id: int):
     """
-    Return the single webpage with that ID.
+    Return the single webpage with that webpage_id.
     """
-    row = await _fetch_webpage_by_id(id)
+    row = await _fetch_webpage_by_id(webpage_id)
     if not row:
         raise HTTPException(status_code=404, detail="Webpage not found")
-    return row
+    return WebpageInDB(**row)
 
 
-@router.put("/{id}", response_model=WebpageInDB)
-async def replace_webpage(id: int, page: WebpageCreate):
+@router.put("/{webpage_id}", response_model=WebpageInDB)
+async def replace_webpage(webpage_id: int, page: WebpageCreate):
     """
     Replace an existing webpage (full update).
     """
-    success = await _update_webpage(id, page)
+    success = await _update_webpage(webpage_id, page)
     if not success:
         raise HTTPException(status_code=404, detail="Webpage not found")
 
-    updated_record = await _fetch_webpage_by_id(id)
+    updated_record = await _fetch_webpage_by_id(webpage_id)
     return updated_record
 
 
-@router.patch("/{id}", response_model=WebpageInDB)
-async def patch_webpage(id: int, page: WebpageCreate):
+@router.patch("/{webpage_id}", response_model=WebpageInDB)
+async def patch_webpage(webpage_id: int, page: WebpageCreate):
     """
     Patch an existing webpage - only the fields you send will be updated.
     """
@@ -184,10 +184,10 @@ async def patch_webpage(id: int, page: WebpageCreate):
     async with get_aiomysql_connection() as conn:
         query = f"""
             UPDATE webpages
-               SET {', '.join(updates)}
-             WHERE webpage_id = %s;
+            SET {', '.join(updates)}
+            WHERE webpage_id = %s;
         """
-        params.append(id)
+        params.append(webpage_id)
         rowcount = await execute_mysql_query(
             conn,
             query,
@@ -197,40 +197,40 @@ async def patch_webpage(id: int, page: WebpageCreate):
         if rowcount == 0:
             raise HTTPException(status_code=404, detail="Webpage not found")
 
-    return await _fetch_webpage_by_id(id)
+    return await _fetch_webpage_by_id(webpage_id)
 
 
-@router.delete("/{id}")
-async def delete_webpage(id: int):
+@router.delete("/{webpage_id}")
+async def delete_webpage(webpage_id: int):
     """
     Remove the webpage - all associated scrapes and data are deleted automatically via FK cascade.
     """
-    success = await _delete_webpage(id)
+    success = await _delete_webpage(webpage_id)
     if not success:
         raise HTTPException(status_code=404, detail="Webpage not found")
     return {"msg": "Webpage deleted"}
 
 
-@router.get("/{id}/scrapes", response_model=List[ScrapeInDB])
-async def get_webpage_scrapes(id: int):
+@router.get("/{webpage_id}/scrapes", response_model=List[ScrapeInDB])
+async def get_webpage_scrapes(webpage_id: int):
     """
     Return all scrapes defined for a given webpage.
     """
     # Make sure the webpage exists first
-    if not await _fetch_webpage_by_id(id):
+    if not await _fetch_webpage_by_id(webpage_id):
         raise HTTPException(status_code=404, detail="Webpage not found")
 
-    rows = await _fetch_scrapes_by_webpage(id)
+    rows = await _fetch_scrapes_by_webpage(webpage_id)
     return rows
 
 
-@router.get("/{id}/scrapes/data", response_model=List[ScrapeData])
-async def get_webpage_scrape_data(id: int):
+@router.get("/{webpage_id}/scrapes/data", response_model=List[ScrapeData])
+async def get_webpage_scrape_data(webpage_id: int):
     """
     Return all scraped data points for a given webpage.
     """
-    if not await _fetch_webpage_by_id(id):
+    if not await _fetch_webpage_by_id(webpage_id):
         raise HTTPException(status_code=404, detail="Webpage not found")
 
-    rows = await _fetch_scrape_data_by_webpage(id)
+    rows = await _fetch_scrape_data_by_webpage(webpage_id)
     return rows
