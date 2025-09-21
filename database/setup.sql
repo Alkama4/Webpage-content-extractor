@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS scrapes (
 CREATE TABLE IF NOT EXISTS scrape_data (
     data_id INT AUTO_INCREMENT PRIMARY KEY,
     scrape_id INT NOT NULL,
-    value FLOAT,
-    datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    value DECIMAL(15,2),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (scrape_id) REFERENCES scrapes(scrape_id) ON DELETE CASCADE
 );

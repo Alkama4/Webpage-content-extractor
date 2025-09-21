@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -5,7 +6,7 @@ class ScrapeData(BaseModel):
     data_id: int
     scrape_id: int
     value: Optional[float]
-    datetime: str
+    created_at: datetime = Field(..., alias="created_at")
 
     class Config:
         orm_mode = True
