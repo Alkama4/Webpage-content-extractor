@@ -1,108 +1,144 @@
-import requests
-from bs4 import BeautifulSoup
+from typing import Dict, List, Optional
+from .web_page_scraper import WebPageScraper
+from pydantic import BaseModel
+import re
+from decimal import Decimal
 
-class WebPageScraper:
-    def __init__(self, url, element):
-        ''' 
-        Initialize with URL and CSS selector for the element to extract. 
-        url: str - The URL of the webpage to scrape.
-        element: str - The CSS selector of the HTML element to extract.
-            e.g., 'div#content > div.section > table > tbody > tr > td:nth-of-type(2)'
-            Note: "#" in CSS selector denotes id, "." denotes class.
-        '''
-        self.url = url
-        self.element = element
-        self.robots_txt = None
+class ScrapeInfo(BaseModel):
+    scrape_id: int
+    locator: str
+    metric_name: Optional[str] = None
 
-    def get_content(self):
-        ''' 
-        Main method to get content of the specified element if access is allowed by robots.txt. 
-        returns: content: str or None
-        '''
-        disallowed_paths = self._check_access()
-        access = None
+class PageWithScrapes(BaseModel):
+    webpage_id: int
+    url: str
+    page_name: str | None = None
+    scrapes: List[ScrapeInfo]
 
-        if disallowed_paths == []:
-            access = True
-        else:
-            for path in disallowed_paths:
-                if path in self.url:
-                    print(f"Access to {self.url} is disallowed by robots.txt")
-                    access = False
-                    break
-            else:
-                access = True
-            
-        if access:
-            self.content = self._fetch_content()
-            self.result = self._parse_html()
-            return self.result
-        else:
-            return None
+class ScrapeResult(BaseModel):
+    scrape_id: int
+    value: float | None
 
-    def _check_access(self, user_agent='*'):
-        ''' 
-        Check robots.txt file for disallowed paths for the given user agent. 
-        user_agent: str - The user agent to check for (default is '*').
-        Returns: disallowed_paths: list
-        '''
-        disallowed_paths = []
-        robots_txt = self._fetch_robots_txt()
-        if not robots_txt:
-            return disallowed_paths
 
-        lines = robots_txt.splitlines()
-        for line in lines:
-            if line.startswith('User-agent:'):
-                current_user_agent = line.split(':')[1].strip()
-                if current_user_agent == user_agent or current_user_agent == '*':
-                    continue
+def group_scrapes_by_webpage(rows: List[Dict]) -> List[PageWithScrapes]:
+    """
+    Turn a flat list of (webpage + scrape) rows into a nested structure
+    grouped by `webpage_id`. Missing scrapes (rows where `scrape_id` is None)
+    are ignored.
+    """
+    pages: Dict[int, PageWithScrapes] = {}
 
-            elif line.startswith('Disallow:'):
-                disallowed_path = line.split(':')
-                disallowed_path = disallowed_path[1].strip()
-                if disallowed_path != '/' and disallowed_path != '':
-                    disallowed_paths.append(disallowed_path)
+    for r in rows:
+        wid = r["webpage_id"]
+        page = pages.setdefault(
+            wid,
+            PageWithScrapes(
+                webpage_id=wid,
+                url=r["url"],
+                page_name=r.get("page_name"),
+                scrapes=[],
+            ),
+        )
 
-        return disallowed_paths
+        # Only add a scrape if the id is not NULL
+        if r["scrape_id"] is not None:
+            # Build a ScrapeInfo instance instead of a plain dict
+            page.scrapes.append(
+                ScrapeInfo(
+                    scrape_id=r["scrape_id"],
+                    locator=r["locator"],
+                    metric_name=r.get("metric_name"),
+                )
+            )
 
-    def _fetch_robots_txt(self):
-        ''' 
-        Fetch robots.txt file from the website. 
-        Returns the content of robots.txt or None if not found.
-        Returns: robots_txt: str or None
-        '''
-        if not self.robots_txt:
-            robots_url = '/'.join(self.url.split('/')[:3]) + '/robots.txt'
-            response = requests.get(robots_url)
+    return list(pages.values())
 
-            if response.status_code == 200:
-                self.robots_txt = response.text
-            else:
-                self.robots_txt = None
 
-        return self.robots_txt
-    
-    def _fetch_content(self):
-        ''' 
-        Fetch HTML content of the webpage. 
-        Returns: content: str or None
-        '''
-        response = requests.get(self.url)
-        if response.status_code == 200:
-            return response.text
-        else:
-            print(f'Failed to fetch content from {self.url}, status code: {response.status_code}')
-            return None
+def run_scrapes_by_webpage(webpages: List[PageWithScrapes]) -> List[ScrapeResult]:
+    """
+    Execute the scraper for every scrape listed under each webpage.
+    Returns a flat list of dicts: {scrape_id, value}.
+    """
+    results: List[ScrapeResult] = []
 
-    def _parse_html(self):
-        ''' 
-        Parse HTML content and extract the specified element. 
-        Returns: parsed_content: BeautifulSoup object or None
-        '''
-        if not self.content:
-            return None
+    for page in webpages:
+        scraper = WebPageScraper(page.url)
 
-        soup = BeautifulSoup(self.content, 'html.parser')
-        parsed_content = soup.select_one(self.element)
-        return parsed_content
+        for scrape in page.scrapes:
+            try:
+                raw_value = scraper.scrape(scrape.locator)
+            except Exception as exc:
+                print(f"Failed on {page.webpage_id} / {scrape.scrape_id}: {exc}")
+                continue
+
+            if raw_value is None:
+                continue
+
+            try:
+                numeric = parse_number(raw_value)
+            except ValueError as exc:
+                print(f"Could not parse value for {page.webpage_id} / {scrape.scrape_id}: {exc}")
+                continue
+
+            results.append(ScrapeResult(scrape_id=scrape.scrape_id, value=numeric))
+
+    return results
+
+
+def parse_number(raw: str,
+                 allow_percent: bool = False,
+                 force_decimal: bool = True) -> float:
+    """
+    Convert an arbitrary numeric string to a Python float.
+
+    Parameters
+    ----------
+    raw : str
+        The scraped value, e.g. "$2 684,00", "1 234.56", "-12%".
+    allow_percent : bool, default False
+        If True, a trailing '%' is interpreted as a percentage (i.e. 0.12).
+    force_decimal : bool, default True
+        When True the result will always be a float (Decimal → float).  
+        Set to False if you want to keep Decimal for exact math.
+
+    Returns
+    -------
+    float
+        The numeric value.
+
+    Raises
+    ------
+    ValueError
+        If no numeric component can be extracted.
+    """
+    # Trim whitespace
+    s = raw.strip()
+
+    # Detect and handle percent sign if requested
+    percent_multiplier = 1.0
+    if allow_percent and s.endswith('%'):
+        percent_multiplier = 0.01
+        s = s[:-1]          # drop the %
+
+    # Remove any leading currency symbol(s) or other non‑numeric chars.
+    #    We keep digits, commas, dots, spaces, plus/minus signs.
+    cleaned = re.sub(r'[^\d.,+\- ]', '', s)
+
+    # Replace common thousands separators with nothing
+    #    (comma in US/UK, space or dot in many European locales)
+    cleaned = cleaned.replace(' ', '').replace(',', '')
+
+    # If a dot remains but we are sure the locale uses comma as decimal,
+    #    you might need to swap it. Here we assume '.' is always decimal.
+    if not cleaned:
+        raise ValueError(f"Could not parse numeric value from '{raw}'")
+
+    try:
+        number = Decimal(cleaned)
+    except Exception as exc:
+        raise ValueError(f"Failed to convert '{cleaned}' to Decimal: {exc}") from exc
+
+    # Apply percent multiplier
+    number *= Decimal(percent_multiplier)
+
+    return float(number) if force_decimal else number
