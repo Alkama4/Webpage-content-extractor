@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 # Pydantic models
 from app.models.scrape import ScrapeCreate, ScrapeInDB
 from app.models.scrape_data import ScrapeData
 
-# Helpers for MySQL access
+# Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
+from app.scraper.utils import group_scrapes_by_webpage, run_scrapes_by_webpage
 
 router = APIRouter(prefix="/scrapes", tags=["scrapes"])
 
@@ -17,8 +18,8 @@ async def _fetch_all_scrapes() -> List[dict]:
     async with get_aiomysql_connection() as conn:
         query = """
             SELECT scrape_id, locator, metric_name, webpage_id
-              FROM scrapes
-           ORDER BY scrape_id;
+            FROM scrapes
+            ORDER BY scrape_id;
         """
         return await execute_mysql_query(conn, query)
 
@@ -27,8 +28,8 @@ async def _fetch_scrape_by_id(scrape_id: int) -> Optional[dict]:
     async with get_aiomysql_connection() as conn:
         query = """
             SELECT scrape_id, locator, metric_name, webpage_id
-              FROM scrapes
-             WHERE scrape_id = %s;
+            FROM scrapes
+            WHERE scrape_id = %s;
         """
         rows = await execute_mysql_query(conn, query, (scrape_id,))
         return rows[0] if rows else None
@@ -53,9 +54,9 @@ async def _update_scrape(scrape_id: int, data: ScrapeCreate) -> bool:
     async with get_aiomysql_connection() as conn:
         query = """
             UPDATE scrapes
-               SET locator = %s,
-                   metric_name = %s
-             WHERE scrape_id = %s;
+            SET locator = %s,
+                metric_name = %s
+            WHERE scrape_id = %s;
         """
         rowcount = await execute_mysql_query(
             conn,
@@ -83,12 +84,59 @@ async def _delete_scrape(scrape_id: int) -> bool:
 async def _fetch_scrape_data_by_scrape(scrape_id: int) -> List[dict]:
     async with get_aiomysql_connection() as conn:
         query = """
-            SELECT data_id, scrape_id, value, datetime
-              FROM scrape_data
-             WHERE scrape_id = %s
-           ORDER BY datetime DESC;
+            SELECT data_id, scrape_id, value, created_at
+            FROM scrape_data
+            WHERE scrape_id = %s
+            ORDER BY created_at;
         """
         return await execute_mysql_query(conn, query, (scrape_id,))
+
+
+async def _fetch_all_webpage_and_scrape_rows() -> List[Dict[str, Any]]:
+    """
+    Return a list of rows that contain both webpage and scrape columns.
+    Each row is a plain dict (column name -> value).
+    """
+    async with get_aiomysql_connection() as conn:
+        query = """
+            SELECT
+                w.webpage_id, w.url, w.page_name,
+                s.scrape_id, s.locator, s.metric_name
+            FROM webpages AS w
+            LEFT JOIN scrapes AS s ON w.webpage_id = s.webpage_id;
+        """
+        return await execute_mysql_query(conn, query)
+
+
+async def _persist_scraped_data(scrape_data: List[Dict[str, Any]]) -> None:
+    """
+    Bulk-insert the scraped values. Returns the number of rows inserted.
+    Uses a single INSERT statement with many VALUES tuples for speed.
+    """
+    if not scrape_data:
+        return
+
+    async with get_aiomysql_connection() as conn:
+
+        # Build placeholders: "(%s, %s), (%s, %s), ..."
+        values_placeholder = ", ".join(["(%s, %s)"] * len(scrape_data))
+        query = f"""
+            INSERT INTO scrape_data (scrape_id, value)
+            VALUES {values_placeholder};
+        """
+
+        # Flatten the list of tuples into a single tuple for executemany
+        params: List[Any] = []
+        for row in scrape_data:
+            params.extend([row["scrape_id"], row["value"]])
+
+        await execute_mysql_query(
+            conn,
+            query,
+            tuple(params),
+            return_rowcount=True,
+        )
+
 
 
 ########################  Endpoints  ########################
@@ -102,42 +150,23 @@ async def get_scrapes():
 
 @router.post("/run-all")
 async def run_all_scrapes():
-    """Trigger the nightly batch that iterates over every scrape job and runs them."""
-    # Existing implementation stays here - see your original file.
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT 
-                w.webpage_id, w.url, w.page_name,
-                s.scrape_id, s.locator, s.metric_name
-            FROM webpages w
-            LEFT JOIN scrapes s ON w.webpage_id = s.webpage_id;
-        """
-        rows = await execute_mysql_query(conn, query)
+    """
+    Trigger the nightly batch that iterates over every scrape job and runs them. Returns the count of scraped values.
+    """
+    # Get all scrapes joined with webpages
+    rows = await _fetch_all_webpage_and_scrape_rows()
 
-        # Group by webpage
-        webpages = {}
-        for r in rows:
-            wid = r['webpage_id']
-            if wid not in webpages:
-                webpages[wid] = {
-                    "webpage_id": wid,
-                    "url": r['url'],
-                    "page_name": r['page_name'],
-                    "scrapes": []
-                }
-            if r['scrape_id']:
-                webpages[wid]["scrapes"].append({
-                    "scrape_id": r['scrape_id'],
-                    "locator": r['locator'],
-                    "metric_name": r['metric_name']
-                })
+    # Group by webpage (returns List[WebPageWithScrapes])
+    grouped = group_scrapes_by_webpage(rows)
 
-        # Scraping action for the webpages
-        raise HTTPException(status_code=501, detail={
-            "msg": "Endpoint under construction.",
-            "Webpage values to scrape with": list(webpages.values())
-        })
-    
+    # Run the scraper
+    results = run_scrapes_by_webpage(grouped)
+
+    # Persist data to the db
+    await _persist_scraped_data(results)
+
+    return {"message": "Scraping completed", "scrape_count": len(results)}
+
 
 @router.post("/{webpage_id}", status_code=201, response_model=ScrapeInDB)
 async def create_scrape(page_id: int, scrape: ScrapeCreate):
@@ -197,8 +226,8 @@ async def patch_scrape(scrape_id: int, scrape: ScrapeCreate):
     async with get_aiomysql_connection() as conn:
         query = f"""
             UPDATE scrapes
-               SET {', '.join(updates)}
-             WHERE scrape_id = %s;
+            SET {', '.join(updates)}
+            WHERE scrape_id = %s;
         """
         params.append(scrape_id)
         rowcount = await execute_mysql_query(
@@ -231,12 +260,3 @@ async def get_scrape_data(scrape_id: int):
 
     rows = await _fetch_scrape_data_by_scrape(scrape_id)
     return rows
-
-
-@router.post("/{scrape_id}/run")
-async def run_scrape(id: int):
-    """
-    Execute the scraper for this job once, store a new row in scrape_data.
-    """
-    # TODO: Return actual data instead of this placeholder
-    raise HTTPException(status_code=501, detail="Endpoint not yet implemented")
