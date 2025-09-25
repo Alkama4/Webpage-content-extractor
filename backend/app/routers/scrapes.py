@@ -128,7 +128,7 @@ async def _persist_scraped_data(scrape_data: List[Dict[str, Any]]) -> None:
         # Flatten the list of tuples into a single tuple for executemany
         params: List[Any] = []
         for row in scrape_data:
-            params.extend([row["scrape_id"], row["value"]])
+            params.extend([row.scrape_id, row.value])
 
         await execute_mysql_query(
             conn,
