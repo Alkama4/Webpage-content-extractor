@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Pydantic models
-from app.models.scrape import ScrapeCreate, ScrapeInDB
+from app.models.scrape import ScrapeCreate, ScrapeInDB, ScrapeOut, ScrapePatch
 from app.models.scrape_data import ScrapeData
 
 # Project utils
@@ -50,21 +50,81 @@ async def _create_scrape(data: ScrapeCreate, webpage_id: int) -> int:
         return last_id
 
 
-async def _update_scrape(scrape_id: int, data: ScrapeCreate) -> bool:
+async def _update_scrape_helper(
+    scrape_id: int,
+    fields: List[Tuple[str, Any]]
+) -> Tuple[int, Optional[dict]]:
+    """
+    Update a scrape with the supplied list of (column, value) tuples.
+    Raises:
+        HTTPException 404 if the record does not exist.
+        HTTPException 409 if the new locator already exists for another
+            scrape on the same webpage.
+    Returns:
+        rowcount, updated record (or None if not found)
+    """
     async with get_aiomysql_connection() as conn:
-        query = """
+        # Get current webpage_id for this scrape
+        curr_webpage_q = "SELECT webpage_id FROM scrapes WHERE scrape_id = %s"
+        curr_res = await execute_mysql_query(conn, curr_webpage_q, params=[scrape_id])
+        if not curr_res:
+            return 0, None
+        current_webpage_id = curr_res[0]["webpage_id"]
+
+        # Determine new locator and webpage_id values from fields
+        locator_field = next((val for col, val in fields if col == "locator"), None)
+        webpage_id_field = next(
+            (val for col, val in fields if col == "webpage_id"), current_webpage_id
+        )
+
+        # Check for duplicate locator on same webpage
+        if locator_field is not None:
+            dup_q = """
+                SELECT 1 FROM scrapes
+                WHERE webpage_id = %s AND locator = %s AND scrape_id <> %s
+                LIMIT 1;
+            """
+            dup_res = await execute_mysql_query(
+                conn,
+                dup_q,
+                params=[webpage_id_field, locator_field, scrape_id]
+            )
+            if dup_res:
+                raise HTTPException(status_code=409, detail="Locator must be unique per webpage")
+
+        # Build UPDATE statement
+        updates = [f"{col} = %s" for col, _ in fields]
+        params = [val for _, val in fields]
+        params.append(scrape_id)
+
+        query = f"""
             UPDATE scrapes
-            SET locator = %s,
-                metric_name = %s
+            SET {', '.join(updates)}
             WHERE scrape_id = %s;
         """
+
+        # Execute update and get affected rows count
         rowcount = await execute_mysql_query(
             conn,
             query,
-            params=(data.locator, data.metric_name, scrape_id),
+            params=params,
             return_rowcount=True
         )
-        return rowcount > 0
+
+        # If no rows updated, verify existence again
+        if rowcount == 0:
+            exists_q = "SELECT 1 FROM scrapes WHERE scrape_id = %s"
+            result = await execute_mysql_query(
+                conn,
+                exists_q,
+                params=[scrape_id]
+            )
+            if not result:      # record truly missing
+                return 0, None
+
+    # Fetch and return updated record
+    updated_record = await _fetch_scrape_by_id(scrape_id)
+    return rowcount, updated_record
 
 
 async def _delete_scrape(scrape_id: int) -> bool:
@@ -128,7 +188,7 @@ async def _persist_scraped_data(scrape_data: List[Dict[str, Any]]) -> None:
         # Flatten the list of tuples into a single tuple for executemany
         params: List[Any] = []
         for row in scrape_data:
-            params.extend([row["scrape_id"], row["value"]])
+            params.extend([row.scrape_id, row.value])
 
         await execute_mysql_query(
             conn,
@@ -193,53 +253,44 @@ async def get_scrape(scrape_id: int):
     return row
 
 
-@router.put("/{scrape_id}", response_model=ScrapeInDB)
+@router.put("/{scrape_id}", response_model=ScrapeOut)
 async def replace_scrape(scrape_id: int, scrape: ScrapeCreate):
-    """Replace an existing scrape (full update)."""
-    success = await _update_scrape(scrape_id, scrape)
-    if not success:
+    """
+    Full replacement of a scrape. All fields are required.
+    """
+    # build the list of columns to update
+    fields = [("locator", scrape.locator), ("metric_name", scrape.metric_name)]
+    rowcount, updated_record = await _update_scrape_helper(scrape_id, fields)
+
+    if not updated_record:
         raise HTTPException(status_code=404, detail="Scrape not found")
 
-    updated_record = await _fetch_scrape_by_id(scrape_id)
+    # flag is true only if a row was actually changed
+    updated_record["updated"] = rowcount > 0
     return updated_record
 
 
-@router.patch("/{scrape_id}", response_model=ScrapeInDB)
-async def patch_scrape(scrape_id: int, scrape: ScrapeCreate):
+@router.patch("/{scrape_id}", response_model=ScrapeOut)
+async def patch_scrape(scrape_id: int, scrape: ScrapePatch):
     """
-    Patch an existing scrape - only the fields you send will be updated.
+    Patch an existing scrape – only the fields you send will be updated.
     """
-    # Build a dynamic query
-    updates = []
-    params = []
-
+    fields = []
     if scrape.locator is not None:
-        updates.append("locator = %s")
-        params.append(scrape.locator)
+        fields.append(("locator", scrape.locator))
     if scrape.metric_name is not None:
-        updates.append("metric_name = %s")
-        params.append(scrape.metric_name)
+        fields.append(("metric_name", scrape.metric_name))
 
-    if not updates:
+    if not fields:
         raise HTTPException(status_code=400, detail="No fields to update")
 
-    async with get_aiomysql_connection() as conn:
-        query = f"""
-            UPDATE scrapes
-            SET {', '.join(updates)}
-            WHERE scrape_id = %s;
-        """
-        params.append(scrape_id)
-        rowcount = await execute_mysql_query(
-            conn,
-            query,
-            params=params,
-            return_rowcount=True
-        )
-        if rowcount == 0:
-            raise HTTPException(status_code=404, detail="Scrape not found")
+    rowcount, updated_record = await _update_scrape_helper(scrape_id, fields)
 
-    return await _fetch_scrape_by_id(scrape_id)
+    if not updated_record:
+        raise HTTPException(status_code=404, detail="Scrape not found")
+
+    updated_record["updated"] = rowcount > 0
+    return updated_record
 
 
 @router.delete("/{scrape_id}")

@@ -15,8 +15,8 @@ app.add_middleware(
 )
 
 # Mount routers
-app.include_router(webpages_router, prefix="/webpages")
-app.include_router(scrapes_router, prefix="/scrapes")
+app.include_router(webpages_router)
+app.include_router(scrapes_router)
 
 # Root
 @app.get("/")
