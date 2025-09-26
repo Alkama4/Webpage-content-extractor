@@ -19,3 +19,24 @@ class ScrapeInDB(ScrapeBase):
 
     class Config:
         orm_mode = True
+
+class ScrapePatch(ScrapeBase):
+    locator: Optional[str] = None
+    metric_name: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class ScrapeOut(ScrapeInDB):
+    """
+    Response model for PATCH and PUT operations.
+    Inherits id, locator, metric_name, webpage_id from ScrapeInDB
+    and adds an `updated` flag indicating whether any column was actually changed.
+    """
+    updated: Optional[bool] = None
+    updated: bool = Field(
+        default=False,
+        description="True if the UPDATE modified at least one column"
+    )
+    
