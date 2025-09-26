@@ -127,7 +127,7 @@ async def _delete_webpage(webpage_id: int) -> bool:
 async def _fetch_scrapes_by_webpage(webpage_id: int) -> List[dict]:
     async with get_aiomysql_connection() as conn:
         query = """
-            SELECT scrape_id, locator, metric_name
+            SELECT webpage_id, scrape_id, locator, metric_name
             FROM scrapes
             WHERE webpage_id = %s
             ORDER BY scrape_id;
