@@ -142,11 +142,11 @@ async def _fetch_scrape_data_by_webpage(webpage_id: int) -> List[dict]:
             SELECT sd.data_id,
                    sd.scrape_id,
                    sd.value,
-                   sd.createda_at
+                   sd.created_at
             FROM scrape_data AS sd
             JOIN scrapes AS s ON sd.scrape_id = s.scrape_id
             WHERE s.webpage_id = %s
-            ORDER BY sd.createda_at DESC;
+            ORDER BY sd.created_at DESC;
         """
         return await execute_mysql_query(conn, query, (webpage_id,))
 
