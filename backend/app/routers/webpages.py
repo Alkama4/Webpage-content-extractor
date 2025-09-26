@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from typing import List, Optional
+from typing import List, Optional, Tuple, Any
 
 # Pydantic models
-from app.models.webpage import WebpageCreate, WebpageInDB
+from app.models.webpage import WebpageCreate, WebpageInDB, WebpagePatch, WebpageOut
 from app.models.scrape import ScrapeInDB
 from app.models.scrape_data import ScrapeData
 
@@ -50,21 +50,64 @@ async def _create_webpage(data: WebpageCreate) -> int:
         return last_id
 
 
-async def _update_webpage(webpage_id: int, data: WebpageCreate) -> bool:
+async def _update_webpage_helper(
+    webpage_id: int,
+    fields: List[Tuple[str, Any]]
+) -> Tuple[int, Optional[dict]]:
+    """
+    Update a webpage with the supplied list of (column, value) tuples.
+    Raises:
+        HTTPException 409 if the new URL already exists for another record.
+    Returns:
+        rowcount, updated record (or None if not found)
+    """
     async with get_aiomysql_connection() as conn:
-        query = """
+        # Check for duplicate URL before updating
+        url_field = next((val for col, val in fields if col == "url"), None)
+        if url_field is not None:
+            dup_q = """
+                SELECT 1 FROM webpages
+                WHERE url = %s AND webpage_id <> %s
+                LIMIT 1;
+            """
+            dup_res = await execute_mysql_query(
+                conn,
+                dup_q,
+                params=[url_field, webpage_id]
+            )
+            if dup_res:
+                # URL already exists for another record – abort update
+                raise HTTPException(status_code=409, detail="URL must be unique")
+
+        updates = [f"{col} = %s" for col, _ in fields]
+        params = [val for _, val in fields]
+        params.append(webpage_id)
+
+        query = f"""
             UPDATE webpages
-            SET url = %s,
-                page_name = %s
+            SET {', '.join(updates)}
             WHERE webpage_id = %s;
         """
+
         rowcount = await execute_mysql_query(
             conn,
             query,
-            params=(data.url, data.page_name, webpage_id),
+            params=params,
             return_rowcount=True
         )
-        return rowcount > 0
+
+        if rowcount == 0:
+            exists_q = "SELECT 1 FROM webpages WHERE webpage_id = %s"
+            result = await execute_mysql_query(
+                conn,
+                exists_q,
+                params=[webpage_id]
+            )
+            if not result:      # truly missing
+                return 0, None
+
+        updated_record = await _fetch_webpage_by_id(webpage_id)
+        return rowcount, updated_record
 
 
 async def _delete_webpage(webpage_id: int) -> bool:
@@ -149,55 +192,37 @@ async def get_webpage(webpage_id: int):
     return WebpageInDB(**row)
 
 
-@router.put("/{webpage_id}", response_model=WebpageInDB)
+@router.put("/{webpage_id}", response_model=WebpageOut)
 async def replace_webpage(webpage_id: int, page: WebpageCreate):
-    """
-    Replace an existing webpage (full update).
-    """
-    success = await _update_webpage(webpage_id, page)
-    if not success:
+    fields = [("url", page.url), ("page_name", page.page_name)]
+    rowcount, updated_record = await _update_webpage_helper(webpage_id, fields)
+
+    if not updated_record:
         raise HTTPException(status_code=404, detail="Webpage not found")
 
-    updated_record = await _fetch_webpage_by_id(webpage_id)
+    # Flag is true only if a row was actually changed
+    updated_record["updated"] = rowcount > 0
     return updated_record
 
 
-@router.patch("/{webpage_id}", response_model=WebpageInDB)
-async def patch_webpage(webpage_id: int, page: WebpageCreate):
-    """
-    Patch an existing webpage - only the fields you send will be updated.
-    """
-    # Build a dynamic query
-    updates = []
-    params = []
-
+@router.patch("/{webpage_id}", response_model=WebpageOut)
+async def patch_webpage(webpage_id: int, page: WebpagePatch):
+    fields = []
     if page.url is not None:
-        updates.append("url = %s")
-        params.append(page.url)
+        fields.append(("url", page.url))
     if page.page_name is not None:
-        updates.append("page_name = %s")
-        params.append(page.page_name)
+        fields.append(("page_name", page.page_name))
 
-    if not updates:
+    if not fields:
         raise HTTPException(status_code=400, detail="No fields to update")
 
-    async with get_aiomysql_connection() as conn:
-        query = f"""
-            UPDATE webpages
-            SET {', '.join(updates)}
-            WHERE webpage_id = %s;
-        """
-        params.append(webpage_id)
-        rowcount = await execute_mysql_query(
-            conn,
-            query,
-            params=params,
-            return_rowcount=True
-        )
-        if rowcount == 0:
-            raise HTTPException(status_code=404, detail="Webpage not found")
+    rowcount, updated_record = await _update_webpage_helper(webpage_id, fields)
 
-    return await _fetch_webpage_by_id(webpage_id)
+    if not updated_record:
+        raise HTTPException(status_code=404, detail="Webpage not found")
+
+    updated_record["updated"] = rowcount > 0
+    return updated_record
 
 
 @router.delete("/{webpage_id}")

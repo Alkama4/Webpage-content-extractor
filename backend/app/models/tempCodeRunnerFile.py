@@ -1,6 +1,3 @@
-from typing import Optional
-from pydantic import BaseModel, HttpUrl, Field
-
 class WebpageBase(BaseModel):
     url: HttpUrl = Field(..., description="The full URL that will be scraped")
     page_name: Optional[str] = Field(
@@ -25,14 +22,5 @@ class WebpagePatch(WebpageBase):
     class Config:
         orm_mode = True
 
-class WebpageOut(WebpageInDB):
-    """
-    Response model for PATCH and PUT operations.
-    Inherits id, url, page_name from WebpageInDB and adds an
-    `updated` flag indicating whether any column was actually changed.
-    """
+class WebpageOut(WebpageBase):
     updated: Optional[bool] = None
-    updated: bool = Field(
-        default=False,
-        description="True if the UPDATE modified at least one column"
-    )
