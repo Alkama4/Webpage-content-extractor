@@ -39,13 +39,26 @@ async def _create_scrape(conn: Connection, data: ScrapeCreate, webpage_id: int) 
         INSERT INTO scrapes (locator, metric_name, webpage_id)
         VALUES (%s, %s, %s);
     """
-    last_id = await execute_mysql_query(
-        conn,
-        query,
-        params=(data.locator, data.metric_name, webpage_id),
-        return_lastrowid=True
-    )
-    return last_id
+    try:
+        last_id = await execute_mysql_query(
+            conn,
+            query,
+            params=(data.locator, data.metric_name, webpage_id),
+            return_lastrowid=True
+        )
+        return last_id
+    except Exception as exc:
+        # Duplicate key (e.g., same locator on the same webpage)
+        if hasattr(exc, "args") and len(exc.args) > 0 and "1062" in str(exc.args[0]):
+            raise HTTPException(
+                status_code=409, 
+                detail={
+                    "detail": "Locator must be unique per webpage",
+                    "field": "locator",
+                    "value": data.locator
+                }
+            )
+        raise
 
 
 async def _update_scrape_helper(
@@ -88,7 +101,14 @@ async def _update_scrape_helper(
             params=[webpage_id_field, locator_field, scrape_id]
         )
         if dup_res:
-            raise HTTPException(status_code=409, detail="Locator must be unique per webpage")
+            raise HTTPException(
+                status_code=409, 
+                detail={
+                    "detail": "Locator must be unique per webpage",
+                    "field": "locator",
+                    "value": locator_field
+                }
+            )
 
     # Build UPDATE statement
     updates = [f"{col} = %s" for col, _ in fields]
@@ -230,11 +250,7 @@ async def create_scrape(page_id: int, scrape: ScrapeCreate):
     The `webpage_id` must exist - MySQL will raise an FK error otherwise.
     """
     async with get_aiomysql_connection() as conn:
-        try:
-            last_id = await _create_scrape(conn, scrape, page_id)
-        except Exception as exc:
-            # Likely a foreign‑key or duplicate key violation
-            raise HTTPException(status_code=400, detail=str(exc))
+        last_id = await _create_scrape(conn, scrape, page_id)
 
         new_record = await _fetch_scrape_by_id(conn, last_id)
         return new_record

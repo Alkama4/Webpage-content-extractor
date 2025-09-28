@@ -39,13 +39,26 @@ async def _create_webpage(conn: Connection, data: WebpageCreate) -> int:
         INSERT INTO webpages (url, page_name)
         VALUES (%s, %s);
     """
-    last_id = await execute_mysql_query(
-        conn,
-        query,
-        params=(data.url, data.page_name),
-        return_lastrowid=True
-    )
-    return last_id
+    try:
+        last_id = await execute_mysql_query(
+            conn,
+            query,
+            params=(data.url, data.page_name),
+            return_lastrowid=True
+        )
+        return last_id
+    except Exception as exc:
+        # MySQL error 1062 => duplicate entry for unique key
+        if hasattr(exc, "args") and len(exc.args) > 0 and "1062" in str(exc.args[0]):
+            raise HTTPException(
+                status_code=409, 
+                detail={
+                    "detail": "URL must be unique",
+                    "field": "url",
+                    "value": data.url
+                }
+            )
+        raise  # re‑raise any other exception unchanged
 
 
 async def _update_webpage_helper(
@@ -75,7 +88,14 @@ async def _update_webpage_helper(
         )
         if dup_res:
             # URL already exists for another record – abort update
-            raise HTTPException(status_code=409, detail="URL must be unique")
+            raise HTTPException(
+                status_code=409, 
+                detail={
+                    "detail": "URL must be unique",
+                    "field": "url",
+                    "value": str(url_field)
+                }
+            )
 
     updates = [f"{col} = %s" for col, _ in fields]
     params = [val for _, val in fields]
@@ -168,11 +188,7 @@ async def create_webpage(page: WebpageCreate):
     The URL must be unique - the database will raise an error if it already exists.
     """
     async with get_aiomysql_connection() as conn:
-        try:
-            last_id = await _create_webpage(conn, page)
-        except Exception as exc:
-            # Most likely a duplicate key violation
-            raise HTTPException(status_code=400, detail=str(exc))
+        last_id = await _create_webpage(conn, page)
 
         new_record = await _fetch_webpage_by_id(conn, last_id)
         return new_record
