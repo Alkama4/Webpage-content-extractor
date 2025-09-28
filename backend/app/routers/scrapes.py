@@ -4,16 +4,17 @@ from aiomysql import Connection
 
 # Pydantic models
 from app.models.scrape import ScrapeCreate, ScrapeInDB, ScrapeOut, ScrapePatch
-from app.models.scrape_data import ScrapeData
+from app.models.scrape_data import ScrapeData, ScrapeValidationData
+from app.scraper.utils import ValidateRequest
 
 # Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
-from app.scraper.utils import group_scrapes_by_webpage, run_scrapes_by_webpage
+from app.scraper.utils import group_scrapes_by_webpage, run_scrapes_by_webpage, validate_scrapes
 
 router = APIRouter(prefix="/scrapes", tags=["scrapes"])
 
 
-#######################  Helper functions #######################
+#######################  Helper functions  #######################
 
 async def _fetch_all_scrapes(conn: Connection) -> List[dict]:
     query = """
@@ -241,6 +242,16 @@ async def run_all_scrapes():
         await _persist_scraped_data(conn, results)
 
         return {"message": "Scraping completed", "scrape_count": len(results)}
+    
+
+@router.post("/validate", response_model=List[ScrapeValidationData])
+async def validate_scrapes_endpoint(req: ValidateRequest):
+    """
+    Run the scraper against a single page URL using the supplied list of
+    CSS/XPath locators. No data is persisted - the result is returned
+    directly to the caller.
+    """
+    return validate_scrapes(req)
 
 
 @router.post("/{webpage_id}", status_code=201, response_model=ScrapeInDB)

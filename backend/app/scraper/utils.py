@@ -1,8 +1,9 @@
 from typing import Dict, List, Optional
 from .web_page_scraper import WebPageScraper
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl, Field
 import re
 from decimal import Decimal
+from fastapi import HTTPException
 
 class ScrapeInfo(BaseModel):
     scrape_id: int
@@ -18,6 +19,11 @@ class PageWithScrapes(BaseModel):
 class ScrapeResult(BaseModel):
     scrape_id: int
     value: float | None
+
+class ValidateRequest(BaseModel):
+    """Request payload for validating scrapes on a single page."""
+    url: HttpUrl = Field(..., description="The full URL that will be scraped")
+    locators: list[str]
 
 
 def group_scrapes_by_webpage(rows: List[Dict]) -> List[PageWithScrapes]:
@@ -83,6 +89,56 @@ def run_scrapes_by_webpage(webpages: List[PageWithScrapes]) -> List[ScrapeResult
             results.append(ScrapeResult(scrape_id=scrape.scrape_id, value=numeric))
 
     return results
+
+
+def validate_scrapes(req: ValidateRequest) -> List[ScrapeResult]:
+    """
+    Work-horse for the `/validate` endpoint.
+
+    Parameters
+    ----------
+    req : ValidateRequest
+        The request payload containing a single URL and a list of CSS/XPath locators.
+    Returns
+    -------
+    List[ScrapeResult]
+        A flat list of `{scrape_id, value}` objects.  `scrape_id` is set to ``0`` because
+        the validation step does not correspond to an actual database record.
+    """
+    results: List[ScrapeResult] = []
+
+    # Instantiate a scraper for the given URL once and reuse it for all locators
+    scraper = WebPageScraper(str(req.url))
+
+    for idx, locator in enumerate(req.locators):
+        try:
+            raw_value = scraper.scrape(locator)
+        except Exception as exc:      # pragma: no cover - debugging helper
+            print(f"Failed to scrape locator {locator!r}: {exc}")
+            continue
+
+        if raw_value is None:
+            continue
+
+        try:
+            numeric = parse_number(raw_value, allow_percent=False, force_decimal=True)
+        except ValueError as exc:     # pragma: no cover - debugging helper
+            print(f"Could not parse value for locator {locator!r}: {exc}")
+            raise HTTPException(
+                status_code=400, 
+                detail={
+                    "detail": "A scraped elements value couldn't be converted to a number.",
+                    "field": "locator",
+                    "type": "value_error",
+                    "locator": locator,
+                    "value": raw_value
+                }
+            )
+
+        results.append(ScrapeResult(scrape_id=0, value=numeric))
+
+    return results
+
 
 
 def parse_number(raw: str,
