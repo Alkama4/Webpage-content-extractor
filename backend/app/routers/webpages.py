@@ -104,7 +104,7 @@ async def _update_webpage_helper(
         if not result:      # truly missing
             return 0, None
 
-    updated_record = await _fetch_webpage_by_id(webpage_id)
+    updated_record = await _fetch_webpage_by_id(conn, webpage_id)
     return rowcount, updated_record
 
 
