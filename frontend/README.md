@@ -2,5 +2,5 @@ steps
 
 npm i       ------> install deps
 
-npm run dev ------> start dev srv
+npm run dev:full ------> start dev srv
   
