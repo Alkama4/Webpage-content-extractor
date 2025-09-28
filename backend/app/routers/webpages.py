@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional, Tuple, Any
+from aiomysql import Connection
 
 # Pydantic models
 from app.models.webpage import WebpageCreate, WebpageInDB, WebpagePatch, WebpageOut
@@ -14,43 +15,41 @@ router = APIRouter(prefix="/webpages", tags=["webpages"])
 
 ################ Helper functions ################
 
-async def _fetch_all_webpages() -> List[dict]:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT webpage_id, url, page_name
-            FROM webpages
-            ORDER BY webpage_id;
-        """
-        return await execute_mysql_query(conn, query)
+async def _fetch_all_webpages(conn: Connection) -> List[dict]:
+    query = """
+        SELECT webpage_id, url, page_name
+        FROM webpages
+        ORDER BY webpage_id;
+    """
+    return await execute_mysql_query(conn, query)
 
 
-async def _fetch_webpage_by_id(webpage_id: int) -> Optional[dict]:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT webpage_id, url, page_name
-            FROM webpages
-            WHERE webpage_id = %s;
-        """
-        rows = await execute_mysql_query(conn, query, (webpage_id,))
-        return rows[0] if rows else None
+async def _fetch_webpage_by_id(conn: Connection, webpage_id: int) -> Optional[dict]:
+    query = """
+        SELECT webpage_id, url, page_name
+        FROM webpages
+        WHERE webpage_id = %s;
+    """
+    rows = await execute_mysql_query(conn, query, (webpage_id,))
+    return rows[0] if rows else None
 
 
-async def _create_webpage(data: WebpageCreate) -> int:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            INSERT INTO webpages (url, page_name)
-            VALUES (%s, %s);
-        """
-        last_id = await execute_mysql_query(
-            conn,
-            query,
-            params=(data.url, data.page_name),
-            return_lastrowid=True
-        )
-        return last_id
+async def _create_webpage(conn: Connection, data: WebpageCreate) -> int:
+    query = """
+        INSERT INTO webpages (url, page_name)
+        VALUES (%s, %s);
+    """
+    last_id = await execute_mysql_query(
+        conn,
+        query,
+        params=(data.url, data.page_name),
+        return_lastrowid=True
+    )
+    return last_id
 
 
 async def _update_webpage_helper(
+    conn: Connection,
     webpage_id: int,
     fields: List[Tuple[str, Any]]
 ) -> Tuple[int, Optional[dict]]:
@@ -61,94 +60,90 @@ async def _update_webpage_helper(
     Returns:
         rowcount, updated record (or None if not found)
     """
-    async with get_aiomysql_connection() as conn:
-        # Check for duplicate URL before updating
-        url_field = next((val for col, val in fields if col == "url"), None)
-        if url_field is not None:
-            dup_q = """
-                SELECT 1 FROM webpages
-                WHERE url = %s AND webpage_id <> %s
-                LIMIT 1;
-            """
-            dup_res = await execute_mysql_query(
-                conn,
-                dup_q,
-                params=[url_field, webpage_id]
-            )
-            if dup_res:
-                # URL already exists for another record – abort update
-                raise HTTPException(status_code=409, detail="URL must be unique")
-
-        updates = [f"{col} = %s" for col, _ in fields]
-        params = [val for _, val in fields]
-        params.append(webpage_id)
-
-        query = f"""
-            UPDATE webpages
-            SET {', '.join(updates)}
-            WHERE webpage_id = %s;
+    # Check for duplicate URL before updating
+    url_field = next((val for col, val in fields if col == "url"), None)
+    if url_field is not None:
+        dup_q = """
+            SELECT 1 FROM webpages
+            WHERE url = %s AND webpage_id <> %s
+            LIMIT 1;
         """
-
-        rowcount = await execute_mysql_query(
+        dup_res = await execute_mysql_query(
             conn,
-            query,
-            params=params,
-            return_rowcount=True
+            dup_q,
+            params=[url_field, webpage_id]
         )
+        if dup_res:
+            # URL already exists for another record – abort update
+            raise HTTPException(status_code=409, detail="URL must be unique")
 
-        if rowcount == 0:
-            exists_q = "SELECT 1 FROM webpages WHERE webpage_id = %s"
-            result = await execute_mysql_query(
-                conn,
-                exists_q,
-                params=[webpage_id]
-            )
-            if not result:      # truly missing
-                return 0, None
+    updates = [f"{col} = %s" for col, _ in fields]
+    params = [val for _, val in fields]
+    params.append(webpage_id)
 
-        updated_record = await _fetch_webpage_by_id(webpage_id)
-        return rowcount, updated_record
+    query = f"""
+        UPDATE webpages
+        SET {', '.join(updates)}
+        WHERE webpage_id = %s;
+    """
 
+    rowcount = await execute_mysql_query(
+        conn,
+        query,
+        params=params,
+        return_rowcount=True
+    )
 
-async def _delete_webpage(webpage_id: int) -> bool:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            DELETE FROM webpages WHERE webpage_id = %s;
-        """
-        rowcount = await execute_mysql_query(
+    if rowcount == 0:
+        exists_q = "SELECT 1 FROM webpages WHERE webpage_id = %s"
+        result = await execute_mysql_query(
             conn,
-            query,
-            params=(webpage_id,),
-            return_rowcount=True
+            exists_q,
+            params=[webpage_id]
         )
-        return rowcount > 0
+        if not result:      # truly missing
+            return 0, None
+
+    updated_record = await _fetch_webpage_by_id(webpage_id)
+    return rowcount, updated_record
 
 
-async def _fetch_scrapes_by_webpage(webpage_id: int) -> List[dict]:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT webpage_id, scrape_id, locator, metric_name
-            FROM scrapes
-            WHERE webpage_id = %s
-            ORDER BY scrape_id;
-        """
-        return await execute_mysql_query(conn, query, (webpage_id,))
+async def _delete_webpage(conn: Connection, webpage_id: int) -> bool:
+    query = """
+        DELETE FROM webpages WHERE webpage_id = %s;
+    """
+    rowcount = await execute_mysql_query(
+        conn,
+        query,
+        params=(webpage_id,),
+        return_rowcount=True
+    )
+    return rowcount > 0
 
 
-async def _fetch_scrape_data_by_webpage(webpage_id: int) -> List[dict]:
-    async with get_aiomysql_connection() as conn:
-        # Join all three tables to pull the data you want
-        query = """
-            SELECT sd.data_id,
-                   sd.scrape_id,
-                   sd.value,
-                   sd.created_at
-            FROM scrape_data AS sd
-            JOIN scrapes AS s ON sd.scrape_id = s.scrape_id
-            WHERE s.webpage_id = %s
-            ORDER BY sd.created_at DESC;
-        """
-        return await execute_mysql_query(conn, query, (webpage_id,))
+async def _fetch_scrapes_by_webpage(conn: Connection, webpage_id: int) -> List[dict]:
+    query = """
+        SELECT webpage_id, scrape_id, locator, metric_name
+        FROM scrapes
+        WHERE webpage_id = %s
+        ORDER BY scrape_id;
+    """
+    return await execute_mysql_query(conn, query, (webpage_id,))
+
+
+async def _fetch_scrape_data_by_webpage(conn: Connection, webpage_id: int) -> List[dict]:
+    # Join all three tables to pull the data you want
+    query = """
+        SELECT sd.data_id,
+                sd.scrape_id,
+                sd.value,
+                sd.created_at
+        FROM scrape_data AS sd
+        JOIN scrapes AS s ON sd.scrape_id = s.scrape_id
+        WHERE s.webpage_id = %s
+        ORDER BY sd.created_at DESC;
+    """
+    return await execute_mysql_query(conn, query, (webpage_id,))
 
 
 ################ Endpoints ################
@@ -158,8 +153,9 @@ async def get_webpages():
     """
     Return an array of all webpages stored in the system.
     """
-    rows = await _fetch_all_webpages()
-    return rows
+    async with get_aiomysql_connection() as conn:
+        rows = await _fetch_all_webpages(conn)
+        return rows
 
 
 @router.post(
@@ -171,14 +167,15 @@ async def create_webpage(page: WebpageCreate):
 
     The URL must be unique - the database will raise an error if it already exists.
     """
-    try:
-        last_id = await _create_webpage(page)
-    except Exception as exc:
-        # Most likely a duplicate key violation
-        raise HTTPException(status_code=400, detail=str(exc))
+    async with get_aiomysql_connection() as conn:
+        try:
+            last_id = await _create_webpage(conn, page)
+        except Exception as exc:
+            # Most likely a duplicate key violation
+            raise HTTPException(status_code=400, detail=str(exc))
 
-    new_record = await _fetch_webpage_by_id(last_id)
-    return new_record
+        new_record = await _fetch_webpage_by_id(conn, last_id)
+        return new_record
 
 
 @router.get("/{webpage_id}", response_model=WebpageInDB)
@@ -186,43 +183,46 @@ async def get_webpage(webpage_id: int):
     """
     Return the single webpage with that webpage_id.
     """
-    row = await _fetch_webpage_by_id(webpage_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Webpage not found")
-    return WebpageInDB(**row)
+    async with get_aiomysql_connection() as conn:
+        row = await _fetch_webpage_by_id(conn, webpage_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="Webpage not found")
+        return WebpageInDB(**row)
 
 
 @router.put("/{webpage_id}", response_model=WebpageOut)
 async def replace_webpage(webpage_id: int, page: WebpageCreate):
-    fields = [("url", page.url), ("page_name", page.page_name)]
-    rowcount, updated_record = await _update_webpage_helper(webpage_id, fields)
+    async with get_aiomysql_connection() as conn:
+        fields = [("url", page.url), ("page_name", page.page_name)]
+        rowcount, updated_record = await _update_webpage_helper(conn, webpage_id, fields)
 
-    if not updated_record:
-        raise HTTPException(status_code=404, detail="Webpage not found")
+        if not updated_record:
+            raise HTTPException(status_code=404, detail="Webpage not found")
 
-    # Flag is true only if a row was actually changed
-    updated_record["updated"] = rowcount > 0
-    return updated_record
+        # Flag is true only if a row was actually changed
+        updated_record["updated"] = rowcount > 0
+        return updated_record
 
 
 @router.patch("/{webpage_id}", response_model=WebpageOut)
 async def patch_webpage(webpage_id: int, page: WebpagePatch):
-    fields = []
-    if page.url is not None:
-        fields.append(("url", page.url))
-    if page.page_name is not None:
-        fields.append(("page_name", page.page_name))
+    async with get_aiomysql_connection() as conn:
+        fields = []
+        if page.url is not None:
+            fields.append(("url", page.url))
+        if page.page_name is not None:
+            fields.append(("page_name", page.page_name))
 
-    if not fields:
-        raise HTTPException(status_code=400, detail="No fields to update")
+        if not fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
 
-    rowcount, updated_record = await _update_webpage_helper(webpage_id, fields)
+        rowcount, updated_record = await _update_webpage_helper(conn, webpage_id, fields)
 
-    if not updated_record:
-        raise HTTPException(status_code=404, detail="Webpage not found")
+        if not updated_record:
+            raise HTTPException(status_code=404, detail="Webpage not found")
 
-    updated_record["updated"] = rowcount > 0
-    return updated_record
+        updated_record["updated"] = rowcount > 0
+        return updated_record
 
 
 @router.delete("/{webpage_id}")
@@ -230,10 +230,11 @@ async def delete_webpage(webpage_id: int):
     """
     Remove the webpage - all associated scrapes and data are deleted automatically via FK cascade.
     """
-    success = await _delete_webpage(webpage_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Webpage not found")
-    return {"msg": "Webpage deleted"}
+    async with get_aiomysql_connection() as conn:
+        success = await _delete_webpage(conn, webpage_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Webpage not found")
+        return {"msg": "Webpage deleted"}
 
 
 @router.get("/{webpage_id}/scrapes", response_model=List[ScrapeInDB])
@@ -241,12 +242,13 @@ async def get_webpage_scrapes(webpage_id: int):
     """
     Return all scrapes defined for a given webpage.
     """
-    # Make sure the webpage exists first
-    if not await _fetch_webpage_by_id(webpage_id):
-        raise HTTPException(status_code=404, detail="Webpage not found")
+    async with get_aiomysql_connection() as conn:
+        # Make sure the webpage exists first
+        if not await _fetch_webpage_by_id(conn, webpage_id):
+            raise HTTPException(status_code=404, detail="Webpage not found")
 
-    rows = await _fetch_scrapes_by_webpage(webpage_id)
-    return rows
+        rows = await _fetch_scrapes_by_webpage(conn, webpage_id)
+        return rows
 
 
 @router.get("/{webpage_id}/scrapes/data", response_model=List[ScrapeData])
@@ -254,8 +256,9 @@ async def get_webpage_scrape_data(webpage_id: int):
     """
     Return all scraped data points for a given webpage.
     """
-    if not await _fetch_webpage_by_id(webpage_id):
-        raise HTTPException(status_code=404, detail="Webpage not found")
+    async with get_aiomysql_connection() as conn:
+        if not await _fetch_webpage_by_id(conn, webpage_id):
+            raise HTTPException(status_code=404, detail="Webpage not found")
 
-    rows = await _fetch_scrape_data_by_webpage(webpage_id)
-    return rows
+        rows = await _fetch_scrape_data_by_webpage(conn, webpage_id)
+        return rows

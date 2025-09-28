@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Any, Dict, List, Optional, Tuple
+from aiomysql import Connection
 
 # Pydantic models
 from app.models.scrape import ScrapeCreate, ScrapeInDB, ScrapeOut, ScrapePatch
@@ -14,43 +15,41 @@ router = APIRouter(prefix="/scrapes", tags=["scrapes"])
 
 #######################  Helper functions #######################
 
-async def _fetch_all_scrapes() -> List[dict]:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT scrape_id, locator, metric_name, webpage_id
-            FROM scrapes
-            ORDER BY scrape_id;
-        """
-        return await execute_mysql_query(conn, query)
+async def _fetch_all_scrapes(conn: Connection) -> List[dict]:
+    query = """
+        SELECT scrape_id, locator, metric_name, webpage_id
+        FROM scrapes
+        ORDER BY scrape_id;
+    """
+    return await execute_mysql_query(conn, query)
 
 
-async def _fetch_scrape_by_id(scrape_id: int) -> Optional[dict]:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT scrape_id, locator, metric_name, webpage_id
-            FROM scrapes
-            WHERE scrape_id = %s;
-        """
-        rows = await execute_mysql_query(conn, query, (scrape_id,))
-        return rows[0] if rows else None
+async def _fetch_scrape_by_id(conn: Connection, scrape_id: int) -> Optional[dict]:
+    query = """
+        SELECT scrape_id, locator, metric_name, webpage_id
+        FROM scrapes
+        WHERE scrape_id = %s;
+    """
+    rows = await execute_mysql_query(conn, query, (scrape_id,))
+    return rows[0] if rows else None
 
 
-async def _create_scrape(data: ScrapeCreate, webpage_id: int) -> int:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            INSERT INTO scrapes (locator, metric_name, webpage_id)
-            VALUES (%s, %s, %s);
-        """
-        last_id = await execute_mysql_query(
-            conn,
-            query,
-            params=(data.locator, data.metric_name, webpage_id),
-            return_lastrowid=True
-        )
-        return last_id
+async def _create_scrape(conn: Connection, data: ScrapeCreate, webpage_id: int) -> int:
+    query = """
+        INSERT INTO scrapes (locator, metric_name, webpage_id)
+        VALUES (%s, %s, %s);
+    """
+    last_id = await execute_mysql_query(
+        conn,
+        query,
+        params=(data.locator, data.metric_name, webpage_id),
+        return_lastrowid=True
+    )
+    return last_id
 
 
 async def _update_scrape_helper(
+    conn: Connection,
     scrape_id: int,
     fields: List[Tuple[str, Any]]
 ) -> Tuple[int, Optional[dict]]:
@@ -63,112 +62,108 @@ async def _update_scrape_helper(
     Returns:
         rowcount, updated record (or None if not found)
     """
-    async with get_aiomysql_connection() as conn:
-        # Get current webpage_id for this scrape
-        curr_webpage_q = "SELECT webpage_id FROM scrapes WHERE scrape_id = %s"
-        curr_res = await execute_mysql_query(conn, curr_webpage_q, params=[scrape_id])
-        if not curr_res:
-            return 0, None
-        current_webpage_id = curr_res[0]["webpage_id"]
+    # Get current webpage_id for this scrape
+    curr_webpage_q = "SELECT webpage_id FROM scrapes WHERE scrape_id = %s"
+    curr_res = await execute_mysql_query(conn, curr_webpage_q, params=[scrape_id])
+    if not curr_res:
+        return 0, None
+    current_webpage_id = curr_res[0]["webpage_id"]
 
-        # Determine new locator and webpage_id values from fields
-        locator_field = next((val for col, val in fields if col == "locator"), None)
-        webpage_id_field = next(
-            (val for col, val in fields if col == "webpage_id"), current_webpage_id
-        )
+    # Determine new locator and webpage_id values from fields
+    locator_field = next((val for col, val in fields if col == "locator"), None)
+    webpage_id_field = next(
+        (val for col, val in fields if col == "webpage_id"), current_webpage_id
+    )
 
-        # Check for duplicate locator on same webpage
-        if locator_field is not None:
-            dup_q = """
-                SELECT 1 FROM scrapes
-                WHERE webpage_id = %s AND locator = %s AND scrape_id <> %s
-                LIMIT 1;
-            """
-            dup_res = await execute_mysql_query(
-                conn,
-                dup_q,
-                params=[webpage_id_field, locator_field, scrape_id]
-            )
-            if dup_res:
-                raise HTTPException(status_code=409, detail="Locator must be unique per webpage")
-
-        # Build UPDATE statement
-        updates = [f"{col} = %s" for col, _ in fields]
-        params = [val for _, val in fields]
-        params.append(scrape_id)
-
-        query = f"""
-            UPDATE scrapes
-            SET {', '.join(updates)}
-            WHERE scrape_id = %s;
+    # Check for duplicate locator on same webpage
+    if locator_field is not None:
+        dup_q = """
+            SELECT 1 FROM scrapes
+            WHERE webpage_id = %s AND locator = %s AND scrape_id <> %s
+            LIMIT 1;
         """
-
-        # Execute update and get affected rows count
-        rowcount = await execute_mysql_query(
+        dup_res = await execute_mysql_query(
             conn,
-            query,
-            params=params,
-            return_rowcount=True
+            dup_q,
+            params=[webpage_id_field, locator_field, scrape_id]
         )
+        if dup_res:
+            raise HTTPException(status_code=409, detail="Locator must be unique per webpage")
 
-        # If no rows updated, verify existence again
-        if rowcount == 0:
-            exists_q = "SELECT 1 FROM scrapes WHERE scrape_id = %s"
-            result = await execute_mysql_query(
-                conn,
-                exists_q,
-                params=[scrape_id]
-            )
-            if not result:      # record truly missing
-                return 0, None
+    # Build UPDATE statement
+    updates = [f"{col} = %s" for col, _ in fields]
+    params = [val for _, val in fields]
+    params.append(scrape_id)
+
+    query = f"""
+        UPDATE scrapes
+        SET {', '.join(updates)}
+        WHERE scrape_id = %s;
+    """
+
+    # Execute update and get affected rows count
+    rowcount = await execute_mysql_query(
+        conn,
+        query,
+        params=params,
+        return_rowcount=True
+    )
+
+    # If no rows updated, verify existence again
+    if rowcount == 0:
+        exists_q = "SELECT 1 FROM scrapes WHERE scrape_id = %s"
+        result = await execute_mysql_query(
+            conn,
+            exists_q,
+            params=[scrape_id]
+        )
+        if not result:      # record truly missing
+            return 0, None
 
     # Fetch and return updated record
-    updated_record = await _fetch_scrape_by_id(scrape_id)
+    updated_record = await _fetch_scrape_by_id(conn, scrape_id)
     return rowcount, updated_record
 
 
-async def _delete_scrape(scrape_id: int) -> bool:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            DELETE FROM scrapes WHERE scrape_id = %s;
-        """
-        rowcount = await execute_mysql_query(
-            conn,
-            query,
-            params=(scrape_id,),
-            return_rowcount=True
-        )
-        return rowcount > 0
+async def _delete_scrape(conn: Connection, scrape_id: int) -> bool:
+    query = """
+        DELETE FROM scrapes WHERE scrape_id = %s;
+    """
+    rowcount = await execute_mysql_query(
+        conn,
+        query,
+        params=(scrape_id,),
+        return_rowcount=True
+    )
+    return rowcount > 0
 
 
-async def _fetch_scrape_data_by_scrape(scrape_id: int) -> List[dict]:
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT data_id, scrape_id, value, created_at
-            FROM scrape_data
-            WHERE scrape_id = %s
-            ORDER BY created_at;
-        """
-        return await execute_mysql_query(conn, query, (scrape_id,))
+async def _fetch_scrape_data_by_scrape(conn: Connection, scrape_id: int) -> List[dict]:
+    query = """
+        SELECT data_id, scrape_id, value, created_at
+        FROM scrape_data
+        WHERE scrape_id = %s
+        ORDER BY created_at;
+    """
+    return await execute_mysql_query(conn, query, (scrape_id,))
 
 
-async def _fetch_all_webpage_and_scrape_rows() -> List[Dict[str, Any]]:
+async def _fetch_all_webpage_and_scrape_rows(conn: Connection) -> List[Dict[str, Any]]:
     """
     Return a list of rows that contain both webpage and scrape columns.
     Each row is a plain dict (column name -> value).
     """
-    async with get_aiomysql_connection() as conn:
-        query = """
-            SELECT
-                w.webpage_id, w.url, w.page_name,
-                s.scrape_id, s.locator, s.metric_name
-            FROM webpages AS w
-            LEFT JOIN scrapes AS s ON w.webpage_id = s.webpage_id;
-        """
-        return await execute_mysql_query(conn, query)
+    query = """
+        SELECT
+            w.webpage_id, w.url, w.page_name,
+            s.scrape_id, s.locator, s.metric_name
+        FROM webpages AS w
+        LEFT JOIN scrapes AS s ON w.webpage_id = s.webpage_id;
+    """
+    return await execute_mysql_query(conn, query)
 
 
-async def _persist_scraped_data(scrape_data: List[Dict[str, Any]]) -> None:
+async def _persist_scraped_data(conn: Connection, scrape_data: List[Dict[str, Any]]) -> None:
     """
     Bulk-insert the scraped values. Returns the number of rows inserted.
     Uses a single INSERT statement with many VALUES tuples for speed.
@@ -176,26 +171,24 @@ async def _persist_scraped_data(scrape_data: List[Dict[str, Any]]) -> None:
     if not scrape_data:
         return
 
-    async with get_aiomysql_connection() as conn:
+    # Build placeholders: "(%s, %s), (%s, %s), ..."
+    values_placeholder = ", ".join(["(%s, %s)"] * len(scrape_data))
+    query = f"""
+        INSERT INTO scrape_data (scrape_id, value)
+        VALUES {values_placeholder};
+    """
 
-        # Build placeholders: "(%s, %s), (%s, %s), ..."
-        values_placeholder = ", ".join(["(%s, %s)"] * len(scrape_data))
-        query = f"""
-            INSERT INTO scrape_data (scrape_id, value)
-            VALUES {values_placeholder};
-        """
+    # Flatten the list of tuples into a single tuple for executemany
+    params: List[Any] = []
+    for row in scrape_data:
+        params.extend([row.scrape_id, row.value])
 
-        # Flatten the list of tuples into a single tuple for executemany
-        params: List[Any] = []
-        for row in scrape_data:
-            params.extend([row.scrape_id, row.value])
-
-        await execute_mysql_query(
-            conn,
-            query,
-            tuple(params),
-            return_rowcount=True,
-        )
+    await execute_mysql_query(
+        conn,
+        query,
+        tuple(params),
+        return_rowcount=True,
+    )
 
 
 
@@ -204,8 +197,9 @@ async def _persist_scraped_data(scrape_data: List[Dict[str, Any]]) -> None:
 @router.get("/", response_model=List[ScrapeInDB])
 async def get_scrapes():
     """Return an array of all scrape jobs."""
-    rows = await _fetch_all_scrapes()
-    return rows
+    async with get_aiomysql_connection() as conn:
+        rows = await _fetch_all_scrapes(conn)
+        return rows
 
 
 @router.post("/run-all")
@@ -213,19 +207,20 @@ async def run_all_scrapes():
     """
     Trigger the nightly batch that iterates over every scrape job and runs them. Returns the count of scraped values.
     """
-    # Get all scrapes joined with webpages
-    rows = await _fetch_all_webpage_and_scrape_rows()
+    async with get_aiomysql_connection() as conn:
+        # Get all scrapes joined with webpages
+        rows = await _fetch_all_webpage_and_scrape_rows(conn)
 
-    # Group by webpage (returns List[WebPageWithScrapes])
-    grouped = group_scrapes_by_webpage(rows)
+        # Group by webpage (returns List[WebPageWithScrapes])
+        grouped = group_scrapes_by_webpage(rows)
 
-    # Run the scraper
-    results = run_scrapes_by_webpage(grouped)
+        # Run the scraper
+        results = run_scrapes_by_webpage(grouped)
 
-    # Persist data to the db
-    await _persist_scraped_data(results)
+        # Persist data to the db
+        await _persist_scraped_data(conn, results)
 
-    return {"message": "Scraping completed", "scrape_count": len(results)}
+        return {"message": "Scraping completed", "scrape_count": len(results)}
 
 
 @router.post("/{webpage_id}", status_code=201, response_model=ScrapeInDB)
@@ -234,23 +229,25 @@ async def create_scrape(page_id: int, scrape: ScrapeCreate):
     Create a new scrape job for the given webpage.
     The `webpage_id` must exist - MySQL will raise an FK error otherwise.
     """
-    try:
-        last_id = await _create_scrape(scrape, page_id)
-    except Exception as exc:
-        # Likely a foreign‑key or duplicate key violation
-        raise HTTPException(status_code=400, detail=str(exc))
+    async with get_aiomysql_connection() as conn:
+        try:
+            last_id = await _create_scrape(conn, scrape, page_id)
+        except Exception as exc:
+            # Likely a foreign‑key or duplicate key violation
+            raise HTTPException(status_code=400, detail=str(exc))
 
-    new_record = await _fetch_scrape_by_id(last_id)
-    return new_record
+        new_record = await _fetch_scrape_by_id(conn, last_id)
+        return new_record
 
 
 @router.get("/{scrape_id}", response_model=ScrapeInDB)
 async def get_scrape(scrape_id: int):
     """Return the single scrape with that ID."""
-    row = await _fetch_scrape_by_id(scrape_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Scrape not found")
-    return row
+    async with get_aiomysql_connection() as conn:
+        row = await _fetch_scrape_by_id(conn, scrape_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="Scrape not found")
+        return row
 
 
 @router.put("/{scrape_id}", response_model=ScrapeOut)
@@ -258,56 +255,60 @@ async def replace_scrape(scrape_id: int, scrape: ScrapeCreate):
     """
     Full replacement of a scrape. All fields are required.
     """
-    # build the list of columns to update
-    fields = [("locator", scrape.locator), ("metric_name", scrape.metric_name)]
-    rowcount, updated_record = await _update_scrape_helper(scrape_id, fields)
+    async with get_aiomysql_connection() as conn:
+        # build the list of columns to update
+        fields = [("locator", scrape.locator), ("metric_name", scrape.metric_name)]
+        rowcount, updated_record = await _update_scrape_helper(conn, scrape_id, fields)
 
-    if not updated_record:
-        raise HTTPException(status_code=404, detail="Scrape not found")
+        if not updated_record:
+            raise HTTPException(status_code=404, detail="Scrape not found")
 
-    # flag is true only if a row was actually changed
-    updated_record["updated"] = rowcount > 0
-    return updated_record
+        # flag is true only if a row was actually changed
+        updated_record["updated"] = rowcount > 0
+        return updated_record
 
 
 @router.patch("/{scrape_id}", response_model=ScrapeOut)
 async def patch_scrape(scrape_id: int, scrape: ScrapePatch):
     """
-    Patch an existing scrape – only the fields you send will be updated.
+    Patch an existing scrape - only the fields you send will be updated.
     """
-    fields = []
-    if scrape.locator is not None:
-        fields.append(("locator", scrape.locator))
-    if scrape.metric_name is not None:
-        fields.append(("metric_name", scrape.metric_name))
+    async with get_aiomysql_connection() as conn:
+        fields = []
+        if scrape.locator is not None:
+            fields.append(("locator", scrape.locator))
+        if scrape.metric_name is not None:
+            fields.append(("metric_name", scrape.metric_name))
 
-    if not fields:
-        raise HTTPException(status_code=400, detail="No fields to update")
+        if not fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
 
-    rowcount, updated_record = await _update_scrape_helper(scrape_id, fields)
+        rowcount, updated_record = await _update_scrape_helper(conn, scrape_id, fields)
 
-    if not updated_record:
-        raise HTTPException(status_code=404, detail="Scrape not found")
+        if not updated_record:
+            raise HTTPException(status_code=404, detail="Scrape not found")
 
-    updated_record["updated"] = rowcount > 0
-    return updated_record
+        updated_record["updated"] = rowcount > 0
+        return updated_record
 
 
 @router.delete("/{scrape_id}")
 async def delete_scrape(scrape_id: int):
     """Delete the scrape - its data is removed via FK cascade."""
-    success = await _delete_scrape(scrape_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Scrape not found")
-    return {"msg": "Scrape deleted"}
+    async with get_aiomysql_connection() as conn:
+        success = await _delete_scrape(conn, scrape_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Scrape not found")
+        return {"msg": "Scrape deleted"}
 
 
 @router.get("/{scrape_id}/data", response_model=List[ScrapeData])
 async def get_scrape_data(scrape_id: int):
     """Retrieve all data points for a particular scrape."""
-    # Ensure the scrape exists first
-    if not await _fetch_scrape_by_id(scrape_id):
-        raise HTTPException(status_code=404, detail="Scrape not found")
+    async with get_aiomysql_connection() as conn:
+        # Ensure the scrape exists first
+        if not await _fetch_scrape_by_id(conn, scrape_id):
+            raise HTTPException(status_code=404, detail="Scrape not found")
 
-    rows = await _fetch_scrape_data_by_scrape(scrape_id)
-    return rows
+        rows = await _fetch_scrape_data_by_scrape(conn, scrape_id)
+        return rows

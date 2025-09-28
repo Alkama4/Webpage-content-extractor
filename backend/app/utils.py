@@ -2,12 +2,14 @@ import aiomysql
 import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+from aiomysql import Connection
+from typing import AsyncGenerator
 
 # Load development envs
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env.local"))
 
 @asynccontextmanager
-async def get_aiomysql_connection():
+async def get_aiomysql_connection() -> AsyncGenerator[Connection, None]:
     """
     Provides an asynchronous MySQL connection using aiomysql.
     Uses environment variables for credentials. Automatically closes the connection.
