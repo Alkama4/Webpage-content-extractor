@@ -10,3 +10,11 @@ class ScrapeData(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ScrapeValidationData(ScrapeData):
+    # These fields are optional because validation results don't have them.
+    data_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
