@@ -82,7 +82,7 @@
 </template>
 
 <script>
-import { apiRequest } from './utils/fastApi';
+import { fastApi } from './utils/fastApi';
 
 export default {
   name: 'App',
@@ -117,7 +117,9 @@ export default {
     async callValidate() {
       const url = this.targetUrl;                 // use the bound data property
       try {
-        this.previewHtml = await apiRequest('/preview?url=' + encodeURIComponent(url));
+        this.previewHtml = await fastApi.preview.get({
+          url: url
+        });
         this.iframeLoaded = false;                // new content → re‑attach listeners
       } catch (e) {
         console.error(e);
@@ -127,10 +129,8 @@ export default {
     },
 
     async createWebpage() {
-      console.log("this.createWebpageParams", this.createWebpageParams);
-      const response = await apiRequest('/webpages', { method: 'POST', body: this.createWebpageParams });
+      const response = await fastApi.webpages.post(this.createWebpageParams);
       if (response) {
-        console.log(response);
         await this.fetchWebpages();
       }
     },
@@ -182,7 +182,6 @@ export default {
         // Click handler – store the element & locator
         doc.addEventListener('click', (e) => {
           const target = e.target;
-          console.log('Clicked:', target);
           this.clickedElement = target;
           this.locator = this.buildLocator(target);   // compute locator
         });
@@ -192,8 +191,7 @@ export default {
     },
 
     async fetchWebpages() {
-      this.webpages = await apiRequest('/webpages');
-      console.log("this.webpages", this.webpages);
+      this.webpages = await fastApi.webpages.get()
     },
 
     parseNumber(raw) {
