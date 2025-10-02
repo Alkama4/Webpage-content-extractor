@@ -3,7 +3,7 @@ import httpx
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import the routers
-from app.routers import webpages_router, scrapes_router
+from app.routers import webpages_router, elements_router
 
 app = FastAPI(root_path="")
 
@@ -17,7 +17,7 @@ app.add_middleware(
 
 # Mount routers
 app.include_router(webpages_router)
-app.include_router(scrapes_router)
+app.include_router(elements_router)
 
 # Root
 @app.get("/")

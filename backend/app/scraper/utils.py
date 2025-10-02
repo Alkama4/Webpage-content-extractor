@@ -5,53 +5,60 @@ import re
 from decimal import Decimal
 from fastapi import HTTPException
 
-class ScrapeInfo(BaseModel):
-    scrape_id: int
+class ElementInfo(BaseModel):
+    element_id: int
     locator: str
     metric_name: Optional[str] = None
 
-class PageWithScrapes(BaseModel):
+class PageWithElements(BaseModel):
     webpage_id: int
     url: str
     page_name: str | None = None
-    scrapes: List[ScrapeInfo]
+    elements: List[ElementInfo]
 
 class ScrapeResult(BaseModel):
-    scrape_id: int
+    element_id: int
     value: float | None
 
 class ValidateRequest(BaseModel):
-    """Request payload for validating scrapes on a single page."""
-    url: HttpUrl = Field(..., description="The full URL that will be scraped")
+    """Request payload for validating elements on a single page."""
+    url: HttpUrl = Field(..., description="The full URL that will be elementd")
     locators: list[str]
 
+class ValidateResult(BaseModel):
+    locator: str
+    value: float | None
 
-def group_scrapes_by_webpage(rows: List[Dict]) -> List[PageWithScrapes]:
+class ValidationData(ValidateRequest):
+    locators: list[ValidateResult]
+
+
+def group_elements_by_webpage(rows: List[Dict]) -> List[PageWithElements]:
     """
-    Turn a flat list of (webpage + scrape) rows into a nested structure
-    grouped by `webpage_id`. Missing scrapes (rows where `scrape_id` is None)
+    Turn a flat list of (webpage + element) rows into a nested structure
+    grouped by `webpage_id`. Missing elements (rows where `element_id` is None)
     are ignored.
     """
-    pages: Dict[int, PageWithScrapes] = {}
+    pages: Dict[int, PageWithElements] = {}
 
     for r in rows:
         wid = r["webpage_id"]
         page = pages.setdefault(
             wid,
-            PageWithScrapes(
+            PageWithElements(
                 webpage_id=wid,
                 url=r["url"],
                 page_name=r.get("page_name"),
-                scrapes=[],
+                elements=[],
             ),
         )
 
-        # Only add a scrape if the id is not NULL
-        if r["scrape_id"] is not None:
-            # Build a ScrapeInfo instance instead of a plain dict
-            page.scrapes.append(
-                ScrapeInfo(
-                    scrape_id=r["scrape_id"],
+        # Only add a element if the id is not NULL
+        if r["element_id"] is not None:
+            # Build a ElementInfo instance instead of a plain dict
+            page.elements.append(
+                ElementInfo(
+                    element_id=r["element_id"],
                     locator=r["locator"],
                     metric_name=r.get("metric_name"),
                 )
@@ -60,21 +67,21 @@ def group_scrapes_by_webpage(rows: List[Dict]) -> List[PageWithScrapes]:
     return list(pages.values())
 
 
-def run_scrapes_by_webpage(webpages: List[PageWithScrapes]) -> List[ScrapeResult]:
+def run_scrapes_by_webpage(webpages: List[PageWithElements]) -> List[ScrapeResult]:
     """
-    Execute the scraper for every scrape listed under each webpage.
-    Returns a flat list of dicts: {scrape_id, value}.
+    Execute the scraper for every element listed under each webpage.
+    Returns a flat list of dicts: {element_id, value}.
     """
     results: List[ScrapeResult] = []
 
     for page in webpages:
         scraper = WebPageScraper(page.url)
 
-        for scrape in page.scrapes:
+        for element in page.elements:
             try:
-                raw_value = scraper.scrape(scrape.locator)
+                raw_value = scraper.scrape(element.locator)
             except Exception as exc:
-                print(f"Failed on {page.webpage_id} / {scrape.scrape_id}: {exc}")
+                print(f"Failed on {page.webpage_id} / {element.element_id}: {exc}")
                 continue
 
             if raw_value is None:
@@ -83,15 +90,15 @@ def run_scrapes_by_webpage(webpages: List[PageWithScrapes]) -> List[ScrapeResult
             try:
                 numeric = parse_number(raw_value)
             except ValueError as exc:
-                print(f"Could not parse value for {page.webpage_id} / {scrape.scrape_id}: {exc}")
+                print(f"Could not parse value for {page.webpage_id} / {element.element_id}: {exc}")
                 continue
 
-            results.append(ScrapeResult(scrape_id=scrape.scrape_id, value=numeric))
+            results.append(ScrapeResult(element_id=element.element_id, value=numeric))
 
     return results
 
 
-def validate_scrapes(req: ValidateRequest) -> List[ScrapeResult]:
+def validate_scrapes(req: ValidateRequest) -> List[ValidateResult]:
     """
     Work-horse for the `/validate` endpoint.
 
@@ -101,11 +108,11 @@ def validate_scrapes(req: ValidateRequest) -> List[ScrapeResult]:
         The request payload containing a single URL and a list of CSS/XPath locators.
     Returns
     -------
-    List[ScrapeResult]
+    List[ValidateResult]
         A flat list of `{scrape_id, value}` objects.  `scrape_id` is set to ``0`` because
         the validation step does not correspond to an actual database record.
     """
-    results: List[ScrapeResult] = []
+    results: List[ValidateResult] = []
 
     # Instantiate a scraper for the given URL once and reuse it for all locators
     scraper = WebPageScraper(str(req.url))
@@ -135,9 +142,9 @@ def validate_scrapes(req: ValidateRequest) -> List[ScrapeResult]:
                 }
             )
 
-        results.append(ScrapeResult(scrape_id=0, value=numeric))
+        results.append(ValidateResult(locator=locator, value=numeric))
 
-    return results
+    return ValidationData(url=req.url, locators=results)
 
 
 

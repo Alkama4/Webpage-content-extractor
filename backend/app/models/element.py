@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-class ScrapeBase(BaseModel):
+class ElementBase(BaseModel):
     locator: str = Field(..., max_length=512,
                          description="CSS selector or XPath")
     metric_name: Optional[str] = Field(
@@ -10,17 +10,17 @@ class ScrapeBase(BaseModel):
         description="Optional friendly name for the metric",
     )
 
-class ScrapeCreate(ScrapeBase):
+class ElementCreate(ElementBase):
     pass
 
-class ScrapeInDB(ScrapeBase):
-    scrape_id: int
+class ElementInDB(ElementBase):
+    element_id: int
     webpage_id: int
 
     class Config:
         orm_mode = True
 
-class ScrapePatch(ScrapeBase):
+class ElementPatch(ElementBase):
     locator: Optional[str] = None
     metric_name: Optional[str] = None
 
@@ -28,10 +28,10 @@ class ScrapePatch(ScrapeBase):
         orm_mode = True
 
 
-class ScrapeOut(ScrapeInDB):
+class ElementOut(ElementInDB):
     """
     Response model for PATCH and PUT operations.
-    Inherits id, locator, metric_name, webpage_id from ScrapeInDB
+    Inherits id, locator, metric_name, webpage_id from ElementInDB
     and adds an `updated` flag indicating whether any column was actually changed.
     """
     updated: Optional[bool] = None
