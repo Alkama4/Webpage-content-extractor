@@ -23,6 +23,11 @@ export default {
 </script>
 
 <style scoped>
+.card {
+    display: flex;
+    flex-direction: column;
+}
+
 .header {
     color: var(--text-dark-primary);
     display: flex;

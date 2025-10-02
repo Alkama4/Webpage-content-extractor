@@ -1,11 +1,12 @@
 <template>
   <div class="webpages-view center-content gap-16 container-xxl margin-center">
     <BasicCard
+      icon="bx-list-ul"
       class="container-lg f-3"
       title="Webpages" 
       description="Manage pages from which you scrape content"
     >
-      <div class="webpage-wrapper">
+      <div class="webpage-wrapper" v-if="webpages.length > 0">
         <router-link
           v-for="(webpage, index) in webpages" 
           :key="index" 
@@ -17,31 +18,48 @@
           <div class="flex-rw space-between vertical-align">
             <div class="flex-cl">
               <label>{{ webpage.page_name }}</label>
-              <a :href="webpage.url">{{ webpage.url }}</a>
+              <div @click.stop>
+                <a :href="webpage.url">{{ webpage.url }}</a>
+              </div>
             </div>
-            <div class="controls">
-              <i @click.prevent class="bx bxs-edit btn btn-text btn-icon"></i>
-              <i @click.prevent class="bx bxs-trash btn btn-text btn-icon btn-danger"></i>
+            <div class="controls flex-rw">
+              <i 
+                @click.prevent="editWebpage()" 
+                class="bx bxs-edit btn btn-text btn-icon"
+              ></i>
+              <i 
+                @click.prevent="deleteWebpage(webpage.webpage_id)"
+                class="bx bxs-trash btn btn-text btn-icon btn-danger"
+              ></i>
             </div>
           </div>
         </router-link>
       </div>
+      <ListingPlaceholder 
+        v-else
+        icon="bx-globe"
+        text="No webpages found"
+        desc="Create a new webpage using the form on the right."
+      />
     </BasicCard>
     
     <BasicCard
+      icon="bx-list-plus"
       class="container-lg f-1"
       title="Create a webpage" 
       description="Set up a new page for data extraction"
     >
       <form @submit.prevent="createWebpage" class="container">
-        <div>
-          <label for="">URL</label>
-          <input type="text" v-model="createWebpageParams.url">
-        </div>
-        <div>
-          <label for="">Page name</label>
-          <input type="text" v-model="createWebpageParams.page_name">
-        </div>
+        <TextInput
+          v-model="createWebpageParams.url"
+          label="URL"
+          placeholder="http://example.com"
+        />
+        <TextInput
+          v-model="createWebpageParams.page_name"
+          label="Page name"
+          placeholder="The webpages name"
+        />
         <div>
           <button type="submit">Create</button>
         </div>
@@ -52,12 +70,16 @@
 
 <script>
 import BasicCard from '@/components/BasicCard.vue';
+import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
+import TextInput from '@/components/TextInput.vue'
 import { fastApi } from '@/utils/fastApi';
 
 export default {
   name: 'App',
   components: {
-    BasicCard
+    BasicCard,
+    ListingPlaceholder,
+    TextInput,
   },
   data() {
     return {
@@ -80,7 +102,21 @@ export default {
       const response = await fastApi.webpages.post(this.createWebpageParams);
       if (response) {
         await this.fetchWebpages();
+        this.createWebpageParams = {};
       }
+    },
+
+    async deleteWebpage(webpageId) {
+      if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
+        const response = await fastApi.webpages.delete(webpageId);
+        if (response) {
+          await this.fetchWebpages();
+        }
+      }
+    },
+
+    editWebpage() {
+      alert("TBD");
     },
 
     async fetchWebpages() {
@@ -126,7 +162,7 @@ export default {
 
 .webpage-option label {
   cursor: pointer;
-  font-weight: var(--fw-medium);
+  /* font-weight: var(--fw-medium); */
 }
 .webpage-option a {
   font-size: var(--fs-1);

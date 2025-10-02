@@ -58,6 +58,7 @@ header {
     top: 0;
     left: 0;
     right: 0;
+    gap: 8px;
     background-color: var(--bg-body);
     padding-inline: var(--gutter-width);
     border-bottom: 2px solid var(--color-neutral-200);
@@ -69,6 +70,7 @@ header {
     align-items: center;
     gap: 8px;
     font-size: var(--fs-3);
+    white-space: nowrap;
 }
 .name a {
     color: var(--text-dark-primary);
@@ -81,6 +83,11 @@ header {
 
 main {
     padding-top: 16px;
+    padding-bottom: 128px;
+}
+
+nav {
+    overflow-x: scroll;
 }
 
 footer {

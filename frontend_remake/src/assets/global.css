@@ -93,3 +93,14 @@ input:hover {
     border-radius: var(--card-radius);
     border: 2px solid var(--color-neutral-300);
 }
+
+
+/************** Forms **************/
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+button[type="submit"] {
+    margin-top: 16px;
+}
