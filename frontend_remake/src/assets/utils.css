@@ -26,6 +26,20 @@
     margin-inline: auto;
 }
 
+.container-wrapper {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-inline: auto;
+}
+
+.entry-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 /* Gaps */
 .gap-2 { gap: 2px; }
 .gap-4 { gap: 4px; }

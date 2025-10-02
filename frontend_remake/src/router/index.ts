@@ -10,6 +10,10 @@ const router = createRouter({
         {
             path: '/webpages', 
             component: () => import('@/views/WebpagesView.vue')
+        },
+        {
+            path: '/webpages/:webpage_id',
+            component: () => import('@/views/WebpageDetailsView.vue')
         }
     ],
 })

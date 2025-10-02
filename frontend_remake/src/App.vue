@@ -38,8 +38,8 @@ export default {
                     path: '/webpages'
                 },
                 {
-                    icon: 'bx-task',
-                    name: 'Scrape',
+                    icon: 'bx-target-lock',
+                    name: 'Scrapes',
                     path: '/scrapes'
                 },
             ]
@@ -59,10 +59,11 @@ header {
     left: 0;
     right: 0;
     gap: 8px;
-    background-color: var(--bg-body);
+    background-color: hsla(0, 0%, 100%, 0.2);
     padding-inline: var(--gutter-width);
     border-bottom: 2px solid var(--color-neutral-200);
     height: var(--header-height);
+    backdrop-filter: blur(20px);
 }
 
 .name {
@@ -73,7 +74,9 @@ header {
     white-space: nowrap;
 }
 .name a {
-    color: var(--text-dark-primary);
+    color: var(--color-primary-500);
+    font-size: var(--fs-4);
+    font-weight: var(--fw-semibold);
 }
 
 .name i {
@@ -83,7 +86,7 @@ header {
 
 main {
     padding-top: 16px;
-    padding-bottom: 128px;
+    padding-bottom: 64px;
 }
 
 nav {

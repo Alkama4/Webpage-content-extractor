@@ -94,6 +94,14 @@ input:hover {
     border: 2px solid var(--color-neutral-300);
 }
 
+.section-separator {
+    border: none;
+    height: 2px;
+    border-radius: 100px;
+    background-color: var(--color-neutral-200);
+    margin: 16px 0;
+}
+
 
 /************** Forms **************/
 form {
@@ -103,4 +111,16 @@ form {
 }
 button[type="submit"] {
     margin-top: 16px;
+}
+
+table {
+    text-align: left;
+}
+table th,
+table td {
+    vertical-align: top;
+}
+table th {
+    white-space: nowrap;
+    padding-right: 8px;
 }

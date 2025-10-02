@@ -6,34 +6,18 @@
       title="Webpages" 
       description="Manage pages from which you scrape content"
     >
-      <div class="webpage-wrapper" v-if="webpages.length > 0">
-        <router-link
-          v-for="(webpage, index) in webpages" 
-          :key="index" 
-          :to="`/webpages/${webpage.webpage_id}`"
-          class="webpage-option no-deco"
-          @click="handleExpandWebpage(webpage)"
-        >
-          <i class="bx bx-globe"></i>
-          <div class="flex-rw space-between vertical-align">
-            <div class="flex-cl">
-              <label>{{ webpage.page_name }}</label>
-              <div @click.stop>
-                <a :href="webpage.url">{{ webpage.url }}</a>
-              </div>
-            </div>
-            <div class="controls flex-rw">
-              <i 
-                @click.prevent="editWebpage()" 
-                class="bx bxs-edit btn btn-text btn-icon"
-              ></i>
-              <i 
-                @click.prevent="deleteWebpage(webpage.webpage_id)"
-                class="bx bxs-trash btn btn-text btn-icon btn-danger"
-              ></i>
-            </div>
-          </div>
-        </router-link>
+      <div class="entry-list-wrapper" v-if="webpages.length > 0">
+        <ListEntry
+          v-for="page in webpages"
+          :key="page.webpage_id"
+          :item="page"
+          :to="`/webpages/${page.webpage_id}`"
+          icon="bx bx-globe"
+          labelField="page_name"
+          subField="url"
+          :onEdit="editWebpage"
+          :onDelete="deleteWebpage"
+        />
       </div>
       <ListingPlaceholder 
         v-else
@@ -70,6 +54,7 @@
 
 <script>
 import BasicCard from '@/components/BasicCard.vue';
+import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import TextInput from '@/components/TextInput.vue'
 import { fastApi } from '@/utils/fastApi';
@@ -80,6 +65,7 @@ export default {
     BasicCard,
     ListingPlaceholder,
     TextInput,
+    ListEntry,
   },
   data() {
     return {
@@ -106,9 +92,9 @@ export default {
       }
     },
 
-    async deleteWebpage(webpageId) {
+    async deleteWebpage(webpage) {
       if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
-        const response = await fastApi.webpages.delete(webpageId);
+        const response = await fastApi.webpages.delete(webpage.webpage_id);
         if (response) {
           await this.fetchWebpages();
         }
@@ -138,53 +124,5 @@ export default {
 </script>
 
 <style scoped>
-.webpage-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.webpage-option {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 4px 8px;
-  background-color: var(--color-neutral-200);
-  border-radius: var(--btn-radius);
-  cursor: pointer;
-  transition: var(--t-fast) background-color;
-}
-.webpage-option:hover {
-  background-color: var(--color-neutral-300);
-}
-
-.webpage-option label {
-  cursor: pointer;
-  /* font-weight: var(--fw-medium); */
-}
-.webpage-option a {
-  font-size: var(--fs-1);
-}
-.webpage-option i.bx-globe {
-  font-size: var(--fs-5);
-  padding-inline: 4px;
-}
-.webpage-option .controls {
-  transition: var(--t-fast) opacity;
-  opacity: 0;
-}
-.webpage-option:hover .controls {
-  opacity: 1;
-}
-
-.webpage-option .controls i {
-  font-size: var(--fs-4);
-}
-
-.webpage-option .btn:hover {
-  background-color: var(--color-neutral-400);
-}
 
 </style>
