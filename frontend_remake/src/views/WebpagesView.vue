@@ -104,7 +104,10 @@ export default {
     },
 
     async fetchWebpages() {
-      this.webpages = await fastApi.webpages.get()
+      const response = await fastApi.webpages.get()
+      if (response) {
+        this.webpages = response;
+      }
     },
   },
 
@@ -113,7 +116,7 @@ export default {
   },
 
   watch: {
-    /** When the iframe content changes, re‑attach listeners */
+    // When the iframe content changes, re‑attach listeners
     previewHtml() {
       if (!this.iframeLoaded) this.attachIframeListener();
     }

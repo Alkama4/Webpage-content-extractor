@@ -1,8 +1,8 @@
 <template>
-    <div class="element-details flex-cl gap-16">
+    <div class="element-details flex-col gap-16">
         <BasicCard
             class="g-a"
-            icon="bx-target-lock"
+            icon="bxs-layer"
             title="Element details"
             description="Inspect the details of an element"
         >

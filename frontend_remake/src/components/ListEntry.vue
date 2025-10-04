@@ -5,8 +5,8 @@
         @click="onClick && onClick(item)"
     >
         <i v-if="icon" :class="icon"></i>
-        <div class="flex-rw space-between vertical-align">
-            <div class="flex-cl">
+        <div class="flex-row space-between vertical-align">
+            <div class="flex-col">
                 <label>{{ item[labelField] }}</label>
                 <div v-if="subField" class="sub-field">
                     <a v-if="isLink(item[subField])" :href="item[subField]" target="_blank">
@@ -15,7 +15,7 @@
                     <span v-else>{{ item[subField] }}</span>
                 </div>
             </div>
-            <div class="controls flex-rw">
+            <div class="controls flex-row">
                 <i 
                     v-if="onEdit" 
                     @click.prevent="onEdit(item)" 
@@ -24,7 +24,7 @@
                 <i 
                     v-if="onDelete" 
                     @click.prevent="onDelete(item)" 
-                    class="bx bxs-trash btn btn-text btn-icon btn-danger"
+                    class="bx bxs-trash btn btn-text btn-icon btn-icon-danger"
                 ></i>
             </div>
         </div>

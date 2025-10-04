@@ -1,14 +1,14 @@
 <template>
     <div>
-        <h1>Welcome!</h1>
-        <p>Stuff...</p>
+        <h1>Data page</h1>
+        <p>Data goes here</p>
     </div>
 </template>
 
 <script>
 
 export default {
-    name: 'HomeView',
+    name: 'DataView',
     data() {
         return {
             

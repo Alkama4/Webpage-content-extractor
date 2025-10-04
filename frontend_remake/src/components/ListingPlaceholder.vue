@@ -25,6 +25,7 @@ export default {
     border: 2px dashed var(--color-neutral-300);
     border-radius: var(--card-radius);
     height: 100%;
+    min-height: 250px;
     width: 100%;
     padding: 1rem;
     box-sizing: border-box;
@@ -35,7 +36,7 @@ export default {
 i {
     color: var(--color-primary-400);
     font-size: var(--fs-6);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .text {

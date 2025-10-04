@@ -6,48 +6,66 @@
             title="Webpage details"
             description="Inspect the details of a webpage"
         >
-            <table>
-                <tbody>
-                    <tr>
-                        <th>Name</th>
-                        <td>{{ webpage.page_name }}</td>
-                    </tr>
-                    <tr>
-                        <th>URL</th>
-                        <td><a :href="webpage.url">{{ webpage.url }}</a></td>
-                    </tr>
-                    <tr>
-                        <th>Element count</th>
-                        <td>{{ elementCount }} element{{ elementCount == 1 ? '' : 's' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Data count</th>
-                        <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="flex-col gap-16">
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Name</th>
+                            <td>{{ webpage.page_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>URL</th>
+                            <td><a :href="webpage.url">{{ webpage.url }}</a></td>
+                        </tr>
+                        <tr>
+                            <th>Element count</th>
+                            <td>{{ elementCount }} element{{ elementCount == 1 ? '' : 's' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Data count</th>
+                            <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="flex-row gap-8">
+                    <button class="btn-with-icon">
+                        <i class="bx bxs-edit"></i>
+                        <span>Edit</span>
+                    </button>
+                    <button class="btn-with-icon btn-danger">
+                        <i class="bx bxs-trash"></i>
+                        <span>Delete</span>
+                    </button>
+                </div>
+            </div>
         </BasicCard>
 
         <BasicCard
             class="g-b"
             style="min-width: 500px;"
-            icon="bx-target-lock"
+            icon="bx-list-ul"
             title="Webpage elements"
             description="Elements that are scraped from the webpage"
         >
-            <div class="entry-list-wrapper">
+            <div v-if="elements?.length > 0" class="entry-list-wrapper">
                 <ListEntry
                     v-for="element in elements"
                     :key="element.element_id"
                     :item="element"
-                    :to="`/elements/${element.element_id}`"
-                    icon="bx bx-target-lock"
+                    :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
+                    icon="bx bxs-layer"
                     labelField="metric_name"
                     subField="locator"
                     :onEdit="editElement"
                     :onDelete="deleteElement"
                 />
             </div>
+            <ListingPlaceholder 
+                v-else
+                icon="bxs-layer"
+                text="No elements found"
+                desc="Create a new element using the form on the right."
+            />
         </BasicCard>
 
         <BasicCard
@@ -56,8 +74,8 @@
             title="Setup a new element"
             description="Set up a new element to be scraped from the page"
         >
-            <div class="flex-cl gap-8">
-                <div class="flex-cl gap-8">
+            <div class="flex-col gap-8">
+                <div class="flex-col gap-8">
                     <div class="iframe-wrapper" :class="{'unloaded': !previewHtml}">
                         <iframe
                             v-if="previewHtml"
@@ -78,7 +96,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex-cl gap-8">
+                <div class="flex-col gap-8">
                     <InlineMessage 
                         :text="`Unable to parse element value as a number: ${displayeElementDetails.element.innerHTML}`"
                         :interaction="false"
@@ -104,21 +122,12 @@
                     />
 
                     <form @submit.prevent="createElement">
-                        <div class="flex-rw align-bottom gap-4">
-                            <TextInput
-                                class="f-1"
-                                v-model="newElemenDetails.locator"
-                                label="Locator string"
-                                placeholder="div.class > section#id > ul > li:nth-of-type(3)"
-                            />
-                            <div class="flex-rw gap-4 vertical-align">
-                                <i class="bx bx-check validated-icon" v-if="locatorsMatch"></i>
-                                <button type="button" :disabled="failed.valueParse" @click="validateScrape">
-                                    <LoadingIndicator v-if="loading.validate"/>
-                                    <span title="Validate that the backend is able to find the element and get the same value." v-else>Validate</span>
-                                </button>
-                            </div>
-                        </div>
+                        <TextInput
+                            class="f-1"
+                            v-model="newElemenDetails.locator"
+                            label="Locator string"
+                            placeholder="div.class > section#id > ul > li:nth-of-type(3)"
+                        />
                         <TextInput
                             v-model="newElemenDetails.metric_name"
                             label="Metric name"
@@ -139,7 +148,7 @@
             title="Scraped webpage data"
             description="Inspect the data that has been scraped from the current webpage"
         >
-            <table>
+            <table v-if="data?.length > 0">
                 <tbody>
                     <tr>
                         <th>Data ID</th>
@@ -157,6 +166,12 @@
                     </tr>
                 </tbody>
             </table>
+            <ListingPlaceholder 
+                v-else
+                icon="bxs-data"
+                text="No data found"
+                desc="The data scraped from the current webpage will appear here."
+            />
         </BasicCard>
     </div>
 </template>
@@ -165,6 +180,7 @@
 import BasicCard from '@/components/BasicCard.vue';
 import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
+import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
@@ -178,6 +194,7 @@ export default {
         LoadingIndicator,
         TextInput,
         InlineMessage,
+        ListingPlaceholder,
     },
     data() {
         return {
@@ -252,7 +269,6 @@ export default {
                             metric_name: '',
                         }
                         this.iframeLoaded = false;
-                        this.previewHtml = '';
                         this.displayeElementDetails = {
                             locator: '',
                             element: null
@@ -424,23 +440,6 @@ export default {
             // Store the count
             this.locatorMatchCount = matchedEls.length;
         },
-        async validateScrape() {
-            if (!this.newElemenDetails.locator) return;
-
-            this.loading.validate = true;
-            
-            const response = await fastApi.elements.validate({
-                url: this.webpage.url,
-                locators: [
-                    this.newElemenDetails.locator
-                ]
-            })
-
-            if (response) {
-                this.validationResult = response;
-            }
-            this.loading.validate = false;
-        }
     },
     computed: {
         elementCount() {
@@ -449,10 +448,6 @@ export default {
         dataCount() {
             return this.data.length;
         },
-        locatorsMatch() {
-            return this.validationResult?.locators?.find((e) => e.locator == this.newElemenDetails.locator) &&
-                   this.validationResult?.locators?.find((e) => e.locator == this.newElemenDetails.locator)?.value == this.parseNumber(this.displayeElementDetails.element?.innerHTML);
-        }
     },
     async mounted() {
         console.log("Webpage ID:", this.$route.params.webpage_id);
@@ -497,7 +492,7 @@ export default {
     width: 100%;
     height: 400px;
     border-radius: var(--card-radius);
-    border: 4px solid var(--color-primary-200);
+    border: 4px solid var(--color-neutral-300);
     box-sizing: border-box;
     overflow: hidden;
     transition: var(--t-fast) border-color;
@@ -506,7 +501,7 @@ export default {
     cursor: pointer;
 }    
 .iframe-wrapper.unloaded:hover {
-    border-color: var(--color-primary-300);
+    border-color: var(--color-neutral-400);
 }
 iframe {
     height: 100%;

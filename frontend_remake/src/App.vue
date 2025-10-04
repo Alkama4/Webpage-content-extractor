@@ -6,7 +6,7 @@
                 <span>Web Scraper Dashboard</span>
             </router-link>
         </div>
-        <nav class="flex-rw gap-8">
+        <nav class="flex-row gap-8">
             <router-link 
                 v-for="link in links"
                 class="btn btn-text no-deco vertical-align gap-4" 
@@ -17,6 +17,14 @@
             </router-link>
         </nav>
     </header>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li v-for="(crumb, index) in crumbs" :key="index" class="breadcrumb-item">
+                <router-link :to="crumb.to">{{ crumb.text }}</router-link>
+            </li>
+        </ol>
+    </nav>
 
     <main>
         <RouterView/>
@@ -29,6 +37,7 @@
 
 <script>
 export default {
+    name: 'sdfsdf',
     data() {
         return {
             links: [
@@ -38,18 +47,56 @@ export default {
                     path: '/webpages'
                 },
                 {
-                    icon: 'bx-target-lock',
-                    name: 'Elements',
-                    path: '/elements'
-                },
+                    icon: 'bxs-bar-chart-alt-2',
+                    name: 'Data',
+                    path: '/data'
+                }
             ]
+        }
+    },
+    computed: {
+        crumbs() {
+            const crumbs = []
+            let pathSoFar = ''
+
+            const segments = this.$route.path.split('/').filter(Boolean)
+
+            for (let i = 0; i < segments.length; i++) {
+                pathSoFar += '/' + segments[i]
+
+                const match = this.$router.getRoutes().find(r => {
+                    const pattern = r.path.replace(/:\w+/g, '[^/]+')
+                    const regex = new RegExp(`^${pattern}$`)
+                    return regex.test(pathSoFar)
+                })
+
+                if (match) {
+                    let to = match.path
+                    for (const key in this.$route.params) {
+                        to = to.replace(`:${key}`, this.$route.params[key])
+                    }
+
+                    // get last param for this route
+                    const paramKeys = (match.path.match(/:\w+/g) || []).map(k => k.slice(1))
+                    let text = match.name || segments[i]
+                    if (paramKeys.length) {
+                        const lastParam = paramKeys[paramKeys.length - 1]
+                        text += ` ${this.$route.params[lastParam]}`
+                    }
+
+                    crumbs.push({ text, to })
+                }
+            }
+
+            crumbs.unshift({ text: 'Home', to: '/' })
+
+            return crumbs
         }
     }
 }
 </script>
 
 <style scoped>
-
 header {
     display: flex;
     align-items: center;
@@ -85,7 +132,6 @@ header {
 }
 
 main {
-    padding-top: 16px;
     padding-bottom: 64px;
 }
 
@@ -103,6 +149,20 @@ footer {
     padding: 8px;
 }
 
+.breadcrumb {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 8px;
+}
+.breadcrumb-item::after {
+    content: '/';
+    margin-left: 4px;
+}
+.breadcrumb-item:last-child::after { 
+    content: '';
+}
+
 .btn.router-link-active {
     color: var(--text-light-primary);
     background-color: var(--color-primary-500);    
@@ -110,4 +170,5 @@ footer {
 .btn.router-link-active:hover {
     background-color: var(--color-primary-600);
 }
+
 </style>

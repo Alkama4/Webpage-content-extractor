@@ -1,9 +1,9 @@
 /* Flex containers */
-.flex-cl {
+.flex-col {
     display: flex;
     flex-direction: column;
 }
-.flex-rw {
+.flex-row {
     display: flex;
     flex-direction: row;
 }

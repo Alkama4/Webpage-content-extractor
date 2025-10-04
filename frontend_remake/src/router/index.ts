@@ -9,16 +9,24 @@ const router = createRouter({
         },
         {
             path: '/webpages', 
+            name: 'Webpages',
             component: () => import('@/views/WebpagesView.vue')
         },
         {
             path: '/webpages/:webpage_id',
+            name: 'Webpage details',
             component: () => import('@/views/WebpageDetailsView.vue')
         },
         {
-            path: '/elements/:element_id',
-            component: () => import('@/views/ElementDetailsView.vue')
-        }
+            path: '/webpages/:webpage_id/elements/:element_id',
+            name: 'Element details',
+            component: () => import('@/views/ElementDetailsView.vue'),
+        },
+        {
+            path: '/data', 
+            name: 'Data',
+            component: () => import('@/views/DataView.vue')
+        },
     ],
 })
 
