@@ -21,6 +21,9 @@
     justify-content: center;
     flex-wrap: wrap;
 }
+.align-bottom {
+    align-items: end;
+}
 
 .margin-center {
     margin-inline: auto;
@@ -69,3 +72,11 @@
 .f-8  { flex: 8; }
 .f-9  { flex: 9; }
 .f-10 { flex: 10; }
+
+
+.g-a { grid-area: a;}
+.g-b { grid-area: b;}
+.g-c { grid-area: c;}
+.g-d { grid-area: d;}
+.g-e { grid-area: e;}
+.g-f { grid-area: f;}

@@ -1,7 +1,7 @@
 <template>
     <header>
         <div class="name">
-            <router-link to="/" class="no-deco vertical-align gap-4">
+            <router-link to="/" class="no-deco vertical-align gap-6">
                 <i class="bx bxs-server"></i>
                 <span>Web Scraper Dashboard</span>
             </router-link>
@@ -39,8 +39,8 @@ export default {
                 },
                 {
                     icon: 'bx-target-lock',
-                    name: 'Scrapes',
-                    path: '/scrapes'
+                    name: 'Elements',
+                    path: '/elements'
                 },
             ]
         }

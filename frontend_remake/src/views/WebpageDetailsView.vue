@@ -1,7 +1,7 @@
 <template>
-    <div class="webpage-details container-wrapper">
+    <div class="webpage-details">
         <BasicCard
-            class="f-2"
+            class="g-a"
             icon="bx-globe"
             title="Webpage details"
             description="Inspect the details of a webpage"
@@ -17,96 +17,124 @@
                         <td><a :href="webpage.url">{{ webpage.url }}</a></td>
                     </tr>
                     <tr>
-                        <th>Scrape count</th>
-                        <td>{{ scrapeCount }} scrapes</td>
+                        <th>Element count</th>
+                        <td>{{ elementCount }} element{{ elementCount == 1 ? '' : 's' }}</td>
                     </tr>
                     <tr>
                         <th>Data count</th>
-                        <td>{{ dataCount }} datapoints</td>
+                        <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
                     </tr>
                 </tbody>
             </table>
         </BasicCard>
 
         <BasicCard
-            class="f-2"
+            class="g-b"
             style="min-width: 500px;"
             icon="bx-target-lock"
-            title="Webpage scrapes"
+            title="Webpage elements"
             description="Elements that are scraped from the webpage"
         >
             <div class="entry-list-wrapper">
                 <ListEntry
-                    v-for="scrape in scrapes"
-                    :key="scrape.scrape_id"
-                    :item="scrape"
-                    :to="`/scrapes/${scrape.scrape_id}`"
+                    v-for="element in elements"
+                    :key="element.element_id"
+                    :item="element"
+                    :to="`/elements/${element.element_id}`"
                     icon="bx bx-target-lock"
                     labelField="metric_name"
                     subField="locator"
-                    :onEdit="editScrape"
-                    :onDelete="deleteScrape"
+                    :onEdit="editElement"
+                    :onDelete="deleteElement"
                 />
             </div>
         </BasicCard>
 
         <BasicCard
-            class="container-lg"
+            class="g-c"
             icon="bx-list-plus"
-            title="Create a scrape"
-            description="Set up a new scrape for the page"
+            title="Setup a new element"
+            description="Set up a new element to be scraped from the page"
         >
-            <div class="flex-cl gap-16">
-                <div class="iframe-wrapper">
-                    <iframe
-                        v-if="previewHtml"
-                        id="previewFrame"
-                        ref="previewIframe"
-                        :srcdoc="previewHtml"
-                        frameborder="0"
-                    ></iframe>
-                    <div class="placeholder" v-else>
-                        <i class="bx bx-globe"></i>
-                        <div class="text">Page not loaded</div>
-                        <div class="desc">In order to select an element, please load the page with the button below.</div>
+            <div class="flex-cl gap-8">
+                <div class="flex-cl gap-8">
+                    <div class="iframe-wrapper" :class="{'unloaded': !previewHtml}">
+                        <iframe
+                            v-if="previewHtml"
+                            id="previewFrame"
+                            ref="previewIframe"
+                            :srcdoc="previewHtml"
+                            frameborder="0"
+                        ></iframe>
+                        <div class="placeholder" v-else @click="loadPageToIframe">
+                            <template v-if="loading.iframe">
+                                <LoadingIndicator/>
+                            </template>
+                            <template v-else>
+                                <i class="bx bx-window-open icon"></i>
+                                <div class="text">Load page</div>
+                                <div class="desc">Click here to fetch and display the webpage in the frame</div>
+                            </template>
+                        </div>
                     </div>
                 </div>
-                <button @click="loadPageToIframe">Load page</button>
-                <hr class="section-separator">
-                <div>
-                    <div class="selected-element-info">
-                        <div class="vertical-align gap-4">
-                            <i class="bx bxs-info-circle"></i>
-                            <span>Selected elements details</span>
+                <div class="flex-cl gap-8">
+                    <InlineMessage 
+                        :text="`Unable to parse element value as a number: ${displayeElementDetails.element.innerHTML}`"
+                        :interaction="false"
+                        v-if="failed.valueParse"
+                    />
+                    <InlineMessage 
+                        :text="`Multiple elements matched (${locatorMatchCount} matches). The first element will be used.`"
+                        type="warning"
+                        :interaction="false"
+                        v-if="locatorMatchCount > 1"
+                    />
+                    <InlineMessage 
+                        text="A field cannot be empty" 
+                        :interaction="true"
+                        @close="failed.emptyFields = false"
+                        v-if="failed.emptyFields"
+                    />
+                    <InlineMessage 
+                        text="This element already exists under the webpage" 
+                        :interaction="true"
+                        @close="failed.alreadyExists = false"
+                        v-if="failed.alreadyExists"
+                    />
+
+                    <form @submit.prevent="createElement">
+                        <div class="flex-rw align-bottom gap-4">
+                            <TextInput
+                                class="f-1"
+                                v-model="newElemenDetails.locator"
+                                label="Locator string"
+                                placeholder="div.class > section#id > ul > li:nth-of-type(3)"
+                            />
+                            <div class="flex-rw gap-4 vertical-align">
+                                <i class="bx bx-check validated-icon" v-if="locatorsMatch"></i>
+                                <button type="button" :disabled="failed.valueParse" @click="validateScrape">
+                                    <LoadingIndicator v-if="loading.validate"/>
+                                    <span title="Validate that the backend is able to find the element and get the same value." v-else>Validate</span>
+                                </button>
+                            </div>
                         </div>
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <th>Element</th>
-                                    <td>{{ clickedElement?.localName || '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Inner HTML</th>
-                                    <td>{{ clickedElement?.innerHTML || '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Parsed value</th>
-                                    <td>{{ parseNumber(clickedElement?.innerHTML) || '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Locator string</th>
-                                    <td>{{ locator || '-' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <button>Validate locator string</button>
-                    </div>
+                        <TextInput
+                            v-model="newElemenDetails.metric_name"
+                            label="Metric name"
+                            placeholder="Aluminium price"
+                        />
+                        <button :disabled="failed.valueParse" type="submit">
+                            <LoadingIndicator v-if="loading.elementCreate"/>
+                            <span v-else>Create element</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </BasicCard>
 
         <BasicCard
-            class="f-1"
+            class="g-d"
             icon="bxs-data"
             title="Scraped webpage data"
             description="Inspect the data that has been scraped from the current webpage"
@@ -115,15 +143,15 @@
                 <tbody>
                     <tr>
                         <th>Data ID</th>
-                        <th>Scrape ID</th>
+                        <th>Element ID</th>
                         <th>Metric</th>
                         <th>Value</th>
                         <th>Timestamp</th>
                     </tr>
                     <tr v-for="entry in data">
                         <td>{{ entry.data_id }}</td>
-                        <td>{{ entry.scrape_id }}</td>
-                        <td>{{ findMetricName(entry.scrape_id) }}</td>
+                        <td>{{ entry.element_id }}</td>
+                        <td>{{ findMetricName(entry.element_id) }}</td>
                         <td>{{ entry.value }}</td>
                         <td>{{ formatTime(entry.created_at) }}</td>
                     </tr>
@@ -135,26 +163,52 @@
 
 <script>
 import BasicCard from '@/components/BasicCard.vue';
+import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
+import { getCssVar, formatTime } from '@/utils/utils';
 
 export default {
     name: 'WebpageDetails',
     components: {
         BasicCard,
         ListEntry,
+        LoadingIndicator,
+        TextInput,
+        InlineMessage,
     },
     data() {
         return {
             webpage: {},
-            scrapes: [],
+            elements: [],
             data: [],
+
+            loading: {
+                iframe: false,
+                validate: false,
+                elementCreate: false,
+            },
+            failed: {
+                valueParse: false,
+                emptyFields: false,
+                alreadyExists: false,
+            },
 
             // Iframe stuff
             iframeLoaded: false,
             previewHtml: '',
-            clickedElement: null,
-            locator: '',
+            validationResult: null,
+            locatorMatchCount: 0,
+            displayeElementDetails: {
+                element: null,
+                locator: ''
+            },
+            newElemenDetails: {
+                locator: '',
+                metric_name: ''
+            }
         }
     },
     methods: {
@@ -164,47 +218,74 @@ export default {
                 this.webpage = response;
             }
         },
-        async getWebpageScrapes() {
-            const response = await fastApi.webpages.scrapes.get(this.$route.params.webpage_id);
+        async getWebpageElements() {
+            const response = await fastApi.webpages.elements.get(this.$route.params.webpage_id);
             if (response) {
-                this.scrapes = response.sort((a, b) => a.scrape_id - b.scrape_id);
+                this.elements = response.sort((a, b) => a.element_id - b.element_id);
             }
         },
-        async getWebpageScrapeData() {
-            const response = await fastApi.webpages.scrapes.data(this.$route.params.webpage_id);
+        async getWebpageElementData() {
+            const response = await fastApi.webpages.elements.data(this.$route.params.webpage_id);
             if (response) {
                 this.data = response.sort((a, b) => a.data_id - b.data_id);
             }
         },
         formatTime(time) {
-            return new Date(time).toLocaleString("fi-FI", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-            });
+            return formatTime(time);
         },
-        findMetricName(scrapeId) {
-            const scrape = this.scrapes.find(s => s.scrape_id === scrapeId);
-            return scrape ? scrape.metric_name : '';
+        findMetricName(elementId) {
+            const element = this.elements.find(s => s.element_id === elementId);
+            return element ? element.metric_name : '';
         },
-        editScrape() {
+        editElement() {
             alert("TBD");
         },
-        async deleteScrape(scrape) {
+        async createElement() {
+            if (this.newElemenDetails.locator && this.newElemenDetails.metric_name) {
+                this.loading.elementCreate = true;
+                try {
+                    const response = await fastApi.elements.create(this.webpage.webpage_id, this.newElemenDetails)
+                    if (response) {
+                        await this.getWebpageElements();
+                        this.newElemenDetails = {
+                            locator: '',
+                            metric_name: '',
+                        }
+                        this.iframeLoaded = false;
+                        this.previewHtml = '';
+                        this.displayeElementDetails = {
+                            locator: '',
+                            element: null
+                        }
+
+                        // Clear possible hanging errors since it worked
+                        this.failed.alreadyExists = false;
+                        this.failed.emptyFields = false;
+                    }
+                } catch(e) {
+                    if (e.status == 409) {
+                        this.failed.alreadyExists = true;
+                    }
+                } finally {
+                    this.loading.elementCreate = false;
+                }
+            } else {
+                this.failed.emptyFields = true;
+            }
+        },
+        async deleteElement(element) {
             if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
-                const response = await fastApi.scrapes.delete(scrape.scrape_id);
+                const response = await fastApi.elements.delete(element.element_id);
                 if (response) {
-                    await this.getWebpageScrapes();
-                    await this.getWebpageScrapeData();
+                    await this.getWebpageElements();
+                    await this.getWebpageElementData();
                 }
             }
         },
         
         ////////////// Iframe stuff //////////////
         async loadPageToIframe() {
+            this.loading.iframe = true;
             try {
                 this.previewHtml = await fastApi.preview.get({
                     url: this.webpage.url
@@ -218,6 +299,7 @@ export default {
                 console.error(e);
                 this.previewHtml = '<p style="color:red;">Error loading preview</p>';
             }
+            this.loading.iframe = false;
         },
         attachIframeListener() {
             const iframe = this.$refs.previewIframe;
@@ -230,16 +312,29 @@ export default {
                 // Hover outline
                 const style = doc.createElement('style');
                 style.textContent = `
-                    * { cursor: pointer; }
-                    :hover { outline: 2px solid orange !important; }
+                    * { 
+                        cursor: pointer;
+                    }
+                    :hover { 
+                        outline: 2px solid ${getCssVar('--color-primary-400')} !important;
+                    }
+                    .scraper-located-element {
+                        outline: 2px solid ${getCssVar('--color-primary-500')} !important;
+                    }
                 `;
                 doc.head.appendChild(style);
+
+                // Disable all links
+                const anchors = doc.querySelectorAll('a');
+                anchors.forEach(a => a.removeAttribute('href'));
 
                 // Click handler – store the element & locator
                 doc.addEventListener('click', (e) => {
                     const target = e.target;
-                    this.clickedElement = target;
-                    this.locator = this.buildLocator(target);   // compute locator
+                    this.displayeElementDetails.element = target;
+                    this.newElemenDetails.locator = this.displayeElementDetails.locator = this.buildLocator(target);
+
+                    this.parseNumber(this.displayeElementDetails.element.innerHTML);
                 });
 
                 this.iframeLoaded = true;
@@ -250,26 +345,40 @@ export default {
             let current = el;
 
             while (current && current.nodeName.toLowerCase() !== 'html') {
-                if (current === document.body) break;     // stop at body
+                if (current === document.body) break;
 
                 const tag = current.tagName.toLowerCase();
                 let part = `${tag}`;
 
-                // Add class selectors – join with '.' if multiple
+                // add classes (filtering ignored ones)
                 if (current.classList.length > 0) {
-                part += `:${Array.from(current.classList).join('.')}`;
+                    const allowed = Array.from(current.classList).filter(
+                        cls => !['vsc-initialized'].includes(cls)
+                    );
+                    if (allowed.length) part += `.${allowed.join('.')}`;
                 }
 
-                // Add id selector if present
+                // add id
                 if (current.id) {
-                part += `:${current.id}`;
+                    part += `#${current.id}`;
                 }
 
-                // prepend so that the order is from body → target
+                // add nth-of-type if needed
+                const parent = current.parentElement;
+                if (parent) {
+                    const sameTagSiblings = Array.from(parent.children)
+                        .filter(c => c.tagName === current.tagName);
+                    if (sameTagSiblings.length > 1) {
+                        const idx = sameTagSiblings.indexOf(current) + 1;
+                        part += `:nth-of-type(${idx})`;
+                    }
+                }
+
                 parts.unshift(part);
                 current = current.parentElement;
             }
-            return `${parts.join(' > ')}`;
+
+            return parts.join(' > ');
         },
         parseNumber(raw) {
             if (!raw) return;
@@ -280,41 +389,110 @@ export default {
             cleaned = cleaned.replace(/[\s,]/g, "");
 
             if (!cleaned) {
+                this.failed.valueParse = true;
                 return null;
             }
 
             let num = Number(cleaned);
             if (isNaN(num)) {
+                this.failed.valueParse = true;
                 return null;
             }
 
+            this.failed.valueParse = false;
             return num;
+        },
+        highlightByLocator() {
+            const iframe = this.$refs.previewIframe;
+            if (!iframe) return;
+
+            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (!doc) return;
+
+            // Remove any previous highlights that were added by us.
+            const prevHighlights = doc.querySelectorAll('.scraper-located-element');
+            prevHighlights.forEach(el => el.classList.remove('scraper-located-element'));
+
+            // Find all elements that match the stored selector.
+            if (!this.newElemenDetails?.locator) return;
+            const matchedEls = doc.querySelectorAll(this.newElemenDetails.locator);
+            if (!matchedEls.length) return;          // nothing matched
+
+            // Highlight every match and, optionally, log how many there were.
+            matchedEls.forEach(el => el.classList.add('scraper-located-element'));
+
+            // Store the count
+            this.locatorMatchCount = matchedEls.length;
+        },
+        async validateScrape() {
+            if (!this.newElemenDetails.locator) return;
+
+            this.loading.validate = true;
+            
+            const response = await fastApi.elements.validate({
+                url: this.webpage.url,
+                locators: [
+                    this.newElemenDetails.locator
+                ]
+            })
+
+            if (response) {
+                this.validationResult = response;
+            }
+            this.loading.validate = false;
         }
     },
     computed: {
-        scrapeCount() {
-            return this.scrapes.length;
+        elementCount() {
+            return this.elements.length;
         },
         dataCount() {
             return this.data.length;
+        },
+        locatorsMatch() {
+            return this.validationResult?.locators?.find((e) => e.locator == this.newElemenDetails.locator) &&
+                   this.validationResult?.locators?.find((e) => e.locator == this.newElemenDetails.locator)?.value == this.parseNumber(this.displayeElementDetails.element?.innerHTML);
         }
     },
     async mounted() {
         console.log("Webpage ID:", this.$route.params.webpage_id);
         await this.getWebpageInfo();
-        await this.getWebpageScrapes();
-        await this.getWebpageScrapeData();
+        await this.getWebpageElements();
+        await this.getWebpageElementData();
     },
     watch: {
         // When the iframe content changes, re‑attach listeners
         previewHtml() {
             if (!this.iframeLoaded) this.attachIframeListener();
+        },
+        'newElemenDetails.locator'() {
+            this.highlightByLocator();
         }
     }
 }
 </script>
 
 <style scoped>
+.webpage-details {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 4fr 3fr;
+    grid-template-areas:
+        "a a"
+        "b c"
+        "d d";
+}
+@media (max-width: 1000px) {
+    .webpage-details {
+        grid-template-columns: 1fr;
+            grid-template-areas:
+            "a"
+            "b"
+            "c"
+            "d";
+    }
+}
+
 .iframe-wrapper {
     width: 100%;
     height: 400px;
@@ -322,10 +500,18 @@ export default {
     border: 4px solid var(--color-primary-200);
     box-sizing: border-box;
     overflow: hidden;
+    transition: var(--t-fast) border-color;
+}
+.iframe-wrapper.unloaded:hover {
+    cursor: pointer;
+}    
+.iframe-wrapper.unloaded:hover {
+    border-color: var(--color-primary-300);
 }
 iframe {
     height: 100%;
     width: 100%;
+    min-width: none;
 }
 .iframe-wrapper .placeholder {
     display: flex;
@@ -337,26 +523,48 @@ iframe {
     padding: max(1rem, 15%);
     box-sizing: border-box;
 }
-.iframe-wrapper i {
+
+.iframe-wrapper .icon {
     color: var(--color-primary-400);
     font-size: var(--fs-6);
     margin-bottom: 1rem;
     padding: 8px;
     border-radius: 100px;
     background-color: var(--color-primary-100);
+    transition: var(--t-slow) transform;
+}
+.iframe-wrapper:hover i {
+    transform: translateY(-6px) scale(1.05);
 }
 .iframe-wrapper .text {
     font-size: var(--fs-2);
     color: var(--text-dark-secondary);
+    transition: var(--t-slow) transform;
 }
 .iframe-wrapper .desc {
     text-align: center;
     color: var(--text-dark-tertiary);
     font-size: var(--fs-1);
+    transition: var(--t-slow) transform;
 }
+.iframe-wrapper:hover text,
+.iframe-wrapper:hover desc {
+    transform: translateY(-4px);
+}
+
+.iframe-wrapper .loading-indicator {
+    font-size: var(--fs-10);
+    color: var(--color-primary-500);
+}
+
 
 .selected-element-info i {
     color: var(--color-primary-500);
     font-size: var(--fs-4);
+}
+
+.validated-icon {
+    color: var(--color-success);
+    font-size: var(--fs-5);
 }
 </style>

@@ -23,9 +23,11 @@
   --color-neutral-900: hsl(0, 0%, 00%);
 
   /* Success / Warning / Error (use sparingly) */
-  --color-success: #4caf50;
-  --color-warning: #ff9800;
-  --color-error:   #f44336;
+  --color-success: #4ec768;
+  --color-warning: #e09a30;
+  --color-warning-hover: #f5b048;
+  --color-error:   #e7554a;
+  --color-error-hover: #f5695f;
 
   /* Backgrounds */
   --bg-body: var(--color-neutral-100);
@@ -52,6 +54,10 @@
   --fs-4: calc(var(--font-size-base) * 1.25);   /* 20px */
   --fs-5: calc(var(--font-size-base) * 1.375);  /* 22px */
   --fs-6: calc(var(--font-size-base) * 1.5);    /* 24px */
+  --fs-7: calc(var(--font-size-base) * 1.66);
+  --fs-8: calc(var(--font-size-base) * 1.75);
+  --fs-9: calc(var(--font-size-base) * 1.85);
+  --fs-10: calc(var(--font-size-base) * 2);
 
   /* Font families (system‑first for performance) */
   --ff-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont,
@@ -88,7 +94,7 @@
 /* ---------- Component Size ---------- */
 :root {
   /* Buttons */
-  --btn-padding-y: 0.6rem;
+  --btn-padding-y: 0.563rem;
   --btn-padding-x: 1.2rem;
   --btn-margin-y: 0.3rem;
   --btn-margin-x: 0.5rem;

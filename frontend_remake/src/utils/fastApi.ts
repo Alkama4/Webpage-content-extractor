@@ -61,62 +61,62 @@ export const fastApi = {
             return fetchData(request);
         },
 
-        scrapes: {
+        elements: {
             get: async (webpage_id: number) => {
-                const request = apiClient.get(`/webpages/${webpage_id}/scrapes`);
+                const request = apiClient.get(`/webpages/${webpage_id}/elements`);
                 return fetchData(request);
             },
 
             data: async (webpage_id: number) => {
-                const request = apiClient.get(`/webpages/${webpage_id}/scrapes/data`);
+                const request = apiClient.get(`/webpages/${webpage_id}/elements/data`);
                 return fetchData(request);
             }
         }
     },
 
-    scrapes: {
+    elements: {
         get: async () => {
-            const request = apiClient.get('/scrapes/');
+            const request = apiClient.get('/elements/');
             return fetchData(request);
         },
 
         runAll: async () => {
-            const request = apiClient.post('/scrapes/run-all');
+            const request = apiClient.post('/elements/run-all');
             return fetchData(request);
         },
 
         validate: async (data: any) => {
-            const request = apiClient.post('/scrapes/validate', data);
+            const request = apiClient.post('/elements/validate', data);
             return fetchData(request);
         },
 
         create: async (webpage_id: number, data: any) => {
-            const request = apiClient.post(`/scrapes/${webpage_id}`, data);
+            const request = apiClient.post(`/elements/${webpage_id}`, data);
             return fetchData(request);
         },
 
-        getById: async (scrape_id: number) => {
-            const request = apiClient.get(`/scrapes/${scrape_id}`);
+        getById: async (element_id: number) => {
+            const request = apiClient.get(`/elements/${element_id}`);
             return fetchData(request);
         },
 
-        put: async (scrape_id: number, data: any) => {
-            const request = apiClient.put(`/scrapes/${scrape_id}`, data);
+        put: async (element_id: number, data: any) => {
+            const request = apiClient.put(`/elements/${element_id}`, data);
             return fetchData(request);
         },
 
-        patch: async (scrape_id: number, data: any) => {
-            const request = apiClient.patch(`/scrapes/${scrape_id}`, data);
+        patch: async (element_id: number, data: any) => {
+            const request = apiClient.patch(`/elements/${element_id}`, data);
             return fetchData(request);
         },
 
-        delete: async (scrape_id: number) => {
-            const request = apiClient.delete(`/scrapes/${scrape_id}`);
+        delete: async (element_id: number) => {
+            const request = apiClient.delete(`/elements/${element_id}`);
             return fetchData(request);
         },
 
-        data: async (scrape_id: number) => {
-            const request = apiClient.get(`/scrapes/${scrape_id}/data`);
+        data: async (element_id: number) => {
+            const request = apiClient.get(`/elements/${element_id}/data`);
             return fetchData(request);
         }
     },

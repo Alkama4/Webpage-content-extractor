@@ -44,9 +44,7 @@
           label="Page name"
           placeholder="The webpages name"
         />
-        <div>
-          <button type="submit">Create</button>
-        </div>
+        <button type="submit">Create</button>
       </form>
     </BasicCard>
   </div>
