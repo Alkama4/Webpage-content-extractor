@@ -76,72 +76,11 @@
                 title="Setup a new element"
                 description="Set up a new element to be scraped from the page"
             >
-                <div class="flex-col gap-8">
-                    <div class="flex-col gap-8">
-                        <div class="iframe-wrapper" :class="{'unloaded': !previewHtml}">
-                            <iframe
-                                v-if="previewHtml"
-                                id="previewFrame"
-                                ref="previewIframe"
-                                :srcdoc="previewHtml"
-                                frameborder="0"
-                            ></iframe>
-                            <div class="placeholder" v-else @click="loadPageToIframe">
-                                <template v-if="loading.iframe">
-                                    <LoadingIndicator/>
-                                </template>
-                                <template v-else>
-                                    <i class="bx bx-window-open icon"></i>
-                                    <div class="text">Load page</div>
-                                    <div class="desc">Click here to fetch and display the webpage in the frame</div>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex-col gap-8">
-                        <InlineMessage 
-                            :text="`Unable to parse element value as a number: ${displayeElementDetails.element.innerHTML}`"
-                            :interaction="false"
-                            v-if="failed.valueParse"
-                        />
-                        <InlineMessage 
-                            :text="`Multiple elements matched (${locatorMatchCount} matches). The first element will be used.`"
-                            type="warning"
-                            :interaction="false"
-                            v-if="locatorMatchCount > 1"
-                        />
-                        <InlineMessage 
-                            text="A field cannot be empty" 
-                            :interaction="true"
-                            @close="failed.emptyFields = false"
-                            v-if="failed.emptyFields"
-                        />
-                        <InlineMessage 
-                            text="This element already exists under the webpage" 
-                            :interaction="true"
-                            @close="failed.alreadyExists = false"
-                            v-if="failed.alreadyExists"
-                        />
-    
-                        <form @submit.prevent="createElement">
-                            <TextInput
-                                v-model="newElemenDetails.metric_name"
-                                label="Metric name"
-                                placeholder="Aluminium price"
-                            />
-                            <TextInput
-                                class="f-1"
-                                v-model="newElemenDetails.locator"
-                                label="Locator string"
-                                placeholder="div.class > section#id > ul > li:nth-of-type(3)"
-                            />
-                            <button :disabled="failed.valueParse" type="submit">
-                                <LoadingIndicator v-if="loading.elementCreate"/>
-                                <span v-else>Create element</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                <ElementForm
+                    :webpageUrl="webpage.url"
+                    :webpageId="webpage.webpage_id"
+                    @success="getWebpageElements"
+                />
             </BasicCard>
     
             <BasicCard
@@ -181,13 +120,14 @@
 
 <script>
 import BasicCard from '@/components/BasicCard.vue';
+import ElementForm from '@/components/ElementForm.vue';
 import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
-import { getCssVar, formatTime } from '@/utils/utils';
+import { formatTime } from '@/utils/utils';
 
 export default {
     name: 'WebpageDetails',
@@ -198,6 +138,7 @@ export default {
         TextInput,
         InlineMessage,
         ListingPlaceholder,
+        ElementForm,
     },
     data() {
         return {
@@ -260,38 +201,6 @@ export default {
         editElement() {
             alert("TBD");
         },
-        async createElement() {
-            if (this.newElemenDetails.locator && this.newElemenDetails.metric_name) {
-                this.loading.elementCreate = true;
-                try {
-                    const response = await fastApi.elements.create(this.webpage.webpage_id, this.newElemenDetails)
-                    if (response) {
-                        await this.getWebpageElements();
-                        this.newElemenDetails = {
-                            locator: '',
-                            metric_name: '',
-                        }
-                        this.iframeLoaded = false;
-                        this.displayeElementDetails = {
-                            locator: '',
-                            element: null
-                        }
-
-                        // Clear possible hanging errors since it worked
-                        this.failed.alreadyExists = false;
-                        this.failed.emptyFields = false;
-                    }
-                } catch(e) {
-                    if (e.status == 409) {
-                        this.failed.alreadyExists = true;
-                    }
-                } finally {
-                    this.loading.elementCreate = false;
-                }
-            } else {
-                this.failed.emptyFields = true;
-            }
-        },
         async deleteElement(element) {
             if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
                 const response = await fastApi.elements.delete(element.element_id);
@@ -314,148 +223,6 @@ export default {
         editWebpage() {
             alert("TBD");
         },
-
-        ////////////// Iframe stuff //////////////
-        async loadPageToIframe() {
-            this.loading.iframe = true;
-            try {
-                this.previewHtml = await fastApi.preview.get({
-                    url: this.webpage.url
-                });
-                this.iframeLoaded = false;
-
-                this.$nextTick(() => {
-                    this.attachIframeListener();   // ensure iframe exists
-                });
-            } catch (e) {
-                console.error(e);
-                this.previewHtml = '<p style="color:red;">Error loading preview</p>';
-            }
-            this.loading.iframe = false;
-        },
-        attachIframeListener() {
-            const iframe = this.$refs.previewIframe;
-            if (!iframe) return;
-
-            iframe.addEventListener('load', () => {
-                const doc = iframe.contentDocument;
-                if (!doc || this.iframeLoaded) return;
-
-                // Hover outline
-                const style = doc.createElement('style');
-                style.textContent = `
-                    * { 
-                        cursor: pointer;
-                    }
-                    :hover { 
-                        outline: 2px solid ${getCssVar('--color-primary-400')} !important;
-                    }
-                    .scraper-located-element {
-                        outline: 2px solid ${getCssVar('--color-primary-500')} !important;
-                    }
-                `;
-                doc.head.appendChild(style);
-
-                // Disable all links
-                const anchors = doc.querySelectorAll('a');
-                anchors.forEach(a => a.removeAttribute('href'));
-
-                // Click handler – store the element & locator
-                doc.addEventListener('click', (e) => {
-                    const target = e.target;
-                    this.displayeElementDetails.element = target;
-                    this.newElemenDetails.locator = this.displayeElementDetails.locator = this.buildLocator(target);
-
-                    this.parseNumber(this.displayeElementDetails.element.innerHTML);
-                });
-
-                this.iframeLoaded = true;
-            });
-        },
-        buildLocator(el) {
-            const parts = [];
-            let current = el;
-
-            while (current && current.nodeName.toLowerCase() !== 'html') {
-                if (current === document.body) break;
-
-                const tag = current.tagName.toLowerCase();
-                let part = `${tag}`;
-
-                // add classes (filtering ignored ones)
-                if (current.classList.length > 0) {
-                    const allowed = Array.from(current.classList).filter(
-                        cls => !['vsc-initialized'].includes(cls)
-                    );
-                    if (allowed.length) part += `.${allowed.join('.')}`;
-                }
-
-                // add id
-                if (current.id) {
-                    part += `#${current.id}`;
-                }
-
-                // add nth-of-type if needed
-                const parent = current.parentElement;
-                if (parent) {
-                    const sameTagSiblings = Array.from(parent.children)
-                        .filter(c => c.tagName === current.tagName);
-                    if (sameTagSiblings.length > 1) {
-                        const idx = sameTagSiblings.indexOf(current) + 1;
-                        part += `:nth-of-type(${idx})`;
-                    }
-                }
-
-                parts.unshift(part);
-                current = current.parentElement;
-            }
-
-            return parts.join(' > ');
-        },
-        parseNumber(raw) {
-            if (!raw) return;
-            let s = raw.trim();
-
-            // keep digits, commas, dots, spaces, plus/minus
-            let cleaned = s.replace(/[^\d.,+\- ]/g, "");
-            cleaned = cleaned.replace(/[\s,]/g, "");
-
-            if (!cleaned) {
-                this.failed.valueParse = true;
-                return null;
-            }
-
-            let num = Number(cleaned);
-            if (isNaN(num)) {
-                this.failed.valueParse = true;
-                return null;
-            }
-
-            this.failed.valueParse = false;
-            return num;
-        },
-        highlightByLocator() {
-            const iframe = this.$refs.previewIframe;
-            if (!iframe) return;
-
-            const doc = iframe.contentDocument || iframe.contentWindow?.document;
-            if (!doc) return;
-
-            // Remove any previous highlights that were added by us.
-            const prevHighlights = doc.querySelectorAll('.scraper-located-element');
-            prevHighlights.forEach(el => el.classList.remove('scraper-located-element'));
-
-            // Find all elements that match the stored selector.
-            if (!this.newElemenDetails?.locator) return;
-            const matchedEls = doc.querySelectorAll(this.newElemenDetails.locator);
-            if (!matchedEls.length) return;          // nothing matched
-
-            // Highlight every match and, optionally, log how many there were.
-            matchedEls.forEach(el => el.classList.add('scraper-located-element'));
-
-            // Store the count
-            this.locatorMatchCount = matchedEls.length;
-        },
     },
     computed: {
         elementCount() {
@@ -466,20 +233,10 @@ export default {
         },
     },
     async mounted() {
-        console.log("Webpage ID:", this.$route.params.webpage_id);
         await this.getWebpageInfo();
         await this.getWebpageElements();
         await this.getWebpageElementData();
     },
-    watch: {
-        // When the iframe content changes, re‑attach listeners
-        previewHtml() {
-            if (!this.iframeLoaded) this.attachIframeListener();
-        },
-        'newElemenDetails.locator'() {
-            this.highlightByLocator();
-        }
-    }
 }
 </script>
 
@@ -502,80 +259,5 @@ export default {
             "c"
             "d";
     }
-}
-
-.iframe-wrapper {
-    width: 100%;
-    height: 400px;
-    border-radius: var(--card-radius);
-    border: 4px solid var(--color-neutral-300);
-    box-sizing: border-box;
-    overflow: hidden;
-    transition: var(--t-fast) border-color;
-}
-.iframe-wrapper.unloaded:hover {
-    cursor: pointer;
-}    
-.iframe-wrapper.unloaded:hover {
-    border-color: var(--color-neutral-400);
-}
-iframe {
-    height: 100%;
-    width: 100%;
-    min-width: none;
-}
-.iframe-wrapper .placeholder {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-    padding: max(1rem, 15%);
-    box-sizing: border-box;
-}
-
-.iframe-wrapper .icon {
-    color: var(--color-primary-400);
-    font-size: var(--fs-6);
-    margin-bottom: 1rem;
-    padding: 8px;
-    border-radius: 100px;
-    background-color: var(--color-primary-100);
-    transition: var(--t-slow) transform;
-}
-.iframe-wrapper:hover i {
-    transform: translateY(-6px) scale(1.05);
-}
-.iframe-wrapper .text {
-    font-size: var(--fs-2);
-    color: var(--text-dark-secondary);
-    transition: var(--t-slow) transform;
-}
-.iframe-wrapper .desc {
-    text-align: center;
-    color: var(--text-dark-tertiary);
-    font-size: var(--fs-1);
-    transition: var(--t-slow) transform;
-}
-.iframe-wrapper:hover text,
-.iframe-wrapper:hover desc {
-    transform: translateY(-4px);
-}
-
-.iframe-wrapper .loading-indicator {
-    font-size: var(--fs-10);
-    color: var(--color-primary-500);
-}
-
-
-.selected-element-info i {
-    color: var(--color-primary-500);
-    font-size: var(--fs-4);
-}
-
-.validated-icon {
-    color: var(--color-success);
-    font-size: var(--fs-5);
 }
 </style>

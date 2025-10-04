@@ -1,10 +1,10 @@
 <template>
   <div class="webpages-view">
     <h1>Webpages</h1>
-    <div class="center-content gap-16 container-xxl margin-center">
+    <div class="webpages-view-grid gap-16">
       <BasicCard
         icon="bx-list-ul"
-        class="container-lg f-3"
+        class=""
         title="Webpages" 
         description="Manage pages from which you scrape content"
       >
@@ -31,7 +31,7 @@
       
       <BasicCard
         icon="bx-list-plus"
-        class="container-lg f-1"
+        class=""
         title="Create a webpage" 
         description="Set up a new page for data extraction"
       >
@@ -143,5 +143,13 @@ export default {
 </script>
 
 <style scoped>
-
+.webpages-view-grid {
+  display: grid;
+  grid-template-columns: 4fr 2fr
+}
+@media(max-width: 1000px) {
+ .webpages-view-grid {
+  grid-template-columns: 1fr;
+ }
+}
 </style>

@@ -6,7 +6,7 @@
                 class="g-a"
                 icon="bxs-info-circle"
                 title="Element info"
-                description="Inspect the details of an element"
+                description="Inspect the details of the element"
             >
                 <table>
                     <tbody>
@@ -29,12 +29,26 @@
                     </tbody>
                 </table>
             </BasicCard>
+
+            <BasicCard
+                class="g-c"
+                icon="bx-list-plus"
+                title="Edit element details"
+                description="View the selected element in the preview and click it to generate a new selector, or manually edit its locator string or metric name."
+            >
+                <ElementForm
+                    :webpageUrl="parentWebpage.url"
+                    :webpageId="parentWebpage.webpage_id"
+                    :existingElement="element"
+                    @success="getElementInfo"
+                />
+            </BasicCard>
     
             <BasicCard
                 class="g-d"
                 icon="bxs-data"
                 title="Scraped element data"
-                description="Inspect the data that has been scraped from this element"
+                description="Inspect the data that has been scraped from the element"
             >
                 <table>
                     <tbody>
@@ -59,6 +73,7 @@
 
 <script>
 import BasicCard from '@/components/BasicCard.vue';
+import ElementForm from '@/components/ElementForm.vue';
 import { fastApi } from '@/utils/fastApi';
 import { formatTime } from '@/utils/utils';
 
@@ -66,6 +81,7 @@ export default {
     name: 'ElementDetails',
     components: {
         BasicCard,
+        ElementForm,
     },
     data() {
         return {
@@ -88,7 +104,7 @@ export default {
             }
         },
         async getParentWebpageInfo() {
-            const response = await fastApi.webpages.getById(this.element.webpage_id);
+            const response = await fastApi.webpages.getById(this.$route.params.webpage_id);
             if (response) {
                 this.parentWebpage = response;
             }
