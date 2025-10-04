@@ -1,57 +1,59 @@
 <template>
-    <div class="element-details flex-col gap-16">
-        <BasicCard
-            class="g-a"
-            icon="bxs-layer"
-            title="Element details"
-            description="Inspect the details of an element"
-        >
-            <table>
-                <tbody>
-                    <tr>
-                        <th>Metric name</th>
-                        <td>{{ element.metric_name }}</td>
-                    </tr>
-                    <tr>
-                        <th>Parent webpage</th>
-                        <td>{{ parentWebpage.page_name }} (ID {{ parentWebpage.webpage_id }})</td>
-                    </tr>
-                    <tr>
-                        <th>Locator string</th>
-                        <td>{{ element.locator }}</td>
-                    </tr>
-                    <tr>
-                        <th>Data count</th>
-                        <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
-                    </tr>
-
-                </tbody>
-            </table>
-        </BasicCard>
-
-        <BasicCard
-            class="g-d"
-            icon="bxs-data"
-            title="Scraped element data"
-            description="Inspect the data that has been scraped from this element"
-        >
-            <table>
-                <tbody>
-                    <tr>
-                        <th>Data ID</th>
-                        <th>Element ID</th>
-                        <th>Value</th>
-                        <th>Timestamp</th>
-                    </tr>
-                    <tr v-for="entry in data">
-                        <td>{{ entry.data_id }}</td>
-                        <td>{{ entry.element_id }}</td>
-                        <td>{{ entry.value }}</td>
-                        <td>{{ formatTime(entry.created_at) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </BasicCard>
+    <div class="element-details-view">
+        <h1>Element details</h1>
+        <div class="flex-col gap-16">
+            <BasicCard
+                class="g-a"
+                icon="bxs-info-circle"
+                title="Element info"
+                description="Inspect the details of an element"
+            >
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Metric name</th>
+                            <td>{{ element.metric_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Parent webpage</th>
+                            <td>{{ parentWebpage.page_name }} (ID {{ parentWebpage.webpage_id }})</td>
+                        </tr>
+                        <tr>
+                            <th>Locator string</th>
+                            <td>{{ element.locator }}</td>
+                        </tr>
+                        <tr>
+                            <th>Data count</th>
+                            <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </BasicCard>
+    
+            <BasicCard
+                class="g-d"
+                icon="bxs-data"
+                title="Scraped element data"
+                description="Inspect the data that has been scraped from this element"
+            >
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Data ID</th>
+                            <th>Element ID</th>
+                            <th>Value</th>
+                            <th>Timestamp</th>
+                        </tr>
+                        <tr v-for="entry in data">
+                            <td>{{ entry.data_id }}</td>
+                            <td>{{ entry.element_id }}</td>
+                            <td>{{ entry.value }}</td>
+                            <td>{{ formatTime(entry.created_at) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </BasicCard>
+        </div>
     </div>
 </template>
 

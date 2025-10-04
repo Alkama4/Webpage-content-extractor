@@ -9,10 +9,7 @@
             <div class="flex-col">
                 <label>{{ item[labelField] }}</label>
                 <div v-if="subField" class="sub-field">
-                    <a v-if="isLink(item[subField])" :href="item[subField]" target="_blank">
-                        {{ item[subField] }}
-                    </a>
-                    <span v-else>{{ item[subField] }}</span>
+                    {{ item[subField] }}
                 </div>
             </div>
             <div class="controls flex-row">
@@ -66,13 +63,14 @@ const isLink = (value) => {
 .list-entry:hover {
     background-color: var(--color-neutral-300);
 }
+/* .list-entry:hover label {
+    text-decoration: underline;
+} */
 .list-entry label {
     cursor: pointer;
 }
 .list-entry .sub-field {
     font-size: var(--fs-1);
-}
-.list-entry .sub-field span {
     color: var(--text-dark-secondary);
 }
 .list-entry .controls {

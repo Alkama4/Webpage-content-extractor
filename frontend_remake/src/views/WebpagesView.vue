@@ -1,57 +1,69 @@
 <template>
-  <div class="webpages-view center-content gap-16 container-xxl margin-center">
-    <BasicCard
-      icon="bx-list-ul"
-      class="container-lg f-3"
-      title="Webpages" 
-      description="Manage pages from which you scrape content"
-    >
-      <div class="entry-list-wrapper" v-if="webpages.length > 0">
-        <ListEntry
-          v-for="page in webpages"
-          :key="page.webpage_id"
-          :item="page"
-          :to="`/webpages/${page.webpage_id}`"
-          icon="bx bx-globe"
-          labelField="page_name"
-          subField="url"
-          :onEdit="editWebpage"
-          :onDelete="deleteWebpage"
+  <div class="webpages-view">
+    <h1>Webpages</h1>
+    <div class="center-content gap-16 container-xxl margin-center">
+      <BasicCard
+        icon="bx-list-ul"
+        class="container-lg f-3"
+        title="Webpages" 
+        description="Manage pages from which you scrape content"
+      >
+        <div class="entry-list-wrapper" v-if="webpages.length > 0">
+          <ListEntry
+            v-for="page in webpages"
+            :key="page.webpage_id"
+            :item="page"
+            :to="`/webpages/${page.webpage_id}`"
+            icon="bx bx-globe"
+            labelField="page_name"
+            subField="url"
+            :onEdit="editWebpage"
+            :onDelete="deleteWebpage"
+          />
+        </div>
+        <ListingPlaceholder 
+          v-else
+          icon="bx-globe"
+          text="No webpages found"
+          desc="Create a new webpage using the form on the right."
         />
-      </div>
-      <ListingPlaceholder 
-        v-else
-        icon="bx-globe"
-        text="No webpages found"
-        desc="Create a new webpage using the form on the right."
-      />
-    </BasicCard>
-    
-    <BasicCard
-      icon="bx-list-plus"
-      class="container-lg f-1"
-      title="Create a webpage" 
-      description="Set up a new page for data extraction"
-    >
-      <form @submit.prevent="createWebpage" class="container">
-        <TextInput
-          v-model="createWebpageParams.url"
-          label="URL"
-          placeholder="http://example.com"
-        />
-        <TextInput
-          v-model="createWebpageParams.page_name"
-          label="Page name"
-          placeholder="The webpages name"
-        />
-        <button type="submit">Create</button>
-      </form>
-    </BasicCard>
+      </BasicCard>
+      
+      <BasicCard
+        icon="bx-list-plus"
+        class="container-lg f-1"
+        title="Create a webpage" 
+        description="Set up a new page for data extraction"
+      >
+        <div class="flex-col">
+          <InlineMessage 
+            :text="createError" 
+            :interaction="true"
+            @close="createError = ''"
+            v-if="createError"
+          />
+          <form @submit.prevent="createWebpage" class="container">
+            <TextInput
+              v-model="createWebpageParams.url"
+              label="URL"
+              placeholder="http://example.com"
+            />
+            <TextInput
+              v-model="createWebpageParams.page_name"
+              label="Page name"
+              placeholder="The webpages name"
+            />
+            <button type="submit">Create</button>
+          </form>
+        </div>
+      </BasicCard>
+    </div>
   </div>
 </template>
 
 <script>
 import BasicCard from '@/components/BasicCard.vue';
+import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import TextInput from '@/components/TextInput.vue'
@@ -64,6 +76,7 @@ export default {
     ListingPlaceholder,
     TextInput,
     ListEntry,
+    InlineMessage,
   },
   data() {
     return {
@@ -76,6 +89,7 @@ export default {
         url: "",
         page_name: ""
       },
+      createError: "",
       targetUrl: "",
       iframeLoaded: false,          // flag to avoid re‑attaching listeners
       webpages: []
@@ -83,10 +97,14 @@ export default {
   },
   methods: {
     async createWebpage() {
-      const response = await fastApi.webpages.post(this.createWebpageParams);
-      if (response) {
-        await this.fetchWebpages();
-        this.createWebpageParams = {};
+      try {
+        const response = await fastApi.webpages.post(this.createWebpageParams);
+        if (response) {
+          await this.fetchWebpages();
+          this.createWebpageParams = {};
+        }
+      } catch(e) {
+        this.createError = e.response.data.detail[0].msg;
       }
     },
 

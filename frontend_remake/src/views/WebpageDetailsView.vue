@@ -1,178 +1,181 @@
 <template>
     <div class="webpage-details">
-        <BasicCard
-            class="g-a"
-            icon="bx-globe"
-            title="Webpage details"
-            description="Inspect the details of a webpage"
-        >
-            <div class="flex-col gap-16">
-                <table>
+        <h1>Webpage details</h1>
+        <div class="webpage-details-grid">
+            <BasicCard
+                class="g-a"
+                icon="bxs-info-circle"
+                title="Webpage info"
+                description="Inspect the details of a webpage"
+            >
+                <div class="flex-col gap-16">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>Name</th>
+                                <td>{{ webpage.page_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>URL</th>
+                                <td><a :href="webpage.url">{{ webpage.url }}</a></td>
+                            </tr>
+                            <tr>
+                                <th>Element count</th>
+                                <td>{{ elementCount }} element{{ elementCount == 1 ? '' : 's' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Data count</th>
+                                <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="flex-row gap-8">
+                        <button @click="editWebpage" class="btn-with-icon">
+                            <i class="bx bxs-edit"></i>
+                            <span>Edit</span>
+                        </button>
+                        <button @click="deleteWebpage" class="btn-with-icon btn-danger">
+                            <i class="bx bxs-trash"></i>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                </div>
+            </BasicCard>
+    
+            <BasicCard
+                class="g-b"
+                style="min-width: 500px;"
+                icon="bx-list-ul"
+                title="Webpage elements"
+                description="Elements that are scraped from the webpage"
+            >
+                <div v-if="elements?.length > 0" class="entry-list-wrapper">
+                    <ListEntry
+                        v-for="element in elements"
+                        :key="element.element_id"
+                        :item="element"
+                        :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
+                        icon="bx bxs-layer"
+                        labelField="metric_name"
+                        subField="locator"
+                        :onEdit="editElement"
+                        :onDelete="deleteElement"
+                    />
+                </div>
+                <ListingPlaceholder 
+                    v-else
+                    icon="bxs-layer"
+                    text="No elements found"
+                    desc="Create a new element using the form on the right."
+                />
+            </BasicCard>
+    
+            <BasicCard
+                class="g-c"
+                icon="bx-list-plus"
+                title="Setup a new element"
+                description="Set up a new element to be scraped from the page"
+            >
+                <div class="flex-col gap-8">
+                    <div class="flex-col gap-8">
+                        <div class="iframe-wrapper" :class="{'unloaded': !previewHtml}">
+                            <iframe
+                                v-if="previewHtml"
+                                id="previewFrame"
+                                ref="previewIframe"
+                                :srcdoc="previewHtml"
+                                frameborder="0"
+                            ></iframe>
+                            <div class="placeholder" v-else @click="loadPageToIframe">
+                                <template v-if="loading.iframe">
+                                    <LoadingIndicator/>
+                                </template>
+                                <template v-else>
+                                    <i class="bx bx-window-open icon"></i>
+                                    <div class="text">Load page</div>
+                                    <div class="desc">Click here to fetch and display the webpage in the frame</div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col gap-8">
+                        <InlineMessage 
+                            :text="`Unable to parse element value as a number: ${displayeElementDetails.element.innerHTML}`"
+                            :interaction="false"
+                            v-if="failed.valueParse"
+                        />
+                        <InlineMessage 
+                            :text="`Multiple elements matched (${locatorMatchCount} matches). The first element will be used.`"
+                            type="warning"
+                            :interaction="false"
+                            v-if="locatorMatchCount > 1"
+                        />
+                        <InlineMessage 
+                            text="A field cannot be empty" 
+                            :interaction="true"
+                            @close="failed.emptyFields = false"
+                            v-if="failed.emptyFields"
+                        />
+                        <InlineMessage 
+                            text="This element already exists under the webpage" 
+                            :interaction="true"
+                            @close="failed.alreadyExists = false"
+                            v-if="failed.alreadyExists"
+                        />
+    
+                        <form @submit.prevent="createElement">
+                            <TextInput
+                                v-model="newElemenDetails.metric_name"
+                                label="Metric name"
+                                placeholder="Aluminium price"
+                            />
+                            <TextInput
+                                class="f-1"
+                                v-model="newElemenDetails.locator"
+                                label="Locator string"
+                                placeholder="div.class > section#id > ul > li:nth-of-type(3)"
+                            />
+                            <button :disabled="failed.valueParse" type="submit">
+                                <LoadingIndicator v-if="loading.elementCreate"/>
+                                <span v-else>Create element</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </BasicCard>
+    
+            <BasicCard
+                class="g-d"
+                icon="bxs-data"
+                title="Scraped webpage data"
+                description="Inspect the data that has been scraped from the current webpage"
+            >
+                <table v-if="data?.length > 0">
                     <tbody>
                         <tr>
-                            <th>Name</th>
-                            <td>{{ webpage.page_name }}</td>
+                            <th>Data ID</th>
+                            <th>Element ID</th>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Timestamp</th>
                         </tr>
-                        <tr>
-                            <th>URL</th>
-                            <td><a :href="webpage.url">{{ webpage.url }}</a></td>
-                        </tr>
-                        <tr>
-                            <th>Element count</th>
-                            <td>{{ elementCount }} element{{ elementCount == 1 ? '' : 's' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Data count</th>
-                            <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
+                        <tr v-for="entry in data">
+                            <td>{{ entry.data_id }}</td>
+                            <td>{{ entry.element_id }}</td>
+                            <td>{{ findMetricName(entry.element_id) }}</td>
+                            <td>{{ entry.value }}</td>
+                            <td>{{ formatTime(entry.created_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="flex-row gap-8">
-                    <button class="btn-with-icon">
-                        <i class="bx bxs-edit"></i>
-                        <span>Edit</span>
-                    </button>
-                    <button class="btn-with-icon btn-danger">
-                        <i class="bx bxs-trash"></i>
-                        <span>Delete</span>
-                    </button>
-                </div>
-            </div>
-        </BasicCard>
-
-        <BasicCard
-            class="g-b"
-            style="min-width: 500px;"
-            icon="bx-list-ul"
-            title="Webpage elements"
-            description="Elements that are scraped from the webpage"
-        >
-            <div v-if="elements?.length > 0" class="entry-list-wrapper">
-                <ListEntry
-                    v-for="element in elements"
-                    :key="element.element_id"
-                    :item="element"
-                    :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
-                    icon="bx bxs-layer"
-                    labelField="metric_name"
-                    subField="locator"
-                    :onEdit="editElement"
-                    :onDelete="deleteElement"
+                <ListingPlaceholder 
+                    v-else
+                    icon="bxs-data"
+                    text="No data found"
+                    desc="The data scraped from the current webpage will appear here."
                 />
-            </div>
-            <ListingPlaceholder 
-                v-else
-                icon="bxs-layer"
-                text="No elements found"
-                desc="Create a new element using the form on the right."
-            />
-        </BasicCard>
-
-        <BasicCard
-            class="g-c"
-            icon="bx-list-plus"
-            title="Setup a new element"
-            description="Set up a new element to be scraped from the page"
-        >
-            <div class="flex-col gap-8">
-                <div class="flex-col gap-8">
-                    <div class="iframe-wrapper" :class="{'unloaded': !previewHtml}">
-                        <iframe
-                            v-if="previewHtml"
-                            id="previewFrame"
-                            ref="previewIframe"
-                            :srcdoc="previewHtml"
-                            frameborder="0"
-                        ></iframe>
-                        <div class="placeholder" v-else @click="loadPageToIframe">
-                            <template v-if="loading.iframe">
-                                <LoadingIndicator/>
-                            </template>
-                            <template v-else>
-                                <i class="bx bx-window-open icon"></i>
-                                <div class="text">Load page</div>
-                                <div class="desc">Click here to fetch and display the webpage in the frame</div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex-col gap-8">
-                    <InlineMessage 
-                        :text="`Unable to parse element value as a number: ${displayeElementDetails.element.innerHTML}`"
-                        :interaction="false"
-                        v-if="failed.valueParse"
-                    />
-                    <InlineMessage 
-                        :text="`Multiple elements matched (${locatorMatchCount} matches). The first element will be used.`"
-                        type="warning"
-                        :interaction="false"
-                        v-if="locatorMatchCount > 1"
-                    />
-                    <InlineMessage 
-                        text="A field cannot be empty" 
-                        :interaction="true"
-                        @close="failed.emptyFields = false"
-                        v-if="failed.emptyFields"
-                    />
-                    <InlineMessage 
-                        text="This element already exists under the webpage" 
-                        :interaction="true"
-                        @close="failed.alreadyExists = false"
-                        v-if="failed.alreadyExists"
-                    />
-
-                    <form @submit.prevent="createElement">
-                        <TextInput
-                            class="f-1"
-                            v-model="newElemenDetails.locator"
-                            label="Locator string"
-                            placeholder="div.class > section#id > ul > li:nth-of-type(3)"
-                        />
-                        <TextInput
-                            v-model="newElemenDetails.metric_name"
-                            label="Metric name"
-                            placeholder="Aluminium price"
-                        />
-                        <button :disabled="failed.valueParse" type="submit">
-                            <LoadingIndicator v-if="loading.elementCreate"/>
-                            <span v-else>Create element</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </BasicCard>
-
-        <BasicCard
-            class="g-d"
-            icon="bxs-data"
-            title="Scraped webpage data"
-            description="Inspect the data that has been scraped from the current webpage"
-        >
-            <table v-if="data?.length > 0">
-                <tbody>
-                    <tr>
-                        <th>Data ID</th>
-                        <th>Element ID</th>
-                        <th>Metric</th>
-                        <th>Value</th>
-                        <th>Timestamp</th>
-                    </tr>
-                    <tr v-for="entry in data">
-                        <td>{{ entry.data_id }}</td>
-                        <td>{{ entry.element_id }}</td>
-                        <td>{{ findMetricName(entry.element_id) }}</td>
-                        <td>{{ entry.value }}</td>
-                        <td>{{ formatTime(entry.created_at) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <ListingPlaceholder 
-                v-else
-                icon="bxs-data"
-                text="No data found"
-                desc="The data scraped from the current webpage will appear here."
-            />
-        </BasicCard>
+            </BasicCard>
+        </div>
     </div>
 </template>
 
@@ -299,6 +302,19 @@ export default {
             }
         },
         
+        ////////////// Webpage modification //////////////
+        async deleteWebpage() {
+            if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
+                const response = await fastApi.webpages.delete(this.webpage.webpage_id);
+                if (response) {
+                    this.$router.push("/webpages");
+                }
+            }
+        },
+        editWebpage() {
+            alert("TBD");
+        },
+
         ////////////// Iframe stuff //////////////
         async loadPageToIframe() {
             this.loading.iframe = true;
@@ -468,7 +484,7 @@ export default {
 </script>
 
 <style scoped>
-.webpage-details {
+.webpage-details-grid {
     display: grid;
     gap: 16px;
     grid-template-columns: 4fr 3fr;
@@ -478,7 +494,7 @@ export default {
         "d d";
 }
 @media (max-width: 1000px) {
-    .webpage-details {
+    .webpage-details-grid {
         grid-template-columns: 1fr;
             grid-template-areas:
             "a"

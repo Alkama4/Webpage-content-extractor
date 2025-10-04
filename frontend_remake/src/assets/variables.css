@@ -18,8 +18,8 @@
   --color-neutral-400: hsl(0, 0%, 80%);
   --color-neutral-500: hsl(0, 0%, 70%); /* medium grey */
   --color-neutral-600: hsl(0, 0%, 55%);
-  --color-neutral-700: hsl(0, 0%, 30%);
-  --color-neutral-800: hsl(0, 0%, 15%);
+  --color-neutral-700: hsl(0, 0%, 35%);
+  --color-neutral-800: hsl(0, 0%, 20%);
   --color-neutral-900: hsl(0, 0%, 00%);
 
   /* Success / Warning / Error (use sparingly) */
@@ -33,7 +33,7 @@
   --bg-body: var(--color-neutral-100);
 
   /* Text */
-  --text-dark-black: black;
+  --text-dark-black: var(--color-neutral-900);
   --text-dark-primary: var(--color-neutral-800);
   --text-dark-secondary: var(--color-neutral-700);
   --text-dark-tertiary: var(--color-neutral-600);

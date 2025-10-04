@@ -1,7 +1,7 @@
 <template>
-    <div>
+    <div class="home-view">
         <h1>Welcome!</h1>
-        <p>Stuff...</p>
+        <p>Placholder</p>
     </div>
 </template>
 
@@ -11,7 +11,7 @@ export default {
     name: 'HomeView',
     data() {
         return {
-            
+
         };
     },
     methods: {

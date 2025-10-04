@@ -34,7 +34,7 @@ export default {
     align-items: center;
     gap: 4px;
     font-size: var(--fs-3);
-    font-weight: var(--fw-regular);
+    font-weight: var(--fw-semibold);
 }
 .header i {
     font-size: var(--fs-5);

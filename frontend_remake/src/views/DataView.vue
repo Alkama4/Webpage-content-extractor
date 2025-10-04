@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <h1>Data page</h1>
+    <div class="data-view">
+        <h1>Data</h1>
         <p>Data goes here</p>
     </div>
 </template>
@@ -11,7 +11,7 @@ export default {
     name: 'DataView',
     data() {
         return {
-            
+
         };
     },
     methods: {
