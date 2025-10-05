@@ -35,27 +35,7 @@
         title="Create a webpage" 
         description="Set up a new page for data extraction"
       >
-        <div class="flex-col">
-          <InlineMessage 
-            :text="createError" 
-            :interaction="true"
-            @close="createError = ''"
-            v-if="createError"
-          />
-          <form @submit.prevent="createWebpage" class="container">
-            <TextInput
-              v-model="createWebpageParams.url"
-              label="URL"
-              placeholder="http://example.com"
-            />
-            <TextInput
-              v-model="createWebpageParams.page_name"
-              label="Page name"
-              placeholder="The webpages name"
-            />
-            <button type="submit">Create</button>
-          </form>
-        </div>
+        <FormWebpage @success="fetchWebpages"/>
       </BasicCard>
     </div>
   </div>
@@ -63,11 +43,11 @@
 
 <script>
 import BasicCard from '@/components/CardBasic.vue';
-import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import TextInput from '@/components/TextInput.vue'
 import { fastApi } from '@/utils/fastApi';
+import FormWebpage from '@/components/FormWebpage.vue'
 
 export default {
   name: 'App',
@@ -76,38 +56,14 @@ export default {
     ListingPlaceholder,
     TextInput,
     ListEntry,
-    InlineMessage,
+    FormWebpage,
   },
   data() {
     return {
-      previewHtml: null,          // the HTML string for the iframe
-      previewIframe: null,        // will be set via $refs
-      clickedElement: "",         // selected element inside the iframe
-      locator: "",
-      inputUrl: "",
-      createWebpageParams: {
-        url: "",
-        page_name: ""
-      },
-      createError: "",
-      targetUrl: "",
-      iframeLoaded: false,          // flag to avoid re‑attaching listeners
       webpages: []
     };
   },
   methods: {
-    async createWebpage() {
-      try {
-        const response = await fastApi.webpages.post(this.createWebpageParams);
-        if (response) {
-          await this.fetchWebpages();
-          this.createWebpageParams = {};
-        }
-      } catch(e) {
-        this.createError = e.response.data.detail[0].msg;
-      }
-    },
-
     async deleteWebpage(webpage) {
       if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
         const response = await fastApi.webpages.delete(webpage.webpage_id);
@@ -132,13 +88,6 @@ export default {
   async mounted() {
     await this.fetchWebpages()
   },
-
-  watch: {
-    // When the iframe content changes, re‑attach listeners
-    previewHtml() {
-      if (!this.iframeLoaded) this.attachIframeListener();
-    }
-  }
 };
 </script>
 
