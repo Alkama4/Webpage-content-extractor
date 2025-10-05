@@ -66,7 +66,6 @@ export default {
         async webpageCreateOrUpdate() {
             this.loading.formSubmit = true;
             try {
-                console.log("nnoo??")
                 const response = this.existingWebpage
                     ? await fastApi.webpages.put(this.existingWebpage.webpage_id, this.newWebpageDetails)
                     : await fastApi.webpages.post(this.newWebpageDetails);
@@ -91,8 +90,8 @@ export default {
     mounted() {
         if (this.existingWebpage) {
             this.newWebpageDetails = {
-                locator: this.existingWebpage.locator || '',
-                metric_name: this.existingWebpage.metric_name || ''
+                url: this.existingWebpage.url || '',
+                page_name: this.existingWebpage.page_name || ''
             }
         }
     },

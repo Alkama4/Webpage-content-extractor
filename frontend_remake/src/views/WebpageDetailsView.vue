@@ -116,7 +116,7 @@
             </BasicCard>
         </div>
 
-        <ModalElement ref="modalElement"/>
+        <ModalElement ref="modalElementRef"/>
     </div>
 </template>
 
@@ -203,7 +203,7 @@ export default {
             return element ? element.metric_name : '';
         },
         async editElement(element) {
-            const response = await this.$refs.modalElement.open(this.webpage.url, this.webpage.webpage_id, element);
+            const response = await this.$refs.modalElementRef.open(this.webpage.url, this.webpage.webpage_id, element);
             if (response && response.success) {
                 await this.getWebpageElements();
             } 
