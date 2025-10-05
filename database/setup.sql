@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS webpages (
 );
 
 -- Defines scraping jobs linked to webpages and target elements
-CREATE TABLE IF NOT EXISTS scrapes (
-    scrape_id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS elements (
+    element_id INT AUTO_INCREMENT PRIMARY KEY,
     webpage_id INT NOT NULL,
     locator VARCHAR(512) NOT NULL,
     metric_name VARCHAR(128),
@@ -16,10 +16,10 @@ CREATE TABLE IF NOT EXISTS scrapes (
 );
 
 -- Stores scraped data values over time
-CREATE TABLE IF NOT EXISTS scrape_data (
+CREATE TABLE IF NOT EXISTS element_data (
     data_id INT AUTO_INCREMENT PRIMARY KEY,
-    scrape_id INT NOT NULL,
+    element_id INT NOT NULL,
     value DECIMAL(15,2),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (scrape_id) REFERENCES scrapes(scrape_id) ON DELETE CASCADE
+    FOREIGN KEY (element_id) REFERENCES elements(element_id) ON DELETE CASCADE
 );

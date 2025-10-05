@@ -4,8 +4,8 @@ from aiomysql import Connection
 
 # Pydantic models
 from app.models.webpage import WebpageCreate, WebpageInDB, WebpagePatch, WebpageOut
-from app.models.scrape import ScrapeInDB
-from app.models.scrape_data import ScrapeData
+from app.models.element import ElementInDB
+from app.models.element_data import ElementData
 
 # Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
@@ -141,25 +141,25 @@ async def _delete_webpage(conn: Connection, webpage_id: int) -> bool:
     return rowcount > 0
 
 
-async def _fetch_scrapes_by_webpage(conn: Connection, webpage_id: int) -> List[dict]:
+async def _fetch_elements_by_webpage(conn: Connection, webpage_id: int) -> List[dict]:
     query = """
-        SELECT webpage_id, scrape_id, locator, metric_name
-        FROM scrapes
+        SELECT webpage_id, element_id, locator, metric_name
+        FROM elements
         WHERE webpage_id = %s
-        ORDER BY scrape_id;
+        ORDER BY element_id;
     """
     return await execute_mysql_query(conn, query, (webpage_id,))
 
 
-async def _fetch_scrape_data_by_webpage(conn: Connection, webpage_id: int) -> List[dict]:
+async def _fetch_element_data_by_webpage(conn: Connection, webpage_id: int) -> List[dict]:
     # Join all three tables to pull the data you want
     query = """
         SELECT sd.data_id,
-                sd.scrape_id,
+                sd.element_id,
                 sd.value,
                 sd.created_at
-        FROM scrape_data AS sd
-        JOIN scrapes AS s ON sd.scrape_id = s.scrape_id
+        FROM element_data AS sd
+        JOIN elements AS s ON sd.element_id = s.element_id
         WHERE s.webpage_id = %s
         ORDER BY sd.created_at DESC;
     """
@@ -244,7 +244,7 @@ async def patch_webpage(webpage_id: int, page: WebpagePatch):
 @router.delete("/{webpage_id}")
 async def delete_webpage(webpage_id: int):
     """
-    Remove the webpage - all associated scrapes and data are deleted automatically via FK cascade.
+    Remove the webpage - all associated elements and data are deleted automatically via FK cascade.
     """
     async with get_aiomysql_connection() as conn:
         success = await _delete_webpage(conn, webpage_id)
@@ -253,28 +253,28 @@ async def delete_webpage(webpage_id: int):
         return {"msg": "Webpage deleted"}
 
 
-@router.get("/{webpage_id}/scrapes", response_model=List[ScrapeInDB])
-async def get_webpage_scrapes(webpage_id: int):
+@router.get("/{webpage_id}/elements", response_model=List[ElementInDB])
+async def get_webpage_elements(webpage_id: int):
     """
-    Return all scrapes defined for a given webpage.
+    Return all elements defined for a given webpage.
     """
     async with get_aiomysql_connection() as conn:
         # Make sure the webpage exists first
         if not await _fetch_webpage_by_id(conn, webpage_id):
             raise HTTPException(status_code=404, detail="Webpage not found")
 
-        rows = await _fetch_scrapes_by_webpage(conn, webpage_id)
+        rows = await _fetch_elements_by_webpage(conn, webpage_id)
         return rows
 
 
-@router.get("/{webpage_id}/scrapes/data", response_model=List[ScrapeData])
-async def get_webpage_scrape_data(webpage_id: int):
+@router.get("/{webpage_id}/elements/data", response_model=List[ElementData])
+async def get_webpage_element_data(webpage_id: int):
     """
-    Return all scraped data points for a given webpage.
+    Return all elementd data points for a given webpage.
     """
     async with get_aiomysql_connection() as conn:
         if not await _fetch_webpage_by_id(conn, webpage_id):
             raise HTTPException(status_code=404, detail="Webpage not found")
 
-        rows = await _fetch_scrape_data_by_webpage(conn, webpage_id)
+        rows = await _fetch_element_data_by_webpage(conn, webpage_id)
         return rows

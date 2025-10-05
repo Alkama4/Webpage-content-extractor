@@ -1,0 +1,181 @@
+/************** Body **************/
+body {
+    padding: 0;
+    margin: 0;
+    margin-inline: var(--gutter-width);
+    font-family: var(--ff-sans);
+    line-height: 1.6;
+    color: var(--text-dark-primary);
+    background: var(--bg-body);
+}
+#app {
+    padding-top: var(--header-height);
+    box-sizing: border-box;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/************** Everything **************/
+:focus-visible {
+    outline-style: solid;
+    outline-width: 2px;
+    outline-color: var(--text-dark-primary);
+}
+
+:disabled {
+    filter: opacity(0.6);
+    pointer-events: none;
+}
+
+::selection {
+    background-color: var(--color-primary-500);
+    color: var(--text-light-primary);
+}
+
+/************** Links **************/
+a {
+    color: var(--color-primary-500);   /* bright accent instead of white */
+    text-decoration: none;
+}
+a:hover,
+a:focus {
+    text-decoration: underline;
+}
+
+a.no-deco,
+a.no-deco {
+    color: unset;
+}
+a.no-deco:hover,
+a.no-deco:focus {
+    text-decoration: none;
+}
+
+/************** Headers **************/
+h1.mb-0,
+h2.mb-0,
+h3.mb-0,
+h4.mb-0,
+h5.mb-0,
+h6.mb-0 {
+    margin-bottom: 0;
+}
+
+
+/************** Buttons **************/
+button, .btn {
+    font-family: var(--ff-sans);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    border-radius: var(--btn-radius);
+    background: var(--color-primary-500);
+    color: var(--text-light-primary);
+    font-weight: var(--fw-medium);
+    border: none;
+    cursor: pointer;
+    transition: background-color var(--t-fast),
+                color var(--t-fast);
+}
+button:hover, .btn:hover {
+    background: var(--color-primary-600);
+}
+
+.btn-text {
+    color: var(--text-dark-primary);
+    background-color: unset;
+}
+.btn-text:hover {
+    background: var(--color-primary-100);
+}
+
+.btn-with-icon {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-icon {
+    padding: var(--btn-padding-y);
+}
+
+.btn-danger:hover {
+    background-color: var(--color-error);
+}
+
+.btn-icon-danger:hover {
+    color: var(--color-error);
+}
+
+
+
+
+
+/************** Inputs **************/
+input {
+    font-family: var(--ff-sans);
+    padding: 0.5rem 0.5rem;
+    border-radius: var(--btn-radius);
+    border: 1px solid var(--color-neutral-500);
+    box-sizing: border-box;
+}
+input:hover {
+    border: 1px solid var(--color-neutral-400);
+}
+
+
+/************** Cards and areas **************/
+.card {
+    padding: var(--card-pad-y) var(--card-pad-x);
+    border-radius: var(--card-radius);
+    border: 2px solid var(--color-neutral-300);
+}
+
+.section-separator {
+    border: none;
+    height: 2px;
+    border-radius: 100px;
+    background-color: var(--color-neutral-200);
+    margin: 16px 0;
+}
+
+
+/************** Forms **************/
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+button[type="submit"] {
+    margin-top: 16px;
+}
+
+table {
+    text-align: left;
+}
+table th,
+table td {
+    vertical-align: top;
+}
+table th {
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+    padding-right: 8px;
+    width: 0px; /* For tables with th column sets with to min possible */
+}
+
+/************** Tags **************/
+.tag {
+    width: fit-content;
+    padding: 1.5px 10px;
+    font-size: var(--fs-1);
+    border-radius: 6px;
+}
+.tag-error {
+    background-color: var(--color-error);
+    color: var(--text-light-primary);
+}
+.tag-positive {
+    background-color: var(--color-success);
+    color: var(--text-light-primary);
+}
