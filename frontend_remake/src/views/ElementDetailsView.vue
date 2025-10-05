@@ -8,42 +8,44 @@
                 title="Element info"
                 description="Inspect the details of the element"
             >
-                <table>
-                    <tbody>
-                        <tr>
-                            <th>Metric name</th>
-                            <td>{{ element.metric_name }}</td>
-                        </tr>
-                        <tr>
-                            <th>Parent webpage</th>
-                            <td>{{ parentWebpage.page_name }} (ID {{ parentWebpage.webpage_id }})</td>
-                        </tr>
-                        <tr>
-                            <th>Locator string</th>
-                            <td>{{ element.locator }}</td>
-                        </tr>
-                        <tr>
-                            <th>Data count</th>
-                            <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="flex-col gap-16">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>Metric name</th>
+                                <td>{{ element.metric_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Locator string</th>
+                                <td>{{ element.locator }}</td>
+                            </tr>
+                            <tr>
+                                <th>Element ID</th>
+                                <td>{{ element.element_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Parent webpage</th>
+                                <td>{{ parentWebpage.page_name }} (ID {{ parentWebpage.webpage_id }})</td>
+                            </tr>
+                            <tr>
+                                <th>Data count</th>
+                                <td>{{ dataCount }} datapoint{{ dataCount == 1 ? '' : 's' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="flex-row gap-8">
+                        <button @click="editElement" class="btn-with-icon">
+                            <i class="bx bxs-edit"></i>
+                            <span>Edit</span>
+                        </button>
+                        <button @click="deleteElement" class="btn-with-icon btn-danger">
+                            <i class="bx bxs-trash"></i>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                </div>
             </BasicCard>
 
-            <BasicCard
-                class="g-c"
-                icon="bx-list-plus"
-                title="Edit element details"
-                description="View the selected element in the preview and click it to generate a new selector, or manually edit its locator string or metric name."
-            >
-                <FormElement
-                    :webpageUrl="parentWebpage.url"
-                    :webpageId="parentWebpage.webpage_id"
-                    :existingElement="element"
-                    @success="getElementInfo"
-                />
-            </BasicCard>
-    
             <BasicCard
                 class="g-d"
                 icon="bxs-data"
@@ -68,12 +70,15 @@
                 </table>
             </BasicCard>
         </div>
+
+        <ModalElement ref="modalElementRef"/>
     </div>
 </template>
 
 <script>
 import BasicCard from '@/components/CardBasic.vue';
 import FormElement from '@/components/FormElement.vue';
+import ModalElement from '@/components/ModalElement.vue'
 import { fastApi } from '@/utils/fastApi';
 import { formatTime } from '@/utils/utils';
 
@@ -82,6 +87,7 @@ export default {
     components: {
         BasicCard,
         FormElement,
+        ModalElement,
     },
     data() {
         return {
@@ -111,7 +117,22 @@ export default {
         },
         formatTime(time) {
             return formatTime(time);
-        }
+        },
+
+        async editElement() {
+            const response = await this.$refs.modalElementRef.open(this.parentWebpage.url, this.parentWebpage.webpage_id, this.element);
+            if (response && response.success) {
+                await this.getElementInfo();
+            } 
+        },
+        async deleteElement() {
+            if (confirm("Are you certain you wish to delete this element? This action cannot be undone!")) {
+                const response = await fastApi.elements.delete(this.element.element_id);
+                if (response) {
+                    this.$router.push(`/webpages/${this.parentWebpage.webpage_id}`);
+                }
+            }
+        },
     },
     computed: {
         dataCount() {

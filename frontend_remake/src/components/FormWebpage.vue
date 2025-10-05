@@ -8,14 +8,14 @@
         />
         <form @submit.prevent="webpageCreateOrUpdate">
             <TextInput
-                v-model="newWebpageDetails.url"
-                label="URL"
-                placeholder="http://example.com"
-            />
-            <TextInput
                 v-model="newWebpageDetails.page_name"
                 label="Page name"
                 placeholder="The webpages name"
+            />
+            <TextInput
+                v-model="newWebpageDetails.url"
+                label="URL"
+                placeholder="http://example.com"
             />
             <button type="submit">
                 <LoadingIndicator v-if="loading.formSubmit"/>

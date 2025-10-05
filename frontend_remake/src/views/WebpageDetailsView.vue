@@ -1,3 +1,4 @@
+
 <template>
     <div class="webpage-details">
         <h1>Webpage details</h1>
@@ -18,6 +19,10 @@
                             <tr>
                                 <th>URL</th>
                                 <td><a :href="webpage.url">{{ webpage.url }}</a></td>
+                            </tr>
+                            <tr>
+                                <th>Webpage ID</th>
+                                <td>{{ webpage.webpage_id }}</td>
                             </tr>
                             <tr>
                                 <th>Element count</th>
@@ -117,12 +122,14 @@
         </div>
 
         <ModalElement ref="modalElementRef"/>
+        <ModalWebpage ref="modalWebpageRef"/>
     </div>
 </template>
 
 <script>
 import BasicCard from '@/components/CardBasic.vue';
 import ModalElement from '@/components/ModalElement.vue';
+import ModalWebpage from '@/components/ModalWebpage.vue';
 import FormElement from '@/components/FormElement.vue';
 import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
@@ -143,6 +150,7 @@ export default {
         ListingPlaceholder,
         FormElement,
         ModalElement,
+        ModalWebpage,
     },
     data() {
         return {
@@ -210,7 +218,7 @@ export default {
             // Else we aborted returning success = false
         },
         async deleteElement(element) {
-            if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
+            if (confirm("Are you certain you wish to delete this element? This action cannot be undone!")) {
                 const response = await fastApi.elements.delete(element.element_id);
                 if (response) {
                     await this.getWebpageElements();
@@ -228,8 +236,12 @@ export default {
                 }
             }
         },
-        editWebpage() {
-            alert("TBD");
+        async editWebpage() {
+            const response = await this.$refs.modalWebpageRef.open(this.webpage);
+            if (response && response.success) {
+                await this.getWebpageInfo();
+            } 
+            // Else we aborted returning success = false
         },
     },
     computed: {
