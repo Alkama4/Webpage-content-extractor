@@ -36,7 +36,7 @@
                 title="Edit element details"
                 description="View the selected element in the preview and click it to generate a new selector, or manually edit its locator string or metric name."
             >
-                <ElementForm
+                <FormElement
                     :webpageUrl="parentWebpage.url"
                     :webpageId="parentWebpage.webpage_id"
                     :existingElement="element"
@@ -72,8 +72,8 @@
 </template>
 
 <script>
-import BasicCard from '@/components/BasicCard.vue';
-import ElementForm from '@/components/ElementForm.vue';
+import BasicCard from '@/components/CardBasic.vue';
+import FormElement from '@/components/FormElement.vue';
 import { fastApi } from '@/utils/fastApi';
 import { formatTime } from '@/utils/utils';
 
@@ -81,7 +81,7 @@ export default {
     name: 'ElementDetails',
     components: {
         BasicCard,
-        ElementForm,
+        FormElement,
     },
     data() {
         return {

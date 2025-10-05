@@ -73,10 +73,10 @@
             <BasicCard
                 class="g-c"
                 icon="bx-list-plus"
-                title="Setup a new element"
+                title="Create a new element"
                 description="Set up a new element to be scraped from the page"
             >
-                <ElementForm
+                <FormElement
                     :webpageUrl="webpage.url"
                     :webpageId="webpage.webpage_id"
                     @success="getWebpageElements"
@@ -115,12 +115,15 @@
                 />
             </BasicCard>
         </div>
+
+        <ModalElement ref="modalElement"/>
     </div>
 </template>
 
 <script>
-import BasicCard from '@/components/BasicCard.vue';
-import ElementForm from '@/components/ElementForm.vue';
+import BasicCard from '@/components/CardBasic.vue';
+import ModalElement from '@/components/ModalElement.vue';
+import FormElement from '@/components/FormElement.vue';
 import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
@@ -138,7 +141,8 @@ export default {
         TextInput,
         InlineMessage,
         ListingPlaceholder,
-        ElementForm,
+        FormElement,
+        ModalElement,
     },
     data() {
         return {
@@ -198,8 +202,12 @@ export default {
             const element = this.elements.find(s => s.element_id === elementId);
             return element ? element.metric_name : '';
         },
-        editElement() {
-            alert("TBD");
+        async editElement(element) {
+            const response = await this.$refs.modalElement.open(this.webpage.url, this.webpage.webpage_id, element);
+            if (response && response.success) {
+                await this.getWebpageElements();
+            } 
+            // Else we aborted returning success = false
         },
         async deleteElement(element) {
             if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {

@@ -106,7 +106,7 @@ header {
     left: 0;
     right: 0;
     gap: 8px;
-    background-color: hsla(0, 0%, 100%, 0.2);
+    background-color: hsla(0, 0%, 100%, 0.5);
     padding-inline: var(--gutter-width);
     border-bottom: 2px solid var(--color-neutral-200);
     height: var(--header-height);

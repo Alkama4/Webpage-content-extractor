@@ -1,5 +1,5 @@
 <template>
-    <div class="element-form flex-col gap-8">
+    <div class="form-element flex-col gap-8">
         <div class="flex-col gap-8">
             <div class="iframe-wrapper" :class="{'unloaded': !previewHtml}">
                 <iframe
@@ -69,7 +69,7 @@ import { fastApi } from '@/utils/fastApi';
 import { getCssVar } from '@/utils/utils';
 
 export default {
-    name: 'ElementForm',
+    name: 'FormElement',
     data() {
         return {
             loading: {

@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import BasicCard from '@/components/BasicCard.vue';
+import BasicCard from '@/components/CardBasic.vue';
 import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';

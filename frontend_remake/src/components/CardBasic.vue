@@ -1,5 +1,5 @@
 <template>
-    <div class="card">
+    <div class="card-basic card">
         <div class="header-row">
             <div class="header">
                 <i class="bx" :class="icon"></i>
@@ -13,7 +13,7 @@
 
 <script>
 export default {
-  name: 'BasicCard',
+  name: 'CardBasic',
   props: {
     title: { type: String, default: 'Untitled' },
     description: { type: String, default: 'Untitled' },
@@ -26,6 +26,7 @@ export default {
 .card {
     display: flex;
     flex-direction: column;
+    background-color: var(--color-neutral-100);
 }
 
 .header {
