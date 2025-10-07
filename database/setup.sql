@@ -2,7 +2,10 @@
 CREATE TABLE IF NOT EXISTS webpages (
     webpage_id INT AUTO_INCREMENT PRIMARY KEY,
     url VARCHAR(512) NOT NULL UNIQUE,
-    page_name VARCHAR(128)
+    page_name VARCHAR(128),
+    run_minute TINYINT DEFAULT 0,
+    run_hour TINYINT DEFAULT 10,
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 -- Defines scraping jobs linked to webpages and target elements
