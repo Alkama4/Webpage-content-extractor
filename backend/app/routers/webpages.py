@@ -17,7 +17,7 @@ router = APIRouter(prefix="/webpages", tags=["webpages"])
 
 async def _fetch_all_webpages(conn: Connection) -> List[dict]:
     query = """
-        SELECT webpage_id, url, page_name
+        SELECT webpage_id, url, page_name, run_minute, run_hour, is_active
         FROM webpages
         ORDER BY webpage_id;
     """
@@ -26,7 +26,7 @@ async def _fetch_all_webpages(conn: Connection) -> List[dict]:
 
 async def _fetch_webpage_by_id(conn: Connection, webpage_id: int) -> Optional[dict]:
     query = """
-        SELECT webpage_id, url, page_name
+        SELECT webpage_id, url, page_name, run_minute, run_hour, is_active
         FROM webpages
         WHERE webpage_id = %s;
     """
@@ -36,14 +36,14 @@ async def _fetch_webpage_by_id(conn: Connection, webpage_id: int) -> Optional[di
 
 async def _create_webpage(conn: Connection, data: WebpageCreate) -> int:
     query = """
-        INSERT INTO webpages (url, page_name)
-        VALUES (%s, %s);
+        INSERT INTO webpages (url, page_name, run_minute, run_hour, is_active)
+        VALUES (%s, %s, %s, %s, %s);
     """
     try:
         last_id = await execute_mysql_query(
             conn,
             query,
-            params=(data.url, data.page_name),
+            params=(data.url, data.page_name, data.run_minute, data.run_hour, data.is_active),
             return_lastrowid=True
         )
         return last_id
@@ -209,7 +209,13 @@ async def get_webpage(webpage_id: int):
 @router.put("/{webpage_id}", response_model=WebpageOut)
 async def replace_webpage(webpage_id: int, page: WebpageCreate):
     async with get_aiomysql_connection() as conn:
-        fields = [("url", page.url), ("page_name", page.page_name)]
+        fields = [
+            ("url", page.url),
+            ("page_name", page.page_name),
+            ("run_minute", page.run_minute),
+            ("run_hour", page.run_hour),
+            ("is_active", page.is_active)
+        ]
         rowcount, updated_record = await _update_webpage_helper(conn, webpage_id, fields)
 
         if not updated_record:
@@ -228,6 +234,12 @@ async def patch_webpage(webpage_id: int, page: WebpagePatch):
             fields.append(("url", page.url))
         if page.page_name is not None:
             fields.append(("page_name", page.page_name))
+        if page.run_minute is not None:
+            fields.append(("run_minute", page.run_minute))
+        if page.run_hour is not None:
+            fields.append(("run_hour", page.run_hour))
+        if page.is_active is not None:
+            fields.append(("is_active", page.is_active))
 
         if not fields:
             raise HTTPException(status_code=400, detail="No fields to update")
