@@ -1,44 +1,47 @@
 /* ---------- Colors ---------- */
 :root {
-  /* Primary palette – feel free to tweak the hue */
-  --color-primary-100: hsl(210, 50%, 95%);
-  --color-primary-200: hsl(210, 50%, 88%);
-  --color-primary-300: hsl(210, 50%, 80%);
-  --color-primary-400: hsl(210, 50%, 60%);
+  /* Primary palette – based on hsl(210, 50%, 30%) */
+  --color-primary-50: hsl(210, 50%, 95%);
+  --color-primary-100: hsl(210, 50%, 90%);
+  --color-primary-200: hsl(210, 50%, 80%);
+  --color-primary-300: hsl(210, 50%, 70%);
+  --color-primary-400: hsl(210, 50%, 50%);
   --color-primary-500: hsl(210, 50%, 30%); /* main accent */
   --color-primary-600: hsl(210, 50%, 25%);
   --color-primary-700: hsl(210, 50%, 20%);
   --color-primary-800: hsl(210, 50%, 15%);
   --color-primary-900: hsl(210, 50%, 10%);
 
-  /* Neutral palette (darker greys) */
-  --color-neutral-100: hsl(0, 0%, 100%);
-  --color-neutral-200: hsl(0, 0%, 95%);
+  /* Neutral palette (lighter, softer grays) */
+  --color-neutral-50: hsl(0, 0%, 99%);
+  --color-neutral-100: hsl(0, 0%, 97%);
+  --color-neutral-200: hsl(0, 0%, 94%);
   --color-neutral-300: hsl(0, 0%, 88%);
-  --color-neutral-400: hsl(0, 0%, 80%);
-  --color-neutral-500: hsl(0, 0%, 70%); /* medium grey */
-  --color-neutral-600: hsl(0, 0%, 55%);
-  --color-neutral-700: hsl(0, 0%, 35%);
+  --color-neutral-400: hsl(0, 0%, 75%);
+  --color-neutral-500: hsl(0, 0%, 60%); /* medium grey */
+  --color-neutral-600: hsl(0, 0%, 45%);
+  --color-neutral-700: hsl(0, 0%, 30%);
   --color-neutral-800: hsl(0, 0%, 20%);
-  --color-neutral-900: hsl(0, 0%, 00%);
+  --color-neutral-900: hsl(0, 0%, 12%);
 
-  /* Success / Warning / Error (use sparingly) */
-  --color-success: #4ec768;
-  --color-warning: #e09a30;
-  --color-warning-hover: #f5b048;
-  --color-error:   #e7554a;
-  --color-error-hover: #f5695f;
+  /* Success / Warning / Error (lighter, more subtle) */
+  --color-success: hsl(142, 50%, 45%);
+  --color-success-light: hsl(142, 50%, 97%);
+  --color-warning: hsl(38, 60%, 55%);
+  --color-warning-light: hsl(38, 60%, 97%);
+  --color-error: hsl(0, 60%, 65%);
+  --color-error-light: hsl(0, 60%, 97%);
 
   /* Backgrounds */
-  --bg-body: var(--color-neutral-100);
+  --bg-body: linear-gradient(135deg, hsl(0, 0%, 99%) 0%, hsl(214, 15%, 99%) 100%);
 
   /* Text */
   --text-dark-black: var(--color-neutral-900);
   --text-dark-primary: var(--color-neutral-800);
-  --text-dark-secondary: var(--color-neutral-700);
-  --text-dark-tertiary: var(--color-neutral-600);
-  --text-light-primary: var(--color-neutral-100);
-  --text-light-secondary: var(--color-neutral-300);
+  --text-dark-secondary: var(--color-neutral-600);
+  --text-dark-tertiary: var(--color-neutral-500);
+  --text-light-primary: var(--color-neutral-50);
+  --text-light-secondary: var(--color-neutral-200);
 }
 
 /* ---------- Typography ---------- */
@@ -98,29 +101,33 @@
   --btn-padding-x: 1.2rem;
   --btn-margin-y: 0.3rem;
   --btn-margin-x: 0.5rem;
-  --btn-radius: 8px;
+  --btn-radius: 16px;
 
   /* Inputs & Textareas */
   --input-height: 3rem;
   --input-padding: 0.75rem 1rem;
-  --input-radius: 4px;
+  --input-radius: 12px;
 
   /* Cards / Panels */
   --card-pad-x: 1.5rem;
   --card-pad-y: 1.25rem;
-  --card-radius: 16px;
+  --card-radius: 24px;
 }
 
 /* ---------- Miscellaneous ---------- */
 :root {
-  /* Shadows – subtle, layered */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.12);
-  --shadow-md: 0 4px 6px rgba(0,0,0,.16);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,.2);
+  /* Premium shadows – sophisticated and expensive-looking */
+  --shadow-xs: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.02);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.02);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12), 0 4px 16px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  --shadow-2xl: 0 24px 64px rgba(0,0,0,.16), 0 12px 32px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.06);
 
   /* Transition timing */
-  --t-slow: .3s ease;
-  --t-fast: .15s ease;
+  --t-slow: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: .15s cubic-bezier(0.4, 0, 0.2, 1);
+  --t-bounce: .3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-  --header-height: 60px;
+  --header-height: 64px;
 }

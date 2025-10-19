@@ -8,8 +8,9 @@
         </div>
         <nav class="flex-row gap-8">
             <router-link 
-                v-for="link in links"
-                class="btn btn-text no-deco vertical-align gap-4" 
+                v-for="(link, index) in links"
+                :key="index"
+                class="nav-btn no-deco vertical-align gap-6" 
                 :to="link.path"
             >
                 <i class="bx" :class="link.icon"></i>
@@ -106,11 +107,13 @@ header {
     left: 0;
     right: 0;
     gap: 8px;
-    background-color: hsla(0, 0%, 100%, 0.5);
+    background: linear-gradient(135deg, hsla(0, 0%, 100%, 0.9) 0%, hsla(214, 20%, 98%, 0.9) 100%);
     padding-inline: var(--gutter-width);
-    border-bottom: 2px solid var(--color-neutral-200);
+    border-bottom: 1px solid var(--color-neutral-200);
     height: var(--header-height);
     backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-sm);
+    z-index: 1000;
 }
 
 .name {
@@ -121,22 +124,34 @@ header {
     white-space: nowrap;
 }
 .name a {
-    color: var(--color-primary-500);
+    color: var(--color-primary-600);
     font-size: var(--fs-4);
-    font-weight: var(--fw-semibold);
+    font-weight: var(--fw-bold);
+    transition: color var(--t-fast);
+}
+.name a:hover {
+    color: var(--color-primary-700);
 }
 
 .name i {
     font-size: var(--fs-6);
     color: var(--color-primary-500);
+    transition: color var(--t-fast);
+}
+.name:hover i {
+    color: var(--color-primary-600);
 }
 
 main {
-    padding-bottom: 64px;
+    padding: 1rem var(--gutter-width) 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-nav {
-    overflow-x: scroll;
+nav:not([aria-label="breadcrumb"]) {
+    overflow: visible;
 }
 
 footer {
@@ -147,28 +162,93 @@ footer {
     margin-bottom: 0;
     color: var(--color-neutral-500);
     padding: 8px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+nav[aria-label="breadcrumb"] {
+    margin: 1rem 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    box-sizing: border-box;
 }
 
 .breadcrumb {
     list-style: none;
     padding: 0;
+    margin: 0;
     display: flex;
     gap: 8px;
+    align-items: center;
+    background: none;
+    border: none;
+}
+.breadcrumb-item {
+    font-size: var(--fs-1);
+    color: var(--text-dark-secondary);
+}
+.breadcrumb-item a {
+    color: hsl(210, 50%, 30%);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--color-neutral-300);
+    box-shadow: var(--shadow-xs);
+    transition: all var(--t-fast);
+    display: inline-block;
+    font-weight: var(--fw-semibold);
+}
+.breadcrumb-item a:hover {
+    color: var(--text-light-primary);
+    background: hsl(210, 50%, 30%);
+    border-color: hsl(210, 50%, 30%);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.breadcrumb-item a.router-link-active {
+    color: var(--text-light-primary);
+    background: hsl(210, 50%, 30%);
+    border-color: hsl(210, 50%, 30%);
 }
 .breadcrumb-item::after {
     content: '/';
-    margin-left: 4px;
+    margin-left: 8px;
+    color: var(--color-neutral-400);
 }
 .breadcrumb-item:last-child::after { 
     content: '';
 }
 
-.btn.router-link-active {
-    color: var(--text-light-primary);
-    background-color: var(--color-primary-500);    
+.nav-btn {
+    color: var(--color-primary-600);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: transparent;
+    transition: all var(--t-fast);
+    display: inline-flex;
+    align-items: center;
+    font-weight: var(--fw-medium);
 }
-.btn.router-link-active:hover {
-    background-color: var(--color-primary-600);
+
+.nav-btn:hover {
+    color: var(--color-primary-700);
+    background: var(--color-primary-50);
+}
+
+.nav-btn.router-link-active {
+    color: var(--text-light-primary);
+    background: hsl(210, 50%, 30%);
+}
+
+.nav-btn.router-link-active:hover {
+    background: var(--color-primary-200);
 }
 
 </style>
