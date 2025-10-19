@@ -51,27 +51,36 @@ const isLink = (value) => {
 .list-entry {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     width: 100%;
     box-sizing: border-box;
-    padding: 4px 8px;
-    background-color: var(--color-neutral-200);
+    padding: 12px 16px;
+    background: var(--color-neutral-100);
+    border: 1px solid var(--color-neutral-200);
     border-radius: var(--btn-radius);
     cursor: pointer;
-    transition: var(--t-fast) background-color;
+    transition: all var(--t-fast);
+    box-shadow: var(--shadow-xs);
 }
 .list-entry:hover {
-    background-color: var(--color-neutral-300);
+    background: var(--color-neutral-50);
+    border-color: var(--color-primary-200);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
 }
 /* .list-entry:hover label {
     text-decoration: underline;
 } */
 .list-entry label {
     cursor: pointer;
+    font-weight: var(--fw-medium);
+    font-size: var(--fs-2);
+    color: var(--text-dark-primary);
 }
 .list-entry .sub-field {
     font-size: var(--fs-1);
     color: var(--text-dark-secondary);
+    margin-top: 2px;
 }
 .list-entry .controls {
     transition: var(--t-fast) opacity;
@@ -86,10 +95,14 @@ const isLink = (value) => {
 }
 .list-entry .controls i {
     font-size: var(--fs-4);
-    padding: 6px;
+    padding: 10px;
+    border-radius: 12px;
+    transition: all var(--t-fast);
 }
 
 .list-entry .btn:hover {
-  background-color: var(--color-neutral-400);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+  transform: scale(1.05);
 }
 </style>
