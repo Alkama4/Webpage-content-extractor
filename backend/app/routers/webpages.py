@@ -189,7 +189,7 @@ async def create_webpage(page: WebpageCreate):
     async with get_aiomysql_connection() as conn:
         last_id = await _create_webpage(conn, page)
 
-        scheduler_manager.add_schedule(last_id)
+        await scheduler_manager.add_schedule(last_id)
 
         new_record = await _fetch_webpage_by_id(conn, last_id)
         return new_record
@@ -222,7 +222,7 @@ async def replace_webpage(webpage_id: int, page: WebpageCreate):
         if not updated_record:
             raise HTTPException(status_code=404, detail="Webpage not found")
 
-        scheduler_manager.update_schedule(webpage_id)
+        await scheduler_manager.update_schedule(webpage_id)
 
         # Flag is true only if a row was actually changed
         updated_record["updated"] = rowcount > 0
@@ -252,7 +252,7 @@ async def patch_webpage(webpage_id: int, page: WebpagePatch):
         if not updated_record:
             raise HTTPException(status_code=404, detail="Webpage not found")
 
-        scheduler_manager.update_schedule(webpage_id)
+        await scheduler_manager.update_schedule(webpage_id)
 
         # Flag is true only if a row was actually changed
         updated_record["updated"] = rowcount > 0
@@ -269,7 +269,7 @@ async def delete_webpage(webpage_id: int):
         if not success:
             raise HTTPException(status_code=404, detail="Webpage not found")
         
-        scheduler_manager.remove_schedule(webpage_id)
+        await scheduler_manager.remove_schedule(webpage_id)
 
         return {"msg": "Webpage deleted"}
 

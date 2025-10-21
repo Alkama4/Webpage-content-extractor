@@ -20,7 +20,8 @@ class ScheduleManager:
 
     async def _sync_schedule(self, row: dict):
         job_id = f"webpage_{row['webpage_id']}"
-        self.scheduler.remove_job(job_id, jobstore=None, job_defaults=None, replace_existing=False) if self.scheduler.get_job(job_id) else None
+        if self.scheduler.get_job(job_id):
+            self.scheduler.remove_job(job_id, jobstore=None)
 
         if row["is_active"]:
             trigger = CronTrigger(hour=row["run_hour"], minute=row["run_minute"])
