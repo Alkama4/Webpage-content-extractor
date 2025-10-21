@@ -1,15 +1,13 @@
 from fastapi import APIRouter, HTTPException
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from aiomysql import Connection
 
 # Pydantic models
 from app.models.element import ElementCreate, ElementInDB, ElementOut, ElementPatch
 from app.models.element_data import ElementData
-from app.scraper.utils import ValidateRequest, ValidationData
 
 # Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
-from app.scraper.utils import group_elements_by_webpage, run_scrapes_by_webpage, validate_scrapes
 
 router = APIRouter(prefix="/elements", tags=["elements"])
 
@@ -169,50 +167,6 @@ async def _fetch_element_data_by_element(conn: Connection, element_id: int) -> L
     return await execute_mysql_query(conn, query, (element_id,))
 
 
-async def _fetch_all_webpage_and_element_rows(conn: Connection) -> List[Dict[str, Any]]:
-    """
-    Return a list of rows that contain both webpage and element columns.
-    Each row is a plain dict (column name -> value).
-    """
-    query = """
-        SELECT
-            w.webpage_id, w.url, w.page_name,
-            s.element_id, s.locator, s.metric_name
-        FROM webpages AS w
-        LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id;
-    """
-    return await execute_mysql_query(conn, query)
-
-
-async def _persist_element_data(conn: Connection, element_data: List[Dict[str, Any]]) -> None:
-    """
-    Bulk-insert the scraped values. Returns the number of rows inserted.
-    Uses a single INSERT statement with many VALUES tuples for speed.
-    """
-    if not element_data:
-        return
-
-    # Build placeholders: "(%s, %s), (%s, %s), ..."
-    values_placeholder = ", ".join(["(%s, %s)"] * len(element_data))
-    query = f"""
-        INSERT INTO element_data (element_id, value)
-        VALUES {values_placeholder};
-    """
-
-    # Flatten the list of tuples into a single tuple for executemany
-    params: List[Any] = []
-    for row in element_data:
-        params.extend([row.element_id, row.value])
-
-    await execute_mysql_query(
-        conn,
-        query,
-        tuple(params),
-        return_rowcount=True,
-    )
-
-
-
 ########################  Endpoints  ########################
 
 @router.get("/", response_model=List[ElementInDB])
@@ -221,37 +175,6 @@ async def get_elementss():
     async with get_aiomysql_connection() as conn:
         rows = await _fetch_all_elements(conn)
         return rows
-
-
-@router.post("/run-all")
-async def run_all_scrapes():
-    """
-    Trigger the nightly batch that iterates over every scrape job and runs them. Returns the count of scraped values.
-    """
-    async with get_aiomysql_connection() as conn:
-        # Get all elements joined with webpages
-        rows = await _fetch_all_webpage_and_element_rows(conn)
-
-        # Group by webpage
-        grouped = group_elements_by_webpage(rows)
-
-        # Run the scraper
-        results = run_scrapes_by_webpage(grouped)
-
-        # Persist data to the db
-        await _persist_element_data(conn, results)
-
-        return {"message": "Scraping completed", "scrape_count": len(results)}
-    
-
-@router.post("/validate", response_model=ValidationData)
-async def validate_scrapes_endpoint(req: ValidateRequest):
-    """
-    Run the scraper against a single page URL using the supplied list of
-    CSS/XPath locators. No data is persisted - the result is returned
-    directly to the caller.
-    """
-    return validate_scrapes(req)
 
 
 @router.post("/{webpage_id}", status_code=201, response_model=ElementInDB)

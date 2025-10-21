@@ -1,13 +1,13 @@
-from fastapi import FastAPI, Response
-import httpx
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import the routers
-from app.routers import webpages_router, elements_router
+# Import routers
+from app.routers import webpages_router, elements_router, root_router
+from app.lifespan import lifespan
 
-app = FastAPI(root_path="")
+app = FastAPI(root_path="", lifespan=lifespan)
 
-# Allow CORS from any origin
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,20 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount routers
+# Routers
+app.include_router(root_router)
 app.include_router(webpages_router)
 app.include_router(elements_router)
-
-# Root
-@app.get("/")
-def root():
-    """
-    Basic landing endpoint. Visit the API docs at /docs or /redoc.
-    """
-    return {"msg": "Hello world! See /docs for interactive documentation."}
-
-@app.get("/preview")
-async def preview(url: str):
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, timeout=10)
-    return Response(content=resp.text, media_type="text/html")

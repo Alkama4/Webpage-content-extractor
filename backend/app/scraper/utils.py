@@ -1,9 +1,10 @@
-from typing import Dict, List, Optional
-from .web_page_scraper import WebPageScraper
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, HttpUrl, Field
 import re
 from decimal import Decimal
 from fastapi import HTTPException
+from app.scraper.web_page_scraper import WebPageScraper
+from app.utils import get_aiomysql_connection, execute_mysql_query
 
 class ElementInfo(BaseModel):
     element_id: int
@@ -20,99 +21,34 @@ class ScrapeResult(BaseModel):
     element_id: int
     value: float | None
 
-class ValidateRequest(BaseModel):
+class ValidationRequest(BaseModel):
     """Request payload for validating elements on a single page."""
     url: HttpUrl = Field(..., description="The full URL that will be elementd")
     locators: list[str]
 
-class ValidateResult(BaseModel):
+class ValidationResult(BaseModel):
     locator: str
     value: float | None
 
-class ValidationData(ValidateRequest):
-    locators: list[ValidateResult]
+class ValidationData(ValidationRequest):
+    locators: list[ValidationResult]
 
 
-def group_elements_by_webpage(rows: List[Dict]) -> List[PageWithElements]:
-    """
-    Turn a flat list of (webpage + element) rows into a nested structure
-    grouped by `webpage_id`. Missing elements (rows where `element_id` is None)
-    are ignored.
-    """
-    pages: Dict[int, PageWithElements] = {}
-
-    for r in rows:
-        wid = r["webpage_id"]
-        page = pages.setdefault(
-            wid,
-            PageWithElements(
-                webpage_id=wid,
-                url=r["url"],
-                page_name=r.get("page_name"),
-                elements=[],
-            ),
-        )
-
-        # Only add a element if the id is not NULL
-        if r["element_id"] is not None:
-            # Build a ElementInfo instance instead of a plain dict
-            page.elements.append(
-                ElementInfo(
-                    element_id=r["element_id"],
-                    locator=r["locator"],
-                    metric_name=r.get("metric_name"),
-                )
-            )
-
-    return list(pages.values())
-
-
-def run_scrapes_by_webpage(webpages: List[PageWithElements]) -> List[ScrapeResult]:
-    """
-    Execute the scraper for every element listed under each webpage.
-    Returns a flat list of dicts: {element_id, value}.
-    """
-    results: List[ScrapeResult] = []
-
-    for page in webpages:
-        scraper = WebPageScraper(page.url)
-
-        for element in page.elements:
-            try:
-                raw_value = scraper.scrape(element.locator)
-            except Exception as exc:
-                print(f"Failed on {page.webpage_id} / {element.element_id}: {exc}")
-                continue
-
-            if raw_value is None:
-                continue
-
-            try:
-                numeric = parse_number(raw_value)
-            except ValueError as exc:
-                print(f"Could not parse value for {page.webpage_id} / {element.element_id}: {exc}")
-                continue
-
-            results.append(ScrapeResult(element_id=element.element_id, value=numeric))
-
-    return results
-
-
-def validate_scrapes(req: ValidateRequest) -> List[ValidateResult]:
+def validate_scrapes(req: ValidationRequest) -> List[ValidationResult]:
     """
     Work-horse for the `/validate` endpoint.
 
     Parameters
     ----------
-    req : ValidateRequest
+    req : ValidationRequest
         The request payload containing a single URL and a list of CSS/XPath locators.
     Returns
     -------
-    List[ValidateResult]
+    List[ValidationResult]
         A flat list of `{scrape_id, value}` objects.  `scrape_id` is set to ``0`` because
         the validation step does not correspond to an actual database record.
     """
-    results: List[ValidateResult] = []
+    results: List[ValidationResult] = []
 
     # Instantiate a scraper for the given URL once and reuse it for all locators
     scraper = WebPageScraper(str(req.url))
@@ -142,10 +78,9 @@ def validate_scrapes(req: ValidateRequest) -> List[ValidateResult]:
                 }
             )
 
-        results.append(ValidateResult(locator=locator, value=numeric))
+        results.append(ValidationResult(locator=locator, value=numeric))
 
     return ValidationData(url=req.url, locators=results)
-
 
 
 def parse_number(raw: str,
@@ -205,3 +140,124 @@ def parse_number(raw: str,
     number *= Decimal(percent_multiplier)
 
     return float(number) if force_decimal else number
+
+
+def _group_elements_by_webpage(rows: List[Dict]) -> List[PageWithElements]:
+    """
+    Turn a flat list of (webpage + element) rows into a nested structure
+    grouped by `webpage_id`. Missing elements (rows where `element_id` is None)
+    are ignored.
+    """
+    pages: Dict[int, PageWithElements] = {}
+
+    for r in rows:
+        wid = r["webpage_id"]
+        page = pages.setdefault(
+            wid,
+            PageWithElements(
+                webpage_id=wid,
+                url=r["url"],
+                page_name=r.get("page_name"),
+                elements=[],
+            ),
+        )
+
+        # Only add a element if the id is not NULL
+        if r["element_id"] is not None:
+            # Build a ElementInfo instance instead of a plain dict
+            page.elements.append(
+                ElementInfo(
+                    element_id=r["element_id"],
+                    locator=r["locator"],
+                    metric_name=r.get("metric_name"),
+                )
+            )
+
+    return list(pages.values())
+
+
+def _run_scrapes_by_webpage(webpages: List[PageWithElements]) -> List[ScrapeResult]:
+    """
+    Execute the scraper for every element listed under each webpage.
+    Returns a flat list of dicts: {element_id, value}.
+    """
+    results: List[ScrapeResult] = []
+
+    for page in webpages:
+        scraper = WebPageScraper(page.url)
+
+        for element in page.elements:
+            try:
+                raw_value = scraper.scrape(element.locator)
+            except Exception as exc:
+                print(f"Failed on {page.webpage_id} / {element.element_id}: {exc}")
+                continue
+
+            if raw_value is None:
+                continue
+
+            try:
+                numeric = parse_number(raw_value)
+            except ValueError as exc:
+                print(f"Could not parse value for {page.webpage_id} / {element.element_id}: {exc}")
+                continue
+
+            results.append(ScrapeResult(element_id=element.element_id, value=numeric))
+
+    return results
+
+
+async def _fetch_all_webpage_and_element_rows(conn) -> List[Dict[str, Any]]:
+    query = """
+        SELECT
+            w.webpage_id, w.url, w.page_name,
+            s.element_id, s.locator, s.metric_name
+        FROM webpages AS w
+        LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+        WHERE w.is_active = TRUE;
+    """
+    return await execute_mysql_query(conn, query)
+
+
+async def _fetch_webpage_and_elements_by_id(conn, webpage_id: int) -> List[Dict[str, Any]]:
+    query = """
+        SELECT
+            w.webpage_id, w.url, w.page_name,
+            s.element_id, s.locator, s.metric_name
+        FROM webpages AS w
+        LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+        WHERE w.webpage_id = %s AND w.is_active = TRUE;
+    """
+    return await execute_mysql_query(conn, query, (webpage_id,))
+
+
+async def _persist_element_data(conn, element_data: List[ScrapeResult]) -> None:
+    if not element_data:
+        return
+
+    placeholders = ", ".join(["(%s, %s)"] * len(element_data))
+    query = f"INSERT INTO element_data (element_id, value) VALUES {placeholders};"
+    params: List[Any] = []
+    for row in element_data:
+        params.extend([row.element_id, row.value])
+
+    await execute_mysql_query(conn, query, tuple(params), return_rowcount=True)
+
+
+async def run_scrape(webpage_id: int | None = None) -> str:
+    """
+    Runs scrapes for either all active webpages or a single one if `webpage_id` is provided.
+    Uses shared scraper utils for grouping, scraping, and persistence.
+    """
+    async with get_aiomysql_connection() as conn:
+        if webpage_id:
+            rows = await _fetch_webpage_and_elements_by_id(conn, webpage_id)
+        else:
+            rows = await _fetch_all_webpage_and_element_rows(conn)
+
+        webpages = _group_elements_by_webpage(rows)
+        results = _run_scrapes_by_webpage(webpages)
+        await _persist_element_data(conn, results)
+
+    scope = f"webpage_id={webpage_id}" if webpage_id else "all active webpages"
+    return f"Scrape completed for {scope}"
