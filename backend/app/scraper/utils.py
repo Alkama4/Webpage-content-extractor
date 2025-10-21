@@ -1,9 +1,10 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from .web_page_scraper import WebPageScraper
 from pydantic import BaseModel, HttpUrl, Field
 import re
 from decimal import Decimal
 from fastapi import HTTPException
+from app.utils import get_aiomysql_connection, execute_mysql_query
 
 class ElementInfo(BaseModel):
     element_id: int
@@ -147,7 +148,6 @@ def validate_scrapes(req: ValidateRequest) -> List[ValidateResult]:
     return ValidationData(url=req.url, locators=results)
 
 
-
 def parse_number(raw: str,
                  allow_percent: bool = False,
                  force_decimal: bool = True) -> float:
@@ -205,3 +205,59 @@ def parse_number(raw: str,
     number *= Decimal(percent_multiplier)
 
     return float(number) if force_decimal else number
+
+
+async def _fetch_all_webpage_and_element_rows(conn) -> List[Dict[str, Any]]:
+    query = """
+        SELECT
+            w.webpage_id, w.url, w.page_name,
+            s.element_id, s.locator, s.metric_name
+        FROM webpages AS w
+        LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+        WHERE w.is_active = TRUE;
+    """
+    return await execute_mysql_query(conn, query)
+
+
+async def _fetch_webpage_and_elements_by_id(conn, webpage_id: int) -> List[Dict[str, Any]]:
+    query = """
+        SELECT
+            w.webpage_id, w.url, w.page_name,
+            s.element_id, s.locator, s.metric_name
+        FROM webpages AS w
+        LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+        WHERE w.webpage_id = %s AND w.is_active = TRUE;
+    """
+    return await execute_mysql_query(conn, query, (webpage_id,))
+
+
+async def _persist_element_data(conn, element_data: List[ScrapeResult]) -> None:
+    if not element_data:
+        return
+
+    placeholders = ", ".join(["(%s, %s)"] * len(element_data))
+    query = f"INSERT INTO element_data (element_id, value) VALUES {placeholders};"
+    params: List[Any] = []
+    for row in element_data:
+        params.extend([row.element_id, row.value])
+
+    await execute_mysql_query(conn, query, tuple(params), return_rowcount=True)
+
+
+async def run_scrape(webpage_id: int | None = None) -> str:
+    """
+    Runs scrapes for either all active webpages or a single one if `webpage_id` is provided.
+    Uses shared scraper utils for grouping, scraping, and persistence.
+    """
+    async with get_aiomysql_connection() as conn:
+        if webpage_id:
+            rows = await _fetch_webpage_and_elements_by_id(conn, webpage_id)
+        else:
+            rows = await _fetch_all_webpage_and_element_rows(conn)
+
+        webpages = group_elements_by_webpage(rows)
+        results = run_scrapes_by_webpage(webpages)
+        await _persist_element_data(conn, results)
+
+    scope = f"webpage_id={webpage_id}" if webpage_id else "all active webpages"
+    return f"Scrape completed for {scope}"

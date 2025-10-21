@@ -1,6 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.utils import get_aiomysql_connection, execute_mysql_query
+from app.scraper.utils import run_scrape
 
 
 class ScheduleManager:
@@ -55,6 +56,5 @@ class ScheduleManager:
         return jobs_info
 
     async def _run_webpage_job(self, row: dict):
-        # Replace this with the actual work to perform
         print(f"Running job for webpage: {row['page_name']} ({row['url']})")
-
+        await run_scrape(row['webpage_id'])        
