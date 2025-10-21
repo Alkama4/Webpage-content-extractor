@@ -9,6 +9,7 @@ from app.models.element_data import ElementData
 
 # Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
+from app.main import scheduler_manager
 
 router = APIRouter(prefix="/webpages", tags=["webpages"])
 
@@ -178,9 +179,7 @@ async def get_webpages():
         return rows
 
 
-@router.post(
-    "/", status_code=201, response_model=WebpageInDB
-)
+@router.post("/", status_code=201, response_model=WebpageInDB)
 async def create_webpage(page: WebpageCreate):
     """
     Create a new webpage record.
@@ -189,6 +188,8 @@ async def create_webpage(page: WebpageCreate):
     """
     async with get_aiomysql_connection() as conn:
         last_id = await _create_webpage(conn, page)
+
+        scheduler_manager.add_schedule(last_id)
 
         new_record = await _fetch_webpage_by_id(conn, last_id)
         return new_record
@@ -221,6 +222,8 @@ async def replace_webpage(webpage_id: int, page: WebpageCreate):
         if not updated_record:
             raise HTTPException(status_code=404, detail="Webpage not found")
 
+        scheduler_manager.update_schedule(webpage_id)
+
         # Flag is true only if a row was actually changed
         updated_record["updated"] = rowcount > 0
         return updated_record
@@ -249,6 +252,9 @@ async def patch_webpage(webpage_id: int, page: WebpagePatch):
         if not updated_record:
             raise HTTPException(status_code=404, detail="Webpage not found")
 
+        scheduler_manager.update_schedule(webpage_id)
+
+        # Flag is true only if a row was actually changed
         updated_record["updated"] = rowcount > 0
         return updated_record
 
@@ -262,6 +268,9 @@ async def delete_webpage(webpage_id: int):
         success = await _delete_webpage(conn, webpage_id)
         if not success:
             raise HTTPException(status_code=404, detail="Webpage not found")
+        
+        scheduler_manager.remove_schedule(webpage_id)
+
         return {"msg": "Webpage deleted"}
 
 
