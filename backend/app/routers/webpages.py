@@ -9,7 +9,7 @@ from app.models.element_data import ElementData
 
 # Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
-from app.main import scheduler_manager
+from app.lifespan import scheduler_manager
 
 router = APIRouter(prefix="/webpages", tags=["webpages"])
 

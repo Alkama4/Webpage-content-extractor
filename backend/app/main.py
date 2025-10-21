@@ -1,22 +1,9 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import httpx
 
 # Import routers
-from app.routers import webpages_router, elements_router
-from app.scheduler.schedule_manager import ScheduleManager
-
-# Setup schedule manager
-scheduler_manager = ScheduleManager()
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await scheduler_manager.start()
-    print("Scheduler started.")
-    yield
-    scheduler_manager.scheduler.shutdown(wait=False)
-    print("Scheduler stopped.")
+from app.routers import webpages_router, elements_router, root_router
+from app.lifespan import lifespan
 
 app = FastAPI(root_path="", lifespan=lifespan)
 
