@@ -51,6 +51,11 @@ export default {
                     icon: 'bxs-bar-chart-alt-2',
                     name: 'Data',
                     path: '/data'
+                },
+                {
+                    icon: 'bx-time-five',
+                    name: 'Scheduler',
+                    path: '/scheduler'
                 }
             ]
         }
@@ -239,7 +244,7 @@ nav[aria-label="breadcrumb"] {
 
 .nav-btn:hover {
     color: var(--color-primary-700);
-    background: var(--color-primary-50);
+    border-color: hsl(210, 50%, 30%);
 }
 
 .nav-btn.router-link-active {
@@ -248,7 +253,7 @@ nav[aria-label="breadcrumb"] {
 }
 
 .nav-btn.router-link-active:hover {
-    background: var(--color-primary-200);
+    background: hsl(210, 50%, 30%);
 }
 
 </style>
