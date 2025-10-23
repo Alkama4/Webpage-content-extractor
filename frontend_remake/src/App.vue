@@ -118,7 +118,7 @@ header {
     height: var(--header-height);
     backdrop-filter: blur(20px);
     box-shadow: var(--shadow-sm);
-    z-index: 1000;
+    z-index: var(--z-header);
 }
 
 .name {

@@ -65,7 +65,7 @@ export default {
     padding: 32px;
     cursor: pointer;
     
-    z-index: 100;
+    z-index: var(--z-modal);
 }
 
 .card {

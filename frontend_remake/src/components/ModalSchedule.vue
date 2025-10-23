@@ -2,7 +2,7 @@
     <ModalBasic 
         ref="modalBasic"
         title="Edit webpage schedule"
-        description="Modify an existing webpages schedule"
+        description="Adjust the schedule for an existing webpage."
         icon="bx-time-five"
         @closed="handleClosed"
     >

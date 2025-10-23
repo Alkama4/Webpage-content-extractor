@@ -14,8 +14,8 @@
                         :item="webpage"
                         :to="`/webpages/${webpage.webpage_id}`"
                         icon="bx bx-globe"
-                        labelField="page_name"
-                        :description="`${formatScheduleTime(webpage)} - Not enabled`"
+                        :label="webpage.page_name"
+                        :description="`${formatScheduleTime(webpage)} - Disabled`"
                         :actions="[
                             {
                                 icon: 'bx bx-time-five',
@@ -48,7 +48,7 @@
                         :item="webpage"
                         :to="`/webpages/${webpage.webpage_id}`"
                         icon="bx bx-globe"
-                        labelField="page_name"
+                        :label="webpage.page_name"
                         :description="`${formatScheduleTime(webpage)} - Enabled`"
                         :actions="[
                             {

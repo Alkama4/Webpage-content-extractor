@@ -7,11 +7,8 @@
         <i v-if="icon" :class="icon"></i>
         <div class="flex-row space-between vertical-align">
             <div class="flex-col">
-                <label>{{ item[labelField] }}</label>
-                <div v-if="subField" class="sub-field">
-                    {{ item[subField] }}
-                </div>
-                <div v-else-if="description" class="sub-field">
+                <label>{{ label }}</label>
+                <div v-if="description" class="sub-field">
                     {{ description }}
                 </div>
             </div>
@@ -21,16 +18,6 @@
                     @click.prevent="action.method(item)" 
                     class="btn btn-transp btn-icon"
                     :class="action.icon"
-                ></i>
-                <i 
-                    v-if="onEdit" 
-                    @click.prevent="onEdit(item)" 
-                    class="bx bxs-edit btn btn-transp btn-icon"
-                ></i>
-                <i 
-                    v-if="onDelete" 
-                    @click.prevent="onDelete(item)" 
-                    class="bx bxs-trash btn btn-transp btn-icon btn-icon-danger"
                 ></i>
             </div>
         </div>
@@ -42,7 +29,7 @@ defineProps({
     item: Object,
     to: String,
     icon: String,
-    labelField: { type: String, default: "name" },
+    label: { type: String, default: "label" },
     subField: String,
     description: String,
     onClick: Function,

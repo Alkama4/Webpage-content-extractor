@@ -69,10 +69,18 @@
                         :item="element"
                         :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
                         icon="bx bxs-layer"
-                        labelField="metric_name"
-                        subField="locator"
-                        :onEdit="editElement"
-                        :onDelete="deleteElement"
+                        :label="element.metric_name"
+                        :description="element.locator"
+                        :actions="[
+                            {
+                                icon: 'bx bxs-edit',
+                                method: editElement
+                            },
+                            {
+                                icon: 'bx bxs-trash',
+                                method: deleteElement
+                            }
+                        ]"
                     />
                 </div>
                 <ListingPlaceholder 

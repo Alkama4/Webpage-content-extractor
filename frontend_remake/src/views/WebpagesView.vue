@@ -15,10 +15,18 @@
                         :item="webpage"
                         :to="`/webpages/${webpage.webpage_id}`"
                         icon="bx bx-globe"
-                        labelField="page_name"
-                        subField="url"
-                        :onEdit="editWebpage"
-                        :onDelete="deleteWebpage"
+                        :label="webpage.page_name"
+                        :description="webpage.url"
+                        :actions="[
+                            {
+                                icon: 'bx bxs-edit',
+                                method: editWebpage
+                            },
+                            {
+                                icon: 'bx bxs-trash',
+                                method: deleteWebpage
+                            }
+                        ]"
                     />
                 </div>
                 <ListingPlaceholder 
