@@ -13,7 +13,7 @@ class WebpageBase(BaseModel):
         default_factory=lambda: time(hour=4, minute=0),
         description="Time of day to run the scrape",
     )
-    is_active: bool = Field(True)
+    is_enabled: bool = Field(True)
 
     @field_validator('run_time', mode='before')
     def _to_time(cls, v):
@@ -42,7 +42,7 @@ class WebpagePatch(WebpageBase):
         None,
         description="Time of day to run the scrape",
     )
-    is_active: Optional[bool] = None
+    is_enabled: Optional[bool] = None
 
     class Config:
         orm_mode = True

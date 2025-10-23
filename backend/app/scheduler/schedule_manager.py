@@ -24,7 +24,7 @@ class ScheduleManager:
             self.scheduler.remove_job(job_id, jobstore=None)
         print(row["run_time"])
 
-        if row["is_active"]:
+        if row["is_enabled"]:
             rt = row["run_time"]
             # Handle both time objects and timedeltas
             if hasattr(rt, "hour") and hasattr(rt, "minute"):

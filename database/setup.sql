@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS webpages (
     url VARCHAR(512) NOT NULL UNIQUE,
     page_name VARCHAR(128),
     run_time TIME NOT NULL DEFAULT '04:00:00',
-    is_active BOOLEAN NOT NULL DEFAULT TRUE
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- Defines scraping jobs linked to webpages and target elements
