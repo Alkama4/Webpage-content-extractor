@@ -38,7 +38,7 @@ async def _fetch_webpage_by_id(conn: Connection, webpage_id: int) -> Optional[di
 async def _create_webpage(conn: Connection, data: WebpageCreate) -> int:
     query = """
         INSERT INTO webpages (url, page_name, run_time, is_enabled)
-        VALUES (%s, %s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s);
     """
     try:
         last_id = await execute_mysql_query(
