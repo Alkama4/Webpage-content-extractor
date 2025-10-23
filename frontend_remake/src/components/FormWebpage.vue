@@ -40,7 +40,6 @@ import TextInput from './TextInput.vue';
 import TimeInput from './TimeInput.vue';
 import ToggleInput from './ToggleInput.vue';
 import { fastApi } from '@/utils/fastApi';
-import { toInputTime } from '@/utils/utils';
 
 export default {
     name: 'FormWebpage',
@@ -105,7 +104,7 @@ export default {
             this.newWebpageDetails = {
                 url: this.existingWebpage.url || '',
                 page_name: this.existingWebpage.page_name || '',
-                run_time: toInputTime(this.existingWebpage.run_time) || '',
+                run_time: this.existingWebpage.run_time || '',
                 is_enabled: this.existingWebpage.is_enabled || false
             }
         }

@@ -57,6 +57,7 @@ export default {
         close() {
             this.handleClosed();
             this.visible = false;
+            this.confirmed = false
         },
 
         handleSuccess() {

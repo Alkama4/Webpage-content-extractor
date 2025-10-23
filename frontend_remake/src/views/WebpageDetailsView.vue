@@ -22,7 +22,7 @@
                             </tr>
                             <tr>
                                 <th>Schedule</th>
-                                <td>{{ toInputTime(webpage.run_time) }}</td>
+                                <td>{{ formatScheduleTime(webpage.run_time) }}</td>
                             </tr>
                             <tr>
                                 <th>Enabled</th>
@@ -171,7 +171,7 @@ import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
-import { formatTimestamp, toInputTime } from '@/utils/utils';
+import { formatTimestamp, formatScheduleTime } from '@/utils/utils';
 
 export default {
     name: 'WebpageDetails',
@@ -241,8 +241,8 @@ export default {
         formatTimestamp(time) {
             return formatTimestamp(time);
         },
-        toInputTime(time) {
-            return toInputTime(time);
+        formatScheduleTime(time) {
+            return formatScheduleTime(time);
         },
         findMetricName(elementId) {
             const element = this.elements.find(s => s.element_id === elementId);

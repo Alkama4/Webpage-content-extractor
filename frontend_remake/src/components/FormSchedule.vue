@@ -26,7 +26,6 @@ import TextInput from './TextInput.vue';
 import TimeInput from './TimeInput.vue';
 import ToggleInput from './ToggleInput.vue';
 import { fastApi } from '@/utils/fastApi';
-import { toInputTime } from '@/utils/utils';
 
 export default {
     name: 'FormSchedule',
@@ -86,7 +85,7 @@ export default {
     mounted() {
         if (this.existingWebpage) {
             this.newWebpageDetails = {
-                run_time: toInputTime(this.existingWebpage.run_time) || '',
+                run_time: this.existingWebpage.run_time || '',
             }
         }
     },
