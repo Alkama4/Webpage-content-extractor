@@ -17,6 +17,14 @@
                 label="URL"
                 placeholder="http://example.com"
             />
+            <TimeInput
+                v-model="newWebpageDetails.run_time"
+                label="Scheduled scrape time"
+            />
+            <ToggleInput
+                v-model="newWebpageDetails.is_enabled"
+                label="Scraping enabled"
+            />
             <button type="submit">
                 <LoadingIndicator v-if="loading.formSubmit"/>
                 <span v-else>{{ existingWebpage ? 'Update webpage' : 'Create webpage' }}</span>
@@ -29,7 +37,10 @@
 import InlineMessage from './InlineMessage.vue';
 import LoadingIndicator from './LoadingIndicator.vue';
 import TextInput from './TextInput.vue';
+import TimeInput from './TimeInput.vue';
+import ToggleInput from './ToggleInput.vue';
 import { fastApi } from '@/utils/fastApi';
+import { toInputTime } from '@/utils/utils';
 
 export default {
     name: 'FormWebpage',
@@ -52,6 +63,8 @@ export default {
     },
     components: {
         TextInput,
+        TimeInput,
+        ToggleInput,
         LoadingIndicator,
         InlineMessage,
     },
@@ -89,10 +102,14 @@ export default {
     },
     mounted() {
         if (this.existingWebpage) {
+            console.log(this.existingWebpage)
             this.newWebpageDetails = {
                 url: this.existingWebpage.url || '',
-                page_name: this.existingWebpage.page_name || ''
+                page_name: this.existingWebpage.page_name || '',
+                run_time: toInputTime(this.existingWebpage.run_time) || '',
+                is_enabled: this.existingWebpage.is_enabled || false
             }
+            console.log(this.newWebpageDetails)
         }
     },
 }

@@ -104,6 +104,10 @@ button:active, .btn:active {
     box-shadow: var(--shadow-sm);
 }
 
+a.btn:hover {
+    transform: none;
+}
+
 .btn-transp {
     background-color: transparent;
     box-shadow: none;
@@ -167,7 +171,7 @@ input {
     color: var(--text-dark-primary);
 }
 input:hover {
-    border-color: var(--color-primary-300);
+    border-color: var(--color-neutral-400);
     background: var(--color-neutral-100);
 }
 input:focus {

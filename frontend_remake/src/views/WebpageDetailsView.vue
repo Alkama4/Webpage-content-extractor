@@ -108,7 +108,7 @@
                             <td>{{ entry.element_id }}</td>
                             <td>{{ findMetricName(entry.element_id) }}</td>
                             <td>{{ entry.value }}</td>
-                            <td>{{ formatTime(entry.created_at) }}</td>
+                            <td>{{ formatTimestamp(entry.created_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -137,7 +137,7 @@ import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
-import { formatTime } from '@/utils/utils';
+import { formatTimestamp } from '@/utils/utils';
 
 export default {
     name: 'WebpageDetails',
@@ -203,8 +203,8 @@ export default {
                 this.data = response.sort((a, b) => a.data_id - b.data_id);
             }
         },
-        formatTime(time) {
-            return formatTime(time);
+        formatTimestamp(time) {
+            return formatTimestamp(time);
         },
         findMetricName(elementId) {
             const element = this.elements.find(s => s.element_id === elementId);

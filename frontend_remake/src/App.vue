@@ -231,9 +231,6 @@ nav[aria-label="breadcrumb"] {
 .nav-btn {
     padding: 8px 16px;
 }
-.nav-btn:hover {
-    transform: none;
-}
 
 .nav-btn.router-link-active {
     background-color: var(--color-primary-500);

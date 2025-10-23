@@ -64,7 +64,7 @@
                             <td>{{ entry.data_id }}</td>
                             <td>{{ entry.element_id }}</td>
                             <td>{{ entry.value }}</td>
-                            <td>{{ formatTime(entry.created_at) }}</td>
+                            <td>{{ formatTimestamp(entry.created_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -80,7 +80,7 @@ import BasicCard from '@/components/CardBasic.vue';
 import FormElement from '@/components/FormElement.vue';
 import ModalElement from '@/components/ModalElement.vue'
 import { fastApi } from '@/utils/fastApi';
-import { formatTime } from '@/utils/utils';
+import { formatTimestamp } from '@/utils/utils';
 
 export default {
     name: 'ElementDetails',
@@ -115,8 +115,8 @@ export default {
                 this.parentWebpage = response;
             }
         },
-        formatTime(time) {
-            return formatTime(time);
+        formatTimestamp(time) {
+            return formatTimestamp(time);
         },
 
         async editElement() {
