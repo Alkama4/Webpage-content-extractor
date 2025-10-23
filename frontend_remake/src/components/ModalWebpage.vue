@@ -25,7 +25,6 @@ export default {
 
     data() {
         return {
-            visible: false,
             existingWebpage: null,
             _promiseResolver: null   // store the resolve function
         }

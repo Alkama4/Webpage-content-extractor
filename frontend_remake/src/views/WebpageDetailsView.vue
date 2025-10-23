@@ -131,6 +131,23 @@
 
         <ModalElement ref="modalElementRef"/>
         <ModalWebpage ref="modalWebpageRef"/>
+        <ModalConfirmation 
+            ref="modalDeleteWebpageConfirmationRef"
+            title="Delete Webpage"
+            description="Are you sure you want to delete the webpage? All of the elements and gathered data will be removed permanently. This action is irreversible!"
+            optionNegative="Back to safety"
+            optionPositive="Delete permanently"
+            confirmationText="I am certain I wish to delete the webpage and all of its related data permanently."
+            :redHover="true"
+        />
+        <ModalConfirmation 
+            ref="modalDeleteElementConfirmationRef"
+            title="Delete Element"
+            description="Are you sure you want to delete the element? All of the gathered data will be removed permanently. This action is irreversible!"
+            optionNegative="Back to safety"
+            optionPositive="Delete permanently"
+            :redHover="true"
+        />
     </div>
 </template>
 
@@ -138,6 +155,7 @@
 import BasicCard from '@/components/CardBasic.vue';
 import ModalElement from '@/components/ModalElement.vue';
 import ModalWebpage from '@/components/ModalWebpage.vue';
+import ModalConfirmation from '@/components/ModalConfirmation.vue';
 import FormElement from '@/components/FormElement.vue';
 import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
@@ -159,6 +177,7 @@ export default {
         FormElement,
         ModalElement,
         ModalWebpage,
+        ModalConfirmation,
     },
     data() {
         return {
@@ -229,7 +248,7 @@ export default {
             // Else we aborted returning success = false
         },
         async deleteElement(element) {
-            if (confirm("Are you certain you wish to delete this element? This action cannot be undone!")) {
+            if (await this.$refs.modalDeleteElementConfirmationRef.open()) {
                 const response = await fastApi.elements.delete(element.element_id);
                 if (response) {
                     await this.getWebpageElements();
@@ -240,7 +259,7 @@ export default {
         
         ////////////// Webpage modification //////////////
         async deleteWebpage() {
-            if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
+            if (await this.$refs.modalDeleteWebpageConfirmationRef.open()) {
                 const response = await fastApi.webpages.delete(this.webpage.webpage_id);
                 if (response) {
                     this.$router.push("/webpages");

@@ -19,18 +19,18 @@
                 <i 
                     v-for="action in actions" 
                     @click.prevent="action.method(item)" 
-                    class="btn btn-text btn-icon"
+                    class="btn btn-transp btn-icon"
                     :class="action.icon"
                 ></i>
                 <i 
                     v-if="onEdit" 
                     @click.prevent="onEdit(item)" 
-                    class="bx bxs-edit btn btn-text btn-icon"
+                    class="bx bxs-edit btn btn-transp btn-icon"
                 ></i>
                 <i 
                     v-if="onDelete" 
                     @click.prevent="onDelete(item)" 
-                    class="bx bxs-trash btn btn-text btn-icon btn-icon-danger"
+                    class="bx bxs-trash btn btn-transp btn-icon btn-icon-danger"
                 ></i>
             </div>
         </div>

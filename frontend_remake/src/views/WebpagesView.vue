@@ -40,6 +40,15 @@
         </div>
 
         <ModalWebpage ref="modalWebpageRef"/>
+        <ModalConfirmation 
+            ref="modalDeleteWebpageConfirmationRef"
+            title="Delete Webpage"
+            description="Are you sure you want to delete the webpage? All of the elements and gathered data will be removed permanently. This action is irreversible!"
+            optionNegative="Back to safety"
+            optionPositive="Delete permanently"
+            confirmationText="I am certain I wish to delete the webpage and all of its related data permanently."
+            :redHover="true"
+        />
     </div>
 </template>
 
@@ -51,6 +60,7 @@ import TextInput from '@/components/TextInput.vue'
 import { fastApi } from '@/utils/fastApi';
 import FormWebpage from '@/components/FormWebpage.vue'
 import ModalWebpage from '@/components/ModalWebpage.vue'
+import ModalConfirmation from '@/components/ModalConfirmation.vue'
 
 export default {
     name: 'App',
@@ -61,6 +71,7 @@ export default {
         ListEntry,
         FormWebpage,
         ModalWebpage,
+        ModalConfirmation,
     },
     data() {
         return {
@@ -69,7 +80,7 @@ export default {
     },
     methods: {
         async deleteWebpage(webpage) {
-            if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
+            if (await this.$refs.modalDeleteWebpageConfirmationRef.open()) {
                 const response = await fastApi.webpages.delete(webpage.webpage_id);
                 if (response) {
                     await this.fetchWebpages();
