@@ -4,6 +4,9 @@
         <div
             class="switch"
             :class="{ active: !!modelValue }"
+            tabindex="0"
+            @keydown.space.prevent="toggleModelValue"
+            @keydown.enter.prevent="toggleModelValue"
         >
             <div class="slider"></div>
         </div>

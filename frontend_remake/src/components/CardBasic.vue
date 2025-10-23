@@ -51,9 +51,4 @@ export default {
     line-height: 1.5;
     margin-bottom: 1.5rem;
 }
-
-.header-row {
-    margin-bottom: 1rem;
-}
-
 </style>

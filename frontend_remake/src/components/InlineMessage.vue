@@ -43,7 +43,7 @@ export default {
     color: var(--text-light-primary);
 }
 .inline-message.error.interaction:hover {
-    background-color: var(--color-error-hover);
+    background-color: var(--color-error-light);
 }
 
 .inline-message.warning {
@@ -57,5 +57,11 @@ export default {
 
 i {
     font-size: var(--fs-4);
+    transition: background-color var(--t-fast);
+    border-radius: 100px;
+    padding: 4px;
+}
+i:hover {
+    background-color: #ffffff34;
 }
 </style>

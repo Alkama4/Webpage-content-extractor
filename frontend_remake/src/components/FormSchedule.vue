@@ -1,5 +1,5 @@
 <template>
-    <div class="form-webpage flex-col gap-8">
+    <div class="form-schedule flex-col gap-8">
         <InlineMessage 
             :text="requestErrorMsg" 
             :interaction="true"
@@ -7,27 +7,13 @@
             v-if="requestErrorMsg"
         />
         <form @submit.prevent="webpageCreateOrUpdate">
-            <TextInput
-                v-model="newWebpageDetails.page_name"
-                label="Page name"
-                placeholder="The webpages name"
-            />
-            <TextInput
-                v-model="newWebpageDetails.url"
-                label="URL"
-                placeholder="http://example.com"
-            />
             <TimeInput
                 v-model="newWebpageDetails.run_time"
                 label="Scheduled scrape time"
             />
-            <ToggleInput
-                v-model="newWebpageDetails.is_enabled"
-                label="Scraping enabled"
-            />
             <button type="submit">
                 <LoadingIndicator v-if="loading.formSubmit"/>
-                <span v-else>{{ existingWebpage ? 'Update webpage' : 'Create webpage' }}</span>
+                <span v-else>Update webpage</span>
             </button>
         </form>
     </div>
@@ -43,7 +29,7 @@ import { fastApi } from '@/utils/fastApi';
 import { toInputTime } from '@/utils/utils';
 
 export default {
-    name: 'FormWebpage',
+    name: 'FormSchedule',
     data() {
         return {
             loading: {
@@ -80,13 +66,10 @@ export default {
             this.loading.formSubmit = true;
             try {
                 const response = this.existingWebpage
-                    ? await fastApi.webpages.put(this.existingWebpage.webpage_id, this.newWebpageDetails)
+                    ? await fastApi.webpages.patch(this.existingWebpage.webpage_id, this.newWebpageDetails)
                     : await fastApi.webpages.post(this.newWebpageDetails);
                 if (response) {
                     this.$emit('success')
-                    if (!this.existingWebpage) {
-                        this.newWebpageDetails = { url: '', page_name: '' };
-                    }
                     // Wipe errors
                     this.requestErrorMsg = '';
                 }
@@ -103,10 +86,7 @@ export default {
     mounted() {
         if (this.existingWebpage) {
             this.newWebpageDetails = {
-                url: this.existingWebpage.url || '',
-                page_name: this.existingWebpage.page_name || '',
                 run_time: toInputTime(this.existingWebpage.run_time) || '',
-                is_enabled: this.existingWebpage.is_enabled || false
             }
         }
     },

@@ -1,14 +1,12 @@
 <template>
     <ModalBasic 
         ref="modalBasic"
-        :title="existingWebpage ? 'Edit webpage' : 'Create webpage'"
-        :description="existingWebpage 
-            ? 'Modify an existing webpages name or URL' 
-            : 'Set up a new page for data extraction'"
-        :icon="existingWebpage ? 'bxs-edit' : 'bx-list-plus'"
+        title="Edit webpage schedule"
+        description="Modify an existing webpages schedule"
+        icon="bx-time-five"
         @closed="handleClosed"
     >
-        <FormWebpage
+        <FormSchedule
             :existingWebpage="existingWebpage"
             @success="handleSuccess"
         />
@@ -17,11 +15,11 @@
 
 <script>
 import ModalBasic from '@/components/ModalBasic.vue'
-import FormWebpage from '@/components/FormWebpage.vue'
+import FormSchedule from '@/components/FormSchedule.vue'
 
 export default {
-    name: 'ModalWebpage',
-    components: { ModalBasic, FormWebpage },
+    name: 'ModalSchedule',
+    components: { ModalBasic, FormSchedule },
 
     data() {
         return {
@@ -60,9 +58,9 @@ export default {
 </script>
 
 <style scoped>
-.form-webpage {
+.form-schedule {
     min-width: 100%;
-    width: 75vw;
-    max-width: 800px;
+    width: 50vw;
+    max-width: 1000px;
 }
 </style>

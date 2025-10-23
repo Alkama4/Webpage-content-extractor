@@ -11,8 +11,17 @@
                 <div v-if="subField" class="sub-field">
                     {{ item[subField] }}
                 </div>
+                <div v-else-if="description" class="sub-field">
+                    {{ description }}
+                </div>
             </div>
             <div class="controls flex-row">
+                <i 
+                    v-for="action in actions" 
+                    @click.prevent="action.method(item)" 
+                    class="btn btn-text btn-icon"
+                    :class="action.icon"
+                ></i>
                 <i 
                     v-if="onEdit" 
                     @click.prevent="onEdit(item)" 
@@ -35,9 +44,14 @@ defineProps({
     icon: String,
     labelField: { type: String, default: "name" },
     subField: String,
+    description: String,
     onClick: Function,
     onEdit: Function,
-    onDelete: Function
+    onDelete: Function,
+    actions: {
+        type: Array,
+        default: () => []
+    }
 })
 
 const isLink = (value) => {
