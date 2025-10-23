@@ -21,9 +21,17 @@
                                 <td><a :href="webpage.url">{{ webpage.url }}</a></td>
                             </tr>
                             <tr>
+                                <th>Schedule</th>
+                                <td>{{ toInputTime(webpage.run_time) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Enabled</th>
+                                <td>{{ webpage.is_enabled ? "Yes" : "No" }}</td>
+                            </tr>
+                            <!-- <tr>
                                 <th>Webpage ID</th>
                                 <td>{{ webpage.webpage_id }}</td>
-                            </tr>
+                            </tr> -->
                             <tr>
                                 <th>Element count</th>
                                 <td>{{ elementCount }} element{{ elementCount == 1 ? '' : 's' }}</td>
@@ -137,7 +145,7 @@ import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
-import { formatTimestamp } from '@/utils/utils';
+import { formatTimestamp, toInputTime } from '@/utils/utils';
 
 export default {
     name: 'WebpageDetails',
@@ -205,6 +213,9 @@ export default {
         },
         formatTimestamp(time) {
             return formatTimestamp(time);
+        },
+        toInputTime(time) {
+            return toInputTime(time);
         },
         findMetricName(elementId) {
             const element = this.elements.find(s => s.element_id === elementId);
