@@ -64,7 +64,7 @@
                             <td>{{ entry.data_id }}</td>
                             <td>{{ entry.element_id }}</td>
                             <td>{{ entry.value }}</td>
-                            <td>{{ formatTime(entry.created_at) }}</td>
+                            <td>{{ formatTimestamp(entry.created_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -72,6 +72,14 @@
         </div>
 
         <ModalElement ref="modalElementRef"/>
+        <ModalConfirmation 
+            ref="modalDeleteElementConfirmationRef"
+            title="Delete Element"
+            description="Are you sure you want to delete the element? All of the gathered data will be removed permanently. This action is irreversible!"
+            optionNegative="Back to safety"
+            optionPositive="Delete permanently"
+            :redHover="true"
+        />
     </div>
 </template>
 
@@ -79,8 +87,9 @@
 import BasicCard from '@/components/CardBasic.vue';
 import FormElement from '@/components/FormElement.vue';
 import ModalElement from '@/components/ModalElement.vue'
+import ModalConfirmation from '@/components/ModalConfirmation.vue'
 import { fastApi } from '@/utils/fastApi';
-import { formatTime } from '@/utils/utils';
+import { formatTimestamp } from '@/utils/utils';
 
 export default {
     name: 'ElementDetails',
@@ -88,6 +97,7 @@ export default {
         BasicCard,
         FormElement,
         ModalElement,
+        ModalConfirmation,
     },
     data() {
         return {
@@ -115,8 +125,8 @@ export default {
                 this.parentWebpage = response;
             }
         },
-        formatTime(time) {
-            return formatTime(time);
+        formatTimestamp(time) {
+            return formatTimestamp(time);
         },
 
         async editElement() {
@@ -126,7 +136,7 @@ export default {
             } 
         },
         async deleteElement() {
-            if (confirm("Are you certain you wish to delete this element? This action cannot be undone!")) {
+            if (await this.$refs.modalDeleteElementConfirmationRef.open()) {
                 const response = await fastApi.elements.delete(this.element.element_id);
                 if (response) {
                     this.$router.push(`/webpages/${this.parentWebpage.webpage_id}`);

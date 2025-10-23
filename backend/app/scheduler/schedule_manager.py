@@ -23,9 +23,30 @@ class ScheduleManager:
         if self.scheduler.get_job(job_id):
             self.scheduler.remove_job(job_id, jobstore=None)
 
-        if row["is_active"]:
-            trigger = CronTrigger(hour=row["run_hour"], minute=row["run_minute"])
-            self.scheduler.add_job(self._run_webpage_job, trigger, id=job_id, args=[row], replace_existing=True)
+        if row["is_enabled"]:
+            print(f"Webpage {row['webpage_id']} is now scheduled to run on {row['run_time']}")
+            rt = row["run_time"]
+            # Handle both time objects and timedeltas
+            if hasattr(rt, "hour") and hasattr(rt, "minute"):
+                hour = rt.hour
+                minute = rt.minute
+            else:
+                total_seconds = int(rt.total_seconds())
+                hour = (total_seconds // 3600) % 24          # keep within 24‑h range
+                minute = (total_seconds % 3600) // 60
+
+            trigger = CronTrigger(hour=hour, minute=minute)
+            self.scheduler.add_job(
+                self._run_webpage_job,
+                trigger,
+                id=job_id,
+                args=[row],
+                replace_existing=True
+            )
+            
+        else:
+            print(f"Webpage {row['webpage_id']} is now disabled")
+            
 
     async def update_schedule(self, webpage_id: int):
         async with get_aiomysql_connection() as conn:

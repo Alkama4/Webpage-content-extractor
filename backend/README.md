@@ -36,3 +36,14 @@ uvicorn app.main:app --reload --port 8000
 | <http://127.0.0.1:8000/docs> | Swagger UI (interactive docs, recommended) |
 | <http://127.0.0.1:8000/redoc> | ReDoc (alternative docs) |
 | <http://127.0.0.1:8000> | Make manual requests |
+
+
+# All in one setup
+
+After the initial setup you can just use the following to get the server up and running quick.
+
+```bash
+cd backend/
+venv\Scripts\activate
+uvicorn app.main:app --reload --port 8000
+```

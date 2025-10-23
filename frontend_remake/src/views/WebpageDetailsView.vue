@@ -21,9 +21,17 @@
                                 <td><a :href="webpage.url">{{ webpage.url }}</a></td>
                             </tr>
                             <tr>
+                                <th>Schedule</th>
+                                <td>{{ formatScheduleTime(webpage.run_time) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Enabled</th>
+                                <td>{{ webpage.is_enabled ? "Yes" : "No" }}</td>
+                            </tr>
+                            <!-- <tr>
                                 <th>Webpage ID</th>
                                 <td>{{ webpage.webpage_id }}</td>
-                            </tr>
+                            </tr> -->
                             <tr>
                                 <th>Element count</th>
                                 <td>{{ elementCount }} element{{ elementCount == 1 ? '' : 's' }}</td>
@@ -61,10 +69,18 @@
                         :item="element"
                         :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
                         icon="bx bxs-layer"
-                        labelField="metric_name"
-                        subField="locator"
-                        :onEdit="editElement"
-                        :onDelete="deleteElement"
+                        :label="element.metric_name"
+                        :description="element.locator"
+                        :actions="[
+                            {
+                                icon: 'bx bxs-edit',
+                                method: editElement
+                            },
+                            {
+                                icon: 'bx bxs-trash',
+                                method: deleteElement
+                            }
+                        ]"
                     />
                 </div>
                 <ListingPlaceholder 
@@ -108,7 +124,7 @@
                             <td>{{ entry.element_id }}</td>
                             <td>{{ findMetricName(entry.element_id) }}</td>
                             <td>{{ entry.value }}</td>
-                            <td>{{ formatTime(entry.created_at) }}</td>
+                            <td>{{ formatTimestamp(entry.created_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -123,6 +139,23 @@
 
         <ModalElement ref="modalElementRef"/>
         <ModalWebpage ref="modalWebpageRef"/>
+        <ModalConfirmation 
+            ref="modalDeleteWebpageConfirmationRef"
+            title="Delete Webpage"
+            description="Are you sure you want to delete the webpage? All of the elements and gathered data will be removed permanently. This action is irreversible!"
+            optionNegative="Back to safety"
+            optionPositive="Delete permanently"
+            confirmationText="I am certain I wish to delete the webpage and all of its related data permanently."
+            :redHover="true"
+        />
+        <ModalConfirmation 
+            ref="modalDeleteElementConfirmationRef"
+            title="Delete Element"
+            description="Are you sure you want to delete the element? All of the gathered data will be removed permanently. This action is irreversible!"
+            optionNegative="Back to safety"
+            optionPositive="Delete permanently"
+            :redHover="true"
+        />
     </div>
 </template>
 
@@ -130,6 +163,7 @@
 import BasicCard from '@/components/CardBasic.vue';
 import ModalElement from '@/components/ModalElement.vue';
 import ModalWebpage from '@/components/ModalWebpage.vue';
+import ModalConfirmation from '@/components/ModalConfirmation.vue';
 import FormElement from '@/components/FormElement.vue';
 import InlineMessage from '@/components/InlineMessage.vue';
 import ListEntry from '@/components/ListEntry.vue';
@@ -137,7 +171,7 @@ import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
-import { formatTime } from '@/utils/utils';
+import { formatTimestamp, formatScheduleTime } from '@/utils/utils';
 
 export default {
     name: 'WebpageDetails',
@@ -151,6 +185,7 @@ export default {
         FormElement,
         ModalElement,
         ModalWebpage,
+        ModalConfirmation,
     },
     data() {
         return {
@@ -203,8 +238,11 @@ export default {
                 this.data = response.sort((a, b) => a.data_id - b.data_id);
             }
         },
-        formatTime(time) {
-            return formatTime(time);
+        formatTimestamp(time) {
+            return formatTimestamp(time);
+        },
+        formatScheduleTime(time) {
+            return formatScheduleTime(time);
         },
         findMetricName(elementId) {
             const element = this.elements.find(s => s.element_id === elementId);
@@ -218,7 +256,7 @@ export default {
             // Else we aborted returning success = false
         },
         async deleteElement(element) {
-            if (confirm("Are you certain you wish to delete this element? This action cannot be undone!")) {
+            if (await this.$refs.modalDeleteElementConfirmationRef.open()) {
                 const response = await fastApi.elements.delete(element.element_id);
                 if (response) {
                     await this.getWebpageElements();
@@ -229,7 +267,7 @@ export default {
         
         ////////////// Webpage modification //////////////
         async deleteWebpage() {
-            if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
+            if (await this.$refs.modalDeleteWebpageConfirmationRef.open()) {
                 const response = await fastApi.webpages.delete(this.webpage.webpage_id);
                 if (response) {
                     this.$router.push("/webpages");

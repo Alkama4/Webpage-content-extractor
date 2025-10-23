@@ -27,7 +27,6 @@ export default {
 
     data() {
         return {
-            visible: false,
             webpageUrl: '',
             webpageId: null,
             existingElement: null,

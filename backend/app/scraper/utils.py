@@ -214,7 +214,7 @@ async def _fetch_all_webpage_and_element_rows(conn) -> List[Dict[str, Any]]:
             s.element_id, s.locator, s.metric_name
         FROM webpages AS w
         LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
-        WHERE w.is_active = TRUE;
+        WHERE w.is_enabled = TRUE;
     """
     return await execute_mysql_query(conn, query)
 
@@ -226,7 +226,7 @@ async def _fetch_webpage_and_elements_by_id(conn, webpage_id: int) -> List[Dict[
             s.element_id, s.locator, s.metric_name
         FROM webpages AS w
         LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
-        WHERE w.webpage_id = %s AND w.is_active = TRUE;
+        WHERE w.webpage_id = %s AND w.is_enabled = TRUE;
     """
     return await execute_mysql_query(conn, query, (webpage_id,))
 

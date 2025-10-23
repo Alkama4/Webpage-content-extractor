@@ -15,10 +15,18 @@
                         :item="webpage"
                         :to="`/webpages/${webpage.webpage_id}`"
                         icon="bx bx-globe"
-                        labelField="page_name"
-                        subField="url"
-                        :onEdit="editWebpage"
-                        :onDelete="deleteWebpage"
+                        :label="webpage.page_name"
+                        :description="webpage.url"
+                        :actions="[
+                            {
+                                icon: 'bx bxs-edit',
+                                method: editWebpage
+                            },
+                            {
+                                icon: 'bx bxs-trash',
+                                method: deleteWebpage
+                            }
+                        ]"
                     />
                 </div>
                 <ListingPlaceholder 
@@ -40,6 +48,15 @@
         </div>
 
         <ModalWebpage ref="modalWebpageRef"/>
+        <ModalConfirmation 
+            ref="modalDeleteWebpageConfirmationRef"
+            title="Delete Webpage"
+            description="Are you sure you want to delete the webpage? All of the elements and gathered data will be removed permanently. This action is irreversible!"
+            optionNegative="Back to safety"
+            optionPositive="Delete permanently"
+            confirmationText="I am certain I wish to delete the webpage and all of its related data permanently."
+            :redHover="true"
+        />
     </div>
 </template>
 
@@ -51,6 +68,7 @@ import TextInput from '@/components/TextInput.vue'
 import { fastApi } from '@/utils/fastApi';
 import FormWebpage from '@/components/FormWebpage.vue'
 import ModalWebpage from '@/components/ModalWebpage.vue'
+import ModalConfirmation from '@/components/ModalConfirmation.vue'
 
 export default {
     name: 'App',
@@ -61,6 +79,7 @@ export default {
         ListEntry,
         FormWebpage,
         ModalWebpage,
+        ModalConfirmation,
     },
     data() {
         return {
@@ -69,7 +88,7 @@ export default {
     },
     methods: {
         async deleteWebpage(webpage) {
-            if (confirm("Are you certain you wish to delete this webpage? This action cannot be undone!")) {
+            if (await this.$refs.modalDeleteWebpageConfirmationRef.open()) {
                 const response = await fastApi.webpages.delete(webpage.webpage_id);
                 if (response) {
                     await this.fetchWebpages();
@@ -103,17 +122,6 @@ export default {
 .webpages-view {
     max-width: 1200px;
     margin: 0 auto;
-}
-
-.webpages-view h1 {
-    font-size: var(--fs-8);
-    font-weight: var(--fw-bold);
-    color: var(--text-dark-primary);
-    margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-500));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .webpages-view-grid {

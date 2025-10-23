@@ -13,6 +13,7 @@
   --color-primary-900: hsl(210, 50%, 10%);
 
   /* Neutral palette (lighter, softer grays) */
+  --color-neutral-0: white;
   --color-neutral-50: hsl(0, 0%, 99%);
   --color-neutral-100: hsl(0, 0%, 97%);
   --color-neutral-200: hsl(0, 0%, 94%);
@@ -26,11 +27,11 @@
 
   /* Success / Warning / Error (lighter, more subtle) */
   --color-success: hsl(142, 50%, 45%);
-  --color-success-light: hsl(142, 50%, 97%);
+  --color-success-light: hsl(142, 50%, 50%);
   --color-warning: hsl(38, 60%, 55%);
-  --color-warning-light: hsl(38, 60%, 97%);
-  --color-error: hsl(0, 60%, 65%);
-  --color-error-light: hsl(0, 60%, 97%);
+  --color-warning-light: hsl(38, 60%, 60%);
+  --color-error: hsl(0, 60%, 60%);
+  --color-error-light: hsl(0, 60%, 65%);
 
   /* Backgrounds */
   --bg-body: linear-gradient(135deg, hsl(0, 0%, 99%) 0%, hsl(214, 15%, 99%) 100%);
@@ -97,11 +98,12 @@
 /* ---------- Component Size ---------- */
 :root {
   /* Buttons */
-  --btn-padding-y: 0.563rem;
-  --btn-padding-x: 1.2rem;
+  --btn-padding-y: 12px;
+  --btn-padding-x: 16px;
   --btn-margin-y: 0.3rem;
   --btn-margin-x: 0.5rem;
   --btn-radius: 16px;
+  --btn-translate: -1px;
 
   /* Inputs & Textareas */
   --input-height: 3rem;
@@ -118,11 +120,17 @@
 :root {
   /* Premium shadows – sophisticated and expensive-looking */
   --shadow-xs: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-xs-inset: inset 0 1px 3px rgba(0,0,0,.08), inset 0 1px 2px rgba(0,0,0,.06);
   --shadow-sm: 0 2px 8px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.02);
+  --shadow-sm-inset: inset 0 2px 8px rgba(0,0,0,.08), inset 0 1px 4px rgba(0,0,0,.06), inset 0 0 0 1px rgba(0,0,0,.02);
   --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.02);
+  --shadow-md-inset: inset 0 4px 16px rgba(0,0,0,.08), inset 0 2px 8px rgba(0,0,0,.06), inset 0 0 0 1px rgba(0,0,0,.02);
   --shadow-lg: 0 8px 32px rgba(0,0,0,.12), 0 4px 16px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  --shadow-lg-inset: inset 0 8px 32px rgba(0,0,0,.12), inset 0 4px 16px rgba(0,0,0,.08), inset 0 0 0 1px rgba(0,0,0,.04);
   --shadow-xl: 0 16px 48px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  --shadow-xl-inset: inset 0 16px 48px rgba(0,0,0,.12), inset 0 8px 24px rgba(0,0,0,.08), inset 0 0 0 1px rgba(0,0,0,.04);
   --shadow-2xl: 0 24px 64px rgba(0,0,0,.16), 0 12px 32px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.06);
+  --shadow-2xl-inset: inset 0 24px 64px rgba(0,0,0,.16), inset 0 12px 32px rgba(0,0,0,.12), inset 0 0 0 1px rgba(0,0,0,.06);
 
   /* Transition timing */
   --t-slow: .3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -130,4 +138,7 @@
   --t-bounce: .3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
   --header-height: 64px;
+
+  --z-modal: 200;
+  --z-header: 100;
 }

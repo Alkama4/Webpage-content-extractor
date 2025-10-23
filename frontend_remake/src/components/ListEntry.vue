@@ -7,21 +7,17 @@
         <i v-if="icon" :class="icon"></i>
         <div class="flex-row space-between vertical-align">
             <div class="flex-col">
-                <label>{{ item[labelField] }}</label>
-                <div v-if="subField" class="sub-field">
-                    {{ item[subField] }}
+                <label>{{ label }}</label>
+                <div v-if="description" class="sub-field">
+                    {{ description }}
                 </div>
             </div>
             <div class="controls flex-row">
                 <i 
-                    v-if="onEdit" 
-                    @click.prevent="onEdit(item)" 
-                    class="bx bxs-edit btn btn-text btn-icon"
-                ></i>
-                <i 
-                    v-if="onDelete" 
-                    @click.prevent="onDelete(item)" 
-                    class="bx bxs-trash btn btn-text btn-icon btn-icon-danger"
+                    v-for="action in actions" 
+                    @click.prevent="action.method(item)" 
+                    class="btn btn-transp btn-icon"
+                    :class="action.icon"
                 ></i>
             </div>
         </div>
@@ -33,11 +29,16 @@ defineProps({
     item: Object,
     to: String,
     icon: String,
-    labelField: { type: String, default: "name" },
+    label: { type: String, default: "label" },
     subField: String,
+    description: String,
     onClick: Function,
     onEdit: Function,
-    onDelete: Function
+    onDelete: Function,
+    actions: {
+        type: Array,
+        default: () => []
+    }
 })
 
 const isLink = (value) => {
@@ -64,9 +65,9 @@ const isLink = (value) => {
 }
 .list-entry:hover {
     background: var(--color-neutral-50);
-    border-color: var(--color-primary-200);
+    /* border-color: var(--color-primary-200); */
     box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
+    transform: translateY(var(--btn-translate));
 }
 /* .list-entry:hover label {
     text-decoration: underline;

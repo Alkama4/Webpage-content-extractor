@@ -21,7 +21,7 @@
 import BasicCard from './CardBasic.vue';
 
 export default {
-    name: 'BasicModal',
+    name: 'ModalBasic',
     components: {
         BasicCard
     },
@@ -65,7 +65,7 @@ export default {
     padding: 32px;
     cursor: pointer;
     
-    z-index: 100;
+    z-index: var(--z-modal);
 }
 
 .card {
