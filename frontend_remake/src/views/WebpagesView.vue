@@ -105,17 +105,6 @@ export default {
     margin: 0 auto;
 }
 
-.webpages-view h1 {
-    font-size: var(--fs-8);
-    font-weight: var(--fw-bold);
-    color: var(--text-dark-primary);
-    margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-500));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
 .webpages-view-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;

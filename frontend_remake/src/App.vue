@@ -10,7 +10,7 @@
             <router-link 
                 v-for="(link, index) in links"
                 :key="index"
-                class="nav-btn no-deco vertical-align gap-6" 
+                class="btn btn-transp nav-btn no-deco vertical-align gap-6" 
                 :to="link.path"
             >
                 <i class="bx" :class="link.icon"></i>
@@ -21,8 +21,8 @@
 
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li v-for="(crumb, index) in crumbs" :key="index" class="breadcrumb-item">
-                <router-link :to="crumb.to">{{ crumb.text }}</router-link>
+            <li v-for="(crumb, index) in crumbs" :key="index" class="breadcrumb-item vertical-align">
+                <router-link class="btn btn-transp no-deco" :to="crumb.to">{{ crumb.text }}</router-link>
             </li>
         </ol>
     </nav>
@@ -87,7 +87,7 @@ export default {
                     let text = match.name || segments[i]
                     if (paramKeys.length) {
                         const lastParam = paramKeys[paramKeys.length - 1]
-                        text += ` ${this.$route.params[lastParam]}`
+                        text += ` #${this.$route.params[lastParam]}`
                     }
 
                     crumbs.push({ text, to })
@@ -185,75 +185,65 @@ nav[aria-label="breadcrumb"] {
 .breadcrumb {
     list-style: none;
     padding: 0;
-    margin: 0;
     display: flex;
     gap: 8px;
+    margin: 0;
     align-items: center;
     background: none;
     border: none;
 }
-.breadcrumb-item {
-    font-size: var(--fs-1);
-    color: var(--text-dark-secondary);
+
+.breadcrumb-item::after {
+    content: '/';
+    margin-left: 8px;
+    font-size: var(--fs-4);
+    color: var(--color-neutral-400);
+}
+.breadcrumb-item:last-child::after { 
+    content: '';
 }
 .breadcrumb-item a {
-    color: hsl(210, 50%, 30%);
-    text-decoration: none;
-    padding: 8px 16px;
-    border-radius: 16px;
+    font-size: var(--fs-1);
+    padding: 5px 16px;
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid var(--color-neutral-300);
     box-shadow: var(--shadow-xs);
-    transition: all var(--t-fast);
-    display: inline-block;
-    font-weight: var(--fw-semibold);
 }
 .breadcrumb-item a:hover {
     color: var(--text-light-primary);
     background: hsl(210, 50%, 30%);
     border-color: hsl(210, 50%, 30%);
     box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
 }
 
 .breadcrumb-item a.router-link-active {
+    background-color: var(--color-primary-500);
+    box-shadow: var(--shadow-sm);
     color: var(--text-light-primary);
-    background: hsl(210, 50%, 30%);
-    border-color: hsl(210, 50%, 30%);
+    border-color: transparent;
 }
-.breadcrumb-item::after {
-    content: '/';
-    margin-left: 8px;
-    color: var(--color-neutral-400);
+.breadcrumb-item a.router-link-active:hover {
+    background-color: var(--color-primary-600);
+    box-shadow: var(--shadow-lg);
 }
-.breadcrumb-item:last-child::after { 
-    content: '';
-}
+
 
 .nav-btn {
-    color: var(--color-primary-600);
-    text-decoration: none;
     padding: 8px 16px;
-    border-radius: 20px;
-    background: transparent;
-    transition: all var(--t-fast);
-    display: inline-flex;
-    align-items: center;
-    font-weight: var(--fw-medium);
 }
-
 .nav-btn:hover {
-    color: var(--color-primary-700);
-    border-color: hsl(210, 50%, 30%);
+    transform: none;
 }
 
 .nav-btn.router-link-active {
+    background-color: var(--color-primary-500);
+    box-shadow: var(--shadow-sm);
     color: var(--text-light-primary);
-    background: hsl(210, 50%, 30%);
 }
 
 .nav-btn.router-link-active:hover {
-    background: hsl(210, 50%, 30%);
+    background-color: var(--color-primary-600);
+    box-shadow: var(--shadow-lg);
 }
 
 </style>

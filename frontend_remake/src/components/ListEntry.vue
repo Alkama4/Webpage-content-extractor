@@ -64,9 +64,9 @@ const isLink = (value) => {
 }
 .list-entry:hover {
     background: var(--color-neutral-50);
-    border-color: var(--color-primary-200);
+    /* border-color: var(--color-primary-200); */
     box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
+    transform: translateY(var(--btn-translate));
 }
 /* .list-entry:hover label {
     text-decoration: underline;

@@ -21,7 +21,7 @@
 import BasicCard from './CardBasic.vue';
 
 export default {
-    name: 'BasicModal',
+    name: 'ModalBasic',
     components: {
         BasicCard
     },
