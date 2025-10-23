@@ -22,10 +22,27 @@ class ScheduleManager:
         job_id = f"webpage_{row['webpage_id']}"
         if self.scheduler.get_job(job_id):
             self.scheduler.remove_job(job_id, jobstore=None)
+        print(row["run_time"])
 
         if row["is_active"]:
-            trigger = CronTrigger(hour=row["run_hour"], minute=row["run_minute"])
-            self.scheduler.add_job(self._run_webpage_job, trigger, id=job_id, args=[row], replace_existing=True)
+            rt = row["run_time"]
+            # Handle both time objects and timedeltas
+            if hasattr(rt, "hour") and hasattr(rt, "minute"):
+                hour = rt.hour
+                minute = rt.minute
+            else:
+                total_seconds = int(rt.total_seconds())
+                hour = (total_seconds // 3600) % 24          # keep within 24‑h range
+                minute = (total_seconds % 3600) // 60
+
+            trigger = CronTrigger(hour=hour, minute=minute)
+            self.scheduler.add_job(
+                self._run_webpage_job,
+                trigger,
+                id=job_id,
+                args=[row],
+                replace_existing=True
+            )
 
     async def update_schedule(self, webpage_id: int):
         async with get_aiomysql_connection() as conn:
