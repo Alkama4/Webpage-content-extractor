@@ -1,6 +1,6 @@
 services:
   scraper-frontend:
-    image: scraper-frontend:latest
+    image: ghcr.io/Alkama4/Webpage-content-extractor/frontend:latest
     container_name: scraper-frontend
     restart: unless-stopped
     ports:
@@ -11,7 +11,7 @@ services:
       - scraper-backend
 
   scraper-backend:
-    image: scraper-backend:latest
+    image: ghcr.io/Alkama4/Webpage-content-extractor/backend:latest
     container_name: scraper-backend
     restart: unless-stopped
     expose:
