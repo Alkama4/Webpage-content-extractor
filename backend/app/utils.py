@@ -16,9 +16,9 @@ async def get_aiomysql_connection() -> AsyncGenerator[Connection, None]:
     """
 
     db_user = os.getenv("DB_USER", "scraper_user")
-    db_password = os.getenv("DB_PASSWORD", "youshouldchangethis")
+    db_password = os.getenv("DB_PASSWORD", "YouShouldChangeThis")
     db_name = os.getenv("DB_NAME", "scraper_db")
-    db_host = os.getenv("DB_HOST", "scraper_database")
+    db_host = os.getenv("DB_HOST", "scraper-database")
     db_port = os.getenv("DB_PORT", "3306")
 
     try:
