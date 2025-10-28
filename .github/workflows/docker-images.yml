@@ -21,10 +21,10 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
 
     - name: Build frontend image
-      run: docker build ./frontend --file Dockerfile --tag ghcr.io/alkama4/web-scraper/frontend:latest
+      run: docker build ./frontend --tag ghcr.io/alkama4/web-scraper/frontend:latest
 
     - name: Build backend image
-      run: docker build ./backend --file Dockerfile --tag ghcr.io/alkama4/web-scraper/backend:latest
+      run: docker build ./backend --tag ghcr.io/alkama4/web-scraper/backend:latest
 
     - name: Push frontend image
       run: docker push ghcr.io/alkama4/web-scraper/frontend:latest
