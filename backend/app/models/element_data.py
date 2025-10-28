@@ -9,4 +9,4 @@ class ElementData(BaseModel):
     created_at: datetime = Field(..., alias="created_at")
 
     class Config:
-        orm_mode = True
+        from_attributes = True

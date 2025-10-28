@@ -29,7 +29,7 @@ class WebpageInDB(WebpageBase):
     webpage_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class WebpagePatch(WebpageBase):
     url: Optional[HttpUrl] = None
@@ -45,7 +45,7 @@ class WebpagePatch(WebpageBase):
     is_enabled: Optional[bool] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class WebpageOut(WebpageInDB):
     """

@@ -1,30 +1,65 @@
 services:
-  frontend:
-    image: nginx:latest
+  scraper-frontend:
+    image: ghcr.io/Alkama4/Webpage-content-extractor/frontend:latest
+    container_name: scraper-frontend
     restart: unless-stopped
     ports:
       - "80:80"
-    volumes:
-      - ./frontend/html:/usr/share/nginx/html
-      - ./frontend/conf.d:/etc/nginx/conf.d
+    networks:
+      - internal-scraper-network
+    depends_on:
+      - scraper-backend
 
-  backend:
-    image: tiangolo/uvicorn-gunicorn-fastapi:latest
+  scraper-backend:
+    image: ghcr.io/Alkama4/Webpage-content-extractor/backend:latest
+    container_name: scraper-backend
     restart: unless-stopped
-    ports:
-      - "8000:80"
-    volumes:
-      - ./backend/app:/app
-
-  database:
-    image: mysql:latest
-    restart: unless-stopped
+    expose:
+      - "8000"
+    networks:
+      - internal-scraper-network
+    env-file:
+      # For portainer, adjust to point to your .env file. The .env.example
+      # can be found on the repo's root.
+      - stack.env
+    depends_on:
+      - scraper-database
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: app_db
-      MYSQL_USER: app_user
-      MYSQL_PASSWORD: app_password
-    ports:
-      - "3306:3306"
+      - DB_USER: "${DB_USER}"
+      - DB_PASSWORD: "${DB_PASSWORD}"
+
+      # If you aren't using the provided db setup, you can use your
+      # own by adjusting these:      
+      #- DB_NAME: "scraper_db"
+      #- DB_HOST: "scraper-database"
+      #- DB_PORT: "3306"
+
+  scraper-database:
+    image: mysql:latest
+    container_name: scraper-database
+    restart: unless-stopped
+    env-file:
+      # For portainer, adjust to point to your .env file. The .env.example
+      # can be found on the repo's root.
+      - stack.env
+    environment:
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MYSQL_DATABASE: scraper_db
+    expose:
+      - "3306"
     volumes:
-      - ./database/data:/var/lib/mysql
+      # Place the init.sql inside the ./init folder
+      - "db_data:/var/lib/mysql"
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - internal-scraper-network
+
+networks:
+  internal-scraper-network:
+    driver: bridge
+    external: false
+
+volumes:
+  db_data:

@@ -18,14 +18,14 @@ class ElementInDB(ElementBase):
     webpage_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ElementPatch(ElementBase):
     locator: Optional[str] = None
     metric_name: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ElementOut(ElementInDB):
