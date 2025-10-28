@@ -7,6 +7,8 @@ services:
       - "80:80"
     networks:
       - internal-scraper-network
+    depends_on:
+      - scraper-backend
 
   scraper-backend:
     image: scraper-backend:latest

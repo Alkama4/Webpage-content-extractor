@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import webpages_router, elements_router, root_router
 from app.lifespan import lifespan
 
-app = FastAPI(root_path="", lifespan=lifespan)
+app = FastAPI(root_path="/api", lifespan=lifespan)
 
 # CORS setup
 app.add_middleware(
