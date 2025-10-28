@@ -7,3 +7,5 @@ beautifulsoup4
 bs4
 httpx
 apscheduler
+uvicorn
+fastapi

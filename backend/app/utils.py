@@ -15,10 +15,10 @@ async def get_aiomysql_connection() -> AsyncGenerator[Connection, None]:
     Uses environment variables for credentials. Automatically closes the connection.
     """
 
-    db_user = os.getenv("DB_USER", "default")
-    db_password = os.getenv("DB_PASSWORD", "default")
-    db_name = os.getenv("DB_NAME", "app_db")
-    db_host = os.getenv("DB_HOST", "database")
+    db_user = os.getenv("DB_USER", "scraper_user")
+    db_password = os.getenv("DB_PASSWORD", "youshouldchangethis")
+    db_name = os.getenv("DB_NAME", "scraper_db")
+    db_host = os.getenv("DB_HOST", "scraper_database")
     db_port = os.getenv("DB_PORT", "3306")
 
     try:
