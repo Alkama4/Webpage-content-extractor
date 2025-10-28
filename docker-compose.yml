@@ -1,6 +1,6 @@
 services:
   scraper-frontend:
-    image: ghcr.io/Alkama4/Webpage-content-extractor/frontend:latest
+    image: ghcr.io/alkama4/web-scraper/frontend:latest
     container_name: scraper-frontend
     restart: unless-stopped
     ports:
@@ -11,22 +11,22 @@ services:
       - scraper-backend
 
   scraper-backend:
-    image: ghcr.io/Alkama4/Webpage-content-extractor/backend:latest
+    image: ghcr.io/alkama4/web-scraper/backend:latest
     container_name: scraper-backend
     restart: unless-stopped
     expose:
       - "8000"
     networks:
       - internal-scraper-network
-    env-file:
+    env_file:
       # For portainer, adjust to point to your .env file. The .env.example
       # can be found on the repo's root.
       - stack.env
     depends_on:
       - scraper-database
     environment:
-      - DB_USER: "${DB_USER}"
-      - DB_PASSWORD: "${DB_PASSWORD}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
 
       # If you aren't using the provided db setup, you can use your
       # own by adjusting these:      
@@ -38,7 +38,7 @@ services:
     image: mysql:latest
     container_name: scraper-database
     restart: unless-stopped
-    env-file:
+    env_file:
       # For portainer, adjust to point to your .env file. The .env.example
       # can be found on the repo's root.
       - stack.env
@@ -51,8 +51,8 @@ services:
       - "3306"
     volumes:
       # Place the init.sql inside the ./init folder
-      - "db_data:/var/lib/mysql"
       - ./database/init:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/mysql
     networks:
       - internal-scraper-network
 
