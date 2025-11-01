@@ -103,6 +103,17 @@
                     @success="getWebpageElements"
                 />
             </BasicCard>
+
+            <BasicCard
+                icon="bxs-bar-chart-alt-2"
+                class=""
+                title="Scraped data visualized" 
+                description="View the scraped data in a graph"
+            >
+                <ChartLine
+                    :chartData="data"
+                />
+            </BasicCard>
     
             <BasicCard
                 class="g-d"
@@ -122,7 +133,7 @@
                         <tr v-for="entry in data">
                             <td>{{ entry.data_id }}</td>
                             <td>{{ entry.element_id }}</td>
-                            <td>{{ findMetricName(entry.element_id) }}</td>
+                            <td>{{ entry.metric_name }}</td>
                             <td>{{ entry.value }}</td>
                             <td>{{ formatTimestamp(entry.created_at) }}</td>
                         </tr>
@@ -172,6 +183,7 @@ import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
 import { formatTimestamp, formatScheduleTime } from '@/utils/utils';
+import ChartLine from '@/components/ChartLine.vue';
 
 export default {
     name: 'WebpageDetails',
@@ -186,6 +198,7 @@ export default {
         ModalElement,
         ModalWebpage,
         ModalConfirmation,
+        ChartLine,
     },
     data() {
         return {
@@ -235,7 +248,14 @@ export default {
         async getWebpageElementData() {
             const response = await fastApi.webpages.elements.data(this.$route.params.webpage_id);
             if (response) {
-                this.data = response.sort((a, b) => a.data_id - b.data_id);
+                // Attach metric_name to each data entry
+                this.data = response.map(entry => {
+                    const element = this.elements.find(el => el.element_id === entry.element_id);
+                    return {
+                        ...entry,
+                        metric_name: element ? element.metric_name : ''
+                    };
+                }).sort((a, b) => a.data_id - b.data_id);
             }
         },
         formatTimestamp(time) {

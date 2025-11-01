@@ -10,57 +10,132 @@
 <script>
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
-import { PieChart } from "echarts/charts";
-import { TitleComponent, TooltipComponent, LegendComponent } from "echarts/components";
+import { LineChart } from "echarts/charts";
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from "echarts/components";
 import VChart from "vue-echarts";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, watch, onMounted } from "vue";
+import { formatTimestamp } from "@/utils/utils";
 
-use([CanvasRenderer, PieChart, TitleComponent, TooltipComponent, LegendComponent]);
+use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
 
 export default defineComponent({
+    name: "ChartLine",
     components: { VChart },
-
-    setup() {
+    props: {
+        chartData: {
+            type: Array,
+            required: true
+        }
+    },
+    setup(props) {
         const chartRef = ref(null);
 
-        onMounted(async () => {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        const updateChart = (data) => {
+            // Group data by metric_name
+            const seriesMap = {};
+            data.forEach(item => {
+                // Use metric_name + element_id as the key for grouping
+                const key = `${item.metric_name} (#${item.element_id})`;
+                if (!seriesMap[key]) seriesMap[key] = [];
+                seriesMap[key].push({ value: item.value, time: item.created_at });
+            });
+
+            const series = Object.entries(seriesMap).map(([label, items]) => ({
+                name: label,          // This now includes metric_name and ID
+                type: "line",
+                smooth: true,
+                data: items.map(i => i.value)
+            }));
+
+            const xAxisData = [...new Set(data.map(i => i.created_at))];
 
             chartRef.value.setOption({
-                title: { text: "Traffic Sources", left: "center" },
-                tooltip: { trigger: "item", formatter: "{a} <br/>{b} : {c} ({d}%)" },
-                legend: {
-                    orient: "vertical",
-                    left: "left",
-                    data: ["Direct", "Email", "Ad Networks", "Video Ads", "Search Engines"],
-                },
-                series: [
-                    {
-                        name: "Traffic Sources",
-                        type: "pie",
-                        radius: "55%",
-                        center: ["50%", "60%"],
-                        data: [
-                            { value: 335, name: "Direct" },
-                            { value: 310, name: "Email" },
-                            { value: 234, name: "Ad Networks" },
-                            { value: 135, name: "Video Ads" },
-                            { value: 1548, name: "Search Engines" },
-                        ],
-                        emphasis: {
-                            itemStyle: {
-                                shadowBlur: 10,
-                                shadowOffsetX: 0,
-                                shadowColor: "rgba(0, 0, 0, 0.5)",
-                            },
-                        },
+                tooltip: {
+                    trigger: "axis",
+                    formatter: params => {
+                        const time = params[0].axisValue;
+                        const rows = params.map(p => `
+                            <div style="display:flex; justify-content:space-between; gap:32px;">
+                                <span>${p.marker} ${p.seriesName}</span>
+                                <span style="font-weight: var(--fw-medium); color: var(--text-dark-secondary);">${p.value.toLocaleString("fi-FI")}</span>
+                            </div>`).join("");
+
+                        return `
+                            <div style="font-size: var(--fs-2); font-weight: var(--fw-semibold); color: var(--text-dark-primary); padding-bottom: 4px">
+                                ${formatTimestamp(time)}
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                ${rows}
+                            </div>`;
                     },
+                    borderWidth: 0,
+                    extraCssText: `
+                        box-shadow: var(--shadow-md);
+                        color: var(--text-dark-secondary);
+                        font-weight: var(--fw-medium);
+                        font-size: var(--fs-1);
+                        border-radius: 8px;
+                        padding: 10px 12px;
+                    `
+                },
+
+                textStyle: {
+                    fontFamily: "Inter",
+                    fontSize: "0.75rem",
+                    fontWeight: "500"
+                },
+
+                legend: { data: Object.keys(seriesMap), top: 0 },
+                grid: { top: 32, bottom: 0, left: 0, right: 0 },
+
+                color: [
+                    'hsl(210, 50%, 30%)',
+                    'hsl(105, 57%, 55%)',
+                    'hsl(47, 100%, 71%)',
+                    'hsl(0, 75%, 65%)',
+                    'hsl(190, 43%, 66%)',
+                    'hsl(165, 54%, 44%)',
+                    'hsl(24, 82%, 61%)',
+                    'hsl(260, 45%, 58%)',
+                    'hsl(335, 57%, 73%)'
                 ],
+
+                xAxis: {
+                    type: 'category',
+                    data: xAxisData,
+                    axisLabel: {
+                        formatter: (value) => formatTimestamp(value),
+                        fontSize: "0.75rem",
+                        color: "hsl(0, 0%, 45%)",
+                    },
+                    axisLine: {
+                        show: false,
+                    },
+                },
+
+                yAxis: {
+                    type: "value",
+                    axisLabel: {
+                        formatter: (v) => v.toLocaleString("fi-FI"),
+                        fontSize: "0.75rem",
+                        color: "hsl(0, 0%, 45%)",
+                    }
+                },
+
+                series
             });
+        };
+
+        onMounted(() => {
+            if (props.chartData.length) updateChart(props.chartData);
+        });
+
+        watch(() => props.chartData, (newData) => {
+            if (newData.length) updateChart(newData);
         });
 
         return { chartRef };
-    },
+    }
 });
 </script>
 
