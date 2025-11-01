@@ -14,7 +14,7 @@ import { LineChart } from "echarts/charts";
 import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from "echarts/components";
 import VChart from "vue-echarts";
 import { defineComponent, ref, watch, onMounted } from "vue";
-import { formatTimestamp } from "@/utils/utils";
+import { formatTimestamp, formatDate } from "@/utils/utils";
 
 use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
 
@@ -33,6 +33,7 @@ export default defineComponent({
         const updateChart = (data) => {
             // Group data by metric_name
             const seriesMap = {};
+            console.log(data)
             data.forEach(item => {
                 // Use metric_name + element_id as the key for grouping
                 const key = `${item.metric_name} (#${item.element_id})`;
@@ -41,13 +42,13 @@ export default defineComponent({
             });
 
             const series = Object.entries(seriesMap).map(([label, items]) => ({
-                name: label,          // This now includes metric_name and ID
+                name: label,
                 type: "line",
                 smooth: true,
-                data: items.map(i => i.value)
+                data: items.map(i => [i.time, i.value])   // <— pair the time with the value
             }));
 
-            const xAxisData = [...new Set(data.map(i => i.created_at))];
+            console.log(series)
 
             chartRef.value.setOption({
                 tooltip: {
@@ -57,7 +58,7 @@ export default defineComponent({
                         const rows = params.map(p => `
                             <div style="display:flex; justify-content:space-between; gap:32px;">
                                 <span>${p.marker} ${p.seriesName}</span>
-                                <span style="font-weight: var(--fw-medium); color: var(--text-dark-secondary);">${p.value.toLocaleString("fi-FI")}</span>
+                                <span">${p.data[1].toLocaleString("fi-FI")}</span>
                             </div>`).join("");
 
                         return `
@@ -86,7 +87,7 @@ export default defineComponent({
                 },
 
                 legend: { data: Object.keys(seriesMap), top: 0 },
-                grid: { top: 32, bottom: 0, left: 0, right: 0 },
+                grid: { top: 32, bottom: 0, left: 0, right: 8 },
 
                 color: [
                     'hsl(210, 50%, 30%)',
@@ -101,16 +102,15 @@ export default defineComponent({
                 ],
 
                 xAxis: {
-                    type: 'category',
-                    data: xAxisData,
+                    type: "time",
                     axisLabel: {
-                        formatter: (value) => formatTimestamp(value),
+                        formatter: (value) => formatDate(value),
+                        rotate: 45,
                         fontSize: "0.75rem",
-                        color: "hsl(0, 0%, 45%)",
+                        color: "hsl(0, 0%, 45%)"
                     },
-                    axisLine: {
-                        show: false,
-                    },
+                    axisLine: { show: false },
+                    axisTick: { show: false }
                 },
 
                 yAxis: {
@@ -118,7 +118,7 @@ export default defineComponent({
                     axisLabel: {
                         formatter: (v) => v.toLocaleString("fi-FI"),
                         fontSize: "0.75rem",
-                        color: "hsl(0, 0%, 45%)",
+                        color: "hsl(0, 0%, 45%)", // --text-dark-secondary
                     }
                 },
 

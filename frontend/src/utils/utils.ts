@@ -15,6 +15,14 @@ export function formatTimestamp(time: string): string {
     });
 }
 
+export function formatDate(time: string): string {
+    return new Date(time).toLocaleString("fi-FI", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    });
+}
+
 export function formatScheduleTime(raw: string | number): string {
     const date = new Date();
 
