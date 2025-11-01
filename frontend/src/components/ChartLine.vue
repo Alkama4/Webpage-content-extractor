@@ -9,14 +9,14 @@
 
 <script>
 import { use } from "echarts/core";
-import { CanvasRenderer } from "echarts/renderers";
+import { SVGRenderer } from "echarts/renderers";
 import { LineChart } from "echarts/charts";
-import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from "echarts/components";
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent, DataZoomComponent } from "echarts/components";
 import VChart from "vue-echarts";
 import { defineComponent, ref, watch, onMounted } from "vue";
 import { formatTimestamp, formatDate } from "@/utils/utils";
 
-use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
+use([SVGRenderer, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, DataZoomComponent]);
 
 export default defineComponent({
     name: "ChartLine",
@@ -101,7 +101,7 @@ export default defineComponent({
 
                 legend: { data: legendMetrics, top: 0 },
                 
-                grid: { top: 32, bottom: 0, left: 0, right: 8 },
+                grid: { top: 32, bottom: 110, left: 0, right: 8 },
 
                 xAxis: {
                     type: "time",
@@ -124,6 +124,55 @@ export default defineComponent({
                     }
                 },
 
+                dataZoom: [
+                    {
+                        id: 'dataZoomX',
+                        type: 'slider',
+                        start: 0, 
+                        end: 100, 
+                        bottom: 8,
+                        moveOnMouseMove: true,
+                        filterMode: 'filter',
+                        backgroundColor: "var(--color-neutral-100)",
+                        dataBackground: {
+                            areaStyle: {
+                                color: "var(--color-neutral-500)"
+                            },
+                            lineStyle: {
+                                color: "var(--color-neutral-500)"
+                            }
+                        },
+                        selectedDataBackground: {
+                            areaStyle: {
+                                color: "var(--color-primary-500)"
+                            },
+                            lineStyle: {
+                                color: "var(--color-primary-300)"
+                            }
+                        },
+                        fillerColor: "hsla(210, 50%, 50%, 0.15)",
+                        borderColor: "var(--color-neutral-300)",
+                        handleStyle: {
+                            borderColor: "var(--color-primary-300)"
+                        },
+                        moveHandleStyle: {
+                            borderColor: "var(--color-primary-400)"
+                        },
+                        moveHandleSize: 8,
+                        brushStyle: {
+                            color: "var(--color-primary-400)"
+                        },
+                        emphasis: {
+                            handleStyle: {
+                                borderColor: "var(--color-primary-400)"
+                            },
+                            moveHandleStyle: {
+                                borderColor: "var(--color-primary-400)"
+                            }, 
+                        }
+                    }
+                ],
+
                 series
             });
         };
@@ -143,7 +192,7 @@ export default defineComponent({
 
 <style scoped>
 .chart {
-    height: 400px;
+    height: 500px;
     width: 100%;
 }
 </style>
