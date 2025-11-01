@@ -24,7 +24,7 @@
                             </tr>
                             <tr>
                                 <th>Parent webpage</th>
-                                <td>{{ parentWebpage.page_name }} (ID {{ parentWebpage.webpage_id }})</td>
+                                <td>{{ parentWebpage.page_name }} #{{ parentWebpage.webpage_id }}</td>
                             </tr>
                             <tr>
                                 <th>Data count</th>
@@ -51,7 +51,14 @@
                 description="View the scraped data in a graph"
             >
                 <ChartLine
+                    v-if="data.length > 0"
                     :chartData="data"
+                />
+                <ListingPlaceholder 
+                    v-else
+                    icon="bxs-bar-chart-alt-2"
+                    text="No data found"
+                    desc="The data scraped from the current element will be used to create a chart here."
                 />
             </CardBasic>
 
@@ -60,7 +67,7 @@
                 title="Scraped element data"
                 description="Inspect the data that has been scraped from the element"
             >
-                <table>
+                <table v-if="data?.length > 0">
                     <tbody>
                         <tr>
                             <th>Data ID</th>
@@ -76,6 +83,12 @@
                         </tr>
                     </tbody>
                 </table>
+                <ListingPlaceholder 
+                    v-else
+                    icon="bxs-data"
+                    text="No data found"
+                    desc="The data scraped from the current element will appear here."
+                />
             </CardBasic>
         </div>
 
@@ -99,6 +112,7 @@ import ModalConfirmation from '@/components/ModalConfirmation.vue'
 import { fastApi } from '@/utils/fastApi';
 import { formatTimestamp } from '@/utils/utils';
 import ChartLine from '@/components/ChartLine.vue';
+import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 
 export default {
     name: 'ElementDetails',
@@ -108,6 +122,7 @@ export default {
         ModalElement,
         ModalConfirmation,
         ChartLine,
+        ListingPlaceholder,
     },
     data() {
         return {
