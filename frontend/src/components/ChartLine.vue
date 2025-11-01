@@ -77,7 +77,7 @@ export default defineComponent({
                         const time = params[0].axisValue;
                         const rows = params.map(p => `
                             <div style="display:flex; justify-content:space-between; gap:32px;">
-                                <span>${p.marker} ${p.seriesName}</span>
+                                <span>${p.marker} ${p.seriesName.split("#")[0]}</span>
                                 <span">${p.data[1].toLocaleString("fi-FI")}</span>
                             </div>`).join("");
 
