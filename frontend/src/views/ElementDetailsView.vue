@@ -2,7 +2,7 @@
     <div class="element-details-view">
         <h1>Element details</h1>
         <div class="flex-col gap-16">
-            <BasicCard
+            <CardBasic
                 icon="bxs-info-circle"
                 title="Element info"
                 description="Inspect the details of the element"
@@ -43,9 +43,9 @@
                         </button>
                     </div>
                 </div>
-            </BasicCard>
+            </CardBasic>
 
-            <BasicCard
+            <CardBasic
                 icon="bxs-bar-chart-alt-2"
                 title="Scraped data visualized" 
                 description="View the scraped data in a graph"
@@ -53,9 +53,9 @@
                 <ChartLine
                     :chartData="data"
                 />
-            </BasicCard>
+            </CardBasic>
 
-            <BasicCard
+            <CardBasic
                 icon="bxs-data"
                 title="Scraped element data"
                 description="Inspect the data that has been scraped from the element"
@@ -76,7 +76,7 @@
                         </tr>
                     </tbody>
                 </table>
-            </BasicCard>
+            </CardBasic>
         </div>
 
         <ModalElement ref="modalElementRef"/>
@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import BasicCard from '@/components/CardBasic.vue';
+import CardBasic from '@/components/CardBasic.vue';
 import FormElement from '@/components/FormElement.vue';
 import ModalElement from '@/components/ModalElement.vue'
 import ModalConfirmation from '@/components/ModalConfirmation.vue'
@@ -103,7 +103,7 @@ import ChartLine from '@/components/ChartLine.vue';
 export default {
     name: 'ElementDetails',
     components: {
-        BasicCard,
+        CardBasic,
         FormElement,
         ModalElement,
         ModalConfirmation,

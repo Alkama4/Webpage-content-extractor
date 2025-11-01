@@ -3,7 +3,7 @@
     <div class="webpage-details">
         <h1>Webpage details</h1>
         <div class="webpage-details-grid">
-            <BasicCard
+            <CardBasic
                 class="g-a"
                 icon="bxs-info-circle"
                 title="Webpage info"
@@ -53,9 +53,9 @@
                         </button>
                     </div>
                 </div>
-            </BasicCard>
+            </CardBasic>
     
-            <BasicCard
+            <CardBasic
                 class="g-b"
                 style="min-width: 500px;"
                 icon="bx-list-ul"
@@ -89,9 +89,9 @@
                     text="No elements found"
                     desc="Create a new element using the form on the right."
                 />
-            </BasicCard>
+            </CardBasic>
     
-            <BasicCard
+            <CardBasic
                 class="g-c"
                 icon="bx-list-plus"
                 title="Create a new element"
@@ -102,9 +102,9 @@
                     :webpageId="webpage.webpage_id"
                     @success="getWebpageElements"
                 />
-            </BasicCard>
+            </CardBasic>
 
-            <BasicCard
+            <CardBasic
                 icon="bxs-bar-chart-alt-2"
                 class="g-d"
                 title="Scraped data visualized" 
@@ -120,9 +120,9 @@
                     text="No data found"
                     desc="The data scraped from the current webpage will be used to create a chart here."
                 />
-            </BasicCard>
+            </CardBasic>
     
-            <BasicCard
+            <CardBasic
                 class="g-e"
                 icon="bxs-data"
                 title="Scraped webpage data"
@@ -152,7 +152,7 @@
                     text="No data found"
                     desc="The data scraped from the current webpage will appear here."
                 />
-            </BasicCard>
+            </CardBasic>
         </div>
 
         <ModalElement ref="modalElementRef"/>
@@ -178,7 +178,7 @@
 </template>
 
 <script>
-import BasicCard from '@/components/CardBasic.vue';
+import CardBasic from '@/components/CardBasic.vue';
 import ModalElement from '@/components/ModalElement.vue';
 import ModalWebpage from '@/components/ModalWebpage.vue';
 import ModalConfirmation from '@/components/ModalConfirmation.vue';
@@ -195,7 +195,7 @@ import ChartLine from '@/components/ChartLine.vue';
 export default {
     name: 'WebpageDetails',
     components: {
-        BasicCard,
+        CardBasic,
         ListEntry,
         LoadingIndicator,
         TextInput,

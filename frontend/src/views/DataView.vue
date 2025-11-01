@@ -3,13 +3,14 @@
         <h1>Data analysis</h1>
 
         <!-- A card for each webpage -->
-        <BasicCard
+        <CardBasic
             v-for="webpage in webpages"
             :key="webpage.webpage_id"
             icon="bx bx-globe"
             class="card-wrapper"
             :title="webpage.page_name"
             description="Scraped data visualized"
+            :link="`/webpages/${webpage.webpage_id}`"
         >
             <!-- Pass the enriched array to ChartLine -->
             <ChartLine
@@ -22,7 +23,7 @@
                 text="No data found"
                 desc="The data scraped from this webpage will be used to create a chart here."
             />
-        </BasicCard>
+        </CardBasic>
 
         <!-- If there are no webpages at all, show one global placeholder -->
         <ListingPlaceholder
@@ -36,13 +37,13 @@
 
 <script>
 import { fastApi } from '@/utils/fastApi';
-import BasicCard from '@/components/CardBasic.vue';
+import CardBasic from '@/components/CardBasic.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import ChartLine from '@/components/ChartLine.vue';
 
 export default {
     name: 'DataView',
-    components: { BasicCard, ListingPlaceholder, ChartLine },
+    components: { CardBasic, ListingPlaceholder, ChartLine },
 
     data() {
         return {

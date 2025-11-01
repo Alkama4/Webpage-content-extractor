@@ -5,25 +5,25 @@
             class="modal-basic"
             @click="close"
         >
-            <BasicCard
+            <CardBasic
                 :title="title"
                 :description="description"
                 :icon="icon"
                 @click.stop
             >
                 <slot></slot>
-            </BasicCard>
+            </CardBasic>
         </div>
     </teleport>
 </template>
 
 <script>
-import BasicCard from './CardBasic.vue';
+import CardBasic from './CardBasic.vue';
 
 export default {
     name: 'ModalBasic',
     components: {
-        BasicCard
+        CardBasic
     },
     data() {
         return {
