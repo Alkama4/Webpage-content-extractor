@@ -23,6 +23,6 @@ npm run build
 Quickly startup the server with one command
 
 ```sh
-cd .\frontend_remake\
+cd .\frontend\
 npm run dev
 ```

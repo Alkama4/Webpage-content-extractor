@@ -6,6 +6,12 @@
             @close="requestErrorMsg = ''"
             v-if="requestErrorMsg"
         />
+        <InlineMessage 
+            text="If the schedule is left blank, 04:00:00 will be used." 
+            :interaction="false"
+            type="warning"
+            v-if="!newWebpageDetails.run_time"
+        />
         <form @submit.prevent="webpageCreateOrUpdate">
             <TextInput
                 v-model="newWebpageDetails.page_name"
@@ -49,14 +55,16 @@ export default {
                 formSubmit: false,
             },
             requestErrorMsg: '',
-
+            
             // Iframe stuff
             previewHtml: '',
             locatorMatchCount: 0,
             selectedWebpage: null,
             newWebpageDetails: {
                 url: '',
-                page_name: ''
+                page_name: '',
+                run_time: '04:00:00',
+                is_enabled: false
             }
         }
     },
