@@ -3,7 +3,7 @@
     <div class="webpage-details">
         <h1>Webpage details</h1>
         <div class="webpage-details-grid">
-            <BasicCard
+            <CardBasic
                 class="g-a"
                 icon="bxs-info-circle"
                 title="Webpage info"
@@ -53,9 +53,9 @@
                         </button>
                     </div>
                 </div>
-            </BasicCard>
+            </CardBasic>
     
-            <BasicCard
+            <CardBasic
                 class="g-b"
                 style="min-width: 500px;"
                 icon="bx-list-ul"
@@ -89,9 +89,9 @@
                     text="No elements found"
                     desc="Create a new element using the form on the right."
                 />
-            </BasicCard>
+            </CardBasic>
     
-            <BasicCard
+            <CardBasic
                 class="g-c"
                 icon="bx-list-plus"
                 title="Create a new element"
@@ -102,10 +102,28 @@
                     :webpageId="webpage.webpage_id"
                     @success="getWebpageElements"
                 />
-            </BasicCard>
-    
-            <BasicCard
+            </CardBasic>
+
+            <CardBasic
+                icon="bxs-bar-chart-alt-2"
                 class="g-d"
+                title="Scraped data visualized" 
+                description="View the scraped data in a graph"
+            >
+                <ChartLine
+                    v-if="data.length > 0"
+                    :chartData="data"
+                />
+                <ListingPlaceholder 
+                    v-else
+                    icon="bxs-bar-chart-alt-2"
+                    text="No data found"
+                    desc="The data scraped from the current webpage will be used to create a chart here."
+                />
+            </CardBasic>
+    
+            <CardBasic
+                class="g-e"
                 icon="bxs-data"
                 title="Scraped webpage data"
                 description="Inspect the data that has been scraped from the current webpage"
@@ -122,7 +140,7 @@
                         <tr v-for="entry in data">
                             <td>{{ entry.data_id }}</td>
                             <td>{{ entry.element_id }}</td>
-                            <td>{{ findMetricName(entry.element_id) }}</td>
+                            <td>{{ entry.metric_name }}</td>
                             <td>{{ entry.value }}</td>
                             <td>{{ formatTimestamp(entry.created_at) }}</td>
                         </tr>
@@ -134,7 +152,7 @@
                     text="No data found"
                     desc="The data scraped from the current webpage will appear here."
                 />
-            </BasicCard>
+            </CardBasic>
         </div>
 
         <ModalElement ref="modalElementRef"/>
@@ -160,7 +178,7 @@
 </template>
 
 <script>
-import BasicCard from '@/components/CardBasic.vue';
+import CardBasic from '@/components/CardBasic.vue';
 import ModalElement from '@/components/ModalElement.vue';
 import ModalWebpage from '@/components/ModalWebpage.vue';
 import ModalConfirmation from '@/components/ModalConfirmation.vue';
@@ -172,11 +190,12 @@ import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import TextInput from '@/components/TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
 import { formatTimestamp, formatScheduleTime } from '@/utils/utils';
+import ChartLine from '@/components/ChartLine.vue';
 
 export default {
     name: 'WebpageDetails',
     components: {
-        BasicCard,
+        CardBasic,
         ListEntry,
         LoadingIndicator,
         TextInput,
@@ -186,6 +205,7 @@ export default {
         ModalElement,
         ModalWebpage,
         ModalConfirmation,
+        ChartLine,
     },
     data() {
         return {
@@ -235,7 +255,14 @@ export default {
         async getWebpageElementData() {
             const response = await fastApi.webpages.elements.data(this.$route.params.webpage_id);
             if (response) {
-                this.data = response.sort((a, b) => a.data_id - b.data_id);
+                // Attach metric_name to each data entry
+                this.data = response.map(entry => {
+                    const element = this.elements.find(el => el.element_id === entry.element_id);
+                    return {
+                        ...entry,
+                        metric_name: element ? element.metric_name : ''
+                    };
+                }).sort((a, b) => a.data_id - b.data_id);
             }
         },
         formatTimestamp(time) {
@@ -306,7 +333,8 @@ export default {
     grid-template-areas:
         "a a"
         "b c"
-        "d d";
+        "d d"
+        "e e";
 }
 @media (max-width: 1000px) {
     .webpage-details-grid {
@@ -315,7 +343,8 @@ export default {
             "a"
             "b"
             "c"
-            "d";
+            "d"
+            "e";
     }
 }
 </style>

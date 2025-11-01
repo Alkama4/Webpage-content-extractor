@@ -2,7 +2,7 @@
     <div class="webpages-view">
         <h1>Webpages</h1>
         <div class="webpages-view-grid gap-16">
-            <BasicCard
+            <CardBasic
                 icon="bx-list-ul"
                 class=""
                 title="Webpages" 
@@ -35,16 +35,16 @@
                     text="No webpages found"
                     desc="Create a new webpage using the form on the right."
                 />
-            </BasicCard>
+            </CardBasic>
 
-            <BasicCard
+            <CardBasic
                 icon="bx-list-plus"
                 class=""
                 title="Create a webpage" 
                 description="Set up a new page for data extraction"
             >
                 <FormWebpage @success="fetchWebpages"/>
-            </BasicCard>
+            </CardBasic>
         </div>
 
         <ModalWebpage ref="modalWebpageRef"/>
@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import BasicCard from '@/components/CardBasic.vue';
+import CardBasic from '@/components/CardBasic.vue';
 import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import TextInput from '@/components/TextInput.vue'
@@ -73,7 +73,7 @@ import ModalConfirmation from '@/components/ModalConfirmation.vue'
 export default {
     name: 'App',
     components: {
-        BasicCard,
+        CardBasic,
         ListingPlaceholder,
         TextInput,
         ListEntry,

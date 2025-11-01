@@ -2,7 +2,7 @@
     <div class="scheduler-view">
         <h1>Scheduler</h1>
         <div class="scheduler-view-grid gap-16">
-            <BasicCard
+            <CardBasic
                 icon="bx-list-ul"
                 title="Disabled Webpages" 
                 description="Webpages that aren't currently set to scrape."
@@ -34,9 +34,9 @@
                     text="No scheduled webpages"
                     desc="All of the webpages are currently scheduled."
                 />
-            </BasicCard>
+            </CardBasic>
 
-            <BasicCard
+            <CardBasic
                 icon="bx-time-five"
                 title="Scheduled Webpages" 
                 description="Webpages that will be scraped at the scheduled time."
@@ -68,7 +68,7 @@
                     text="No scheduled webpages"
                     desc="You can schedule your webpages from the left so that they appear here."
                 />
-            </BasicCard>
+            </CardBasic>
         </div>
         
         <ModalSchedule ref="ModalScheduleRef"/>
@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import BasicCard from '@/components/CardBasic.vue';
+import CardBasic from '@/components/CardBasic.vue';
 import ListEntry from '@/components/ListEntry.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import { fastApi } from '@/utils/fastApi';
@@ -87,7 +87,7 @@ import { formatScheduleTime } from '@/utils/utils';
 export default {
     name: 'SchedulerView',
     components: {
-        BasicCard,
+        CardBasic,
         ListEntry,
         ListingPlaceholder,
         ModalBasic,

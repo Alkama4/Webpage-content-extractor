@@ -3,7 +3,12 @@
         <div class="header-row">
             <div class="header">
                 <i class="bx" :class="icon"></i>
-                <span>{{ title }}</span>
+                <component 
+                    :is="link ? 'router-link' : 'span'"
+                    :to="link"
+                >
+                    {{ title }}
+                </component>
             </div>
             <div class="desc">{{ description }}</div>
         </div>
@@ -13,12 +18,13 @@
 
 <script>
 export default {
-  name: 'CardBasic',
-  props: {
-    title: { type: String, default: 'Untitled' },
-    description: { type: String, default: 'Untitled' },
-    icon: { type: String, default: 'bxs-grid' }
-  }
+    name: 'CardBasic',
+    props: {
+        title: { type: String, default: 'Untitled' },
+        description: { type: String, default: 'Untitled' },
+        icon: { type: String, default: 'bxs-grid' },
+        link: { type: String, default: ''}
+    }
 }
 </script>
 
