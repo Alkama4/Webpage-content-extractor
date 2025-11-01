@@ -33,19 +33,32 @@ export default defineComponent({
         const updateChart = (data) => {
             // Group data by metric_name
             const seriesMap = {};
-            console.log(data)
+
+            const getColor = idx => palette[idx % palette.length];
+            const palette = [
+                'hsl(210, 50%, 30%)',
+                'hsl(105, 57%, 55%)',
+                'hsl(47, 100%, 71%)',
+                'hsl(0, 75%, 65%)',
+                'hsl(190, 43%, 66%)',
+                'hsl(165, 54%, 44%)',
+                'hsl(24, 82%, 61%)',
+                'hsl(260, 45%, 58%)',
+                'hsl(335, 57%, 73%)'
+            ];
+
             data.forEach(item => {
-                // Use metric_name + element_id as the key for grouping
-                const key = item.metric_name;   // const key = `${item.metric_name} (#${item.element_id})`;
-                if (!seriesMap[key]) seriesMap[key] = [];
-                seriesMap[key].push({ value: item.value, time: item.created_at });
+                const key = `${item.metric_name}#${item.element_id}`;
+                if (!seriesMap[key]) seriesMap[key] = { name: item.metric_name, points: [] };
+                seriesMap[key].points.push({ value: item.value, time: item.created_at });
             });
 
-            const series = Object.entries(seriesMap).map(([label, items]) => ({
-                name: label,
-                type: "line",
+            const series = Object.values(seriesMap).map((entry, idx) => ({
+                name: entry.name,
+                type: 'line',
                 smooth: true,
-                data: items.map(i => [i.time, i.value])   // <— pair the time with the value
+                data: entry.points.map(p => [p.time, p.value]),
+                color: getColor(idx)
             }));
 
             console.log(series)
@@ -88,18 +101,6 @@ export default defineComponent({
 
                 legend: { data: Object.keys(seriesMap), top: 0 },
                 grid: { top: 32, bottom: 0, left: 0, right: 8 },
-
-                color: [
-                    'hsl(210, 50%, 30%)',
-                    'hsl(105, 57%, 55%)',
-                    'hsl(47, 100%, 71%)',
-                    'hsl(0, 75%, 65%)',
-                    'hsl(190, 43%, 66%)',
-                    'hsl(165, 54%, 44%)',
-                    'hsl(24, 82%, 61%)',
-                    'hsl(260, 45%, 58%)',
-                    'hsl(335, 57%, 73%)'
-                ],
 
                 xAxis: {
                     type: "time",
