@@ -69,7 +69,7 @@
                         :item="element"
                         :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
                         icon="bx bxs-layer"
-                        :label="element.metric_name"
+                        :label="`${element.metric_name} (#${element.element_id})`"
                         :description="element.locator"
                         :actions="[
                             {
@@ -106,7 +106,7 @@
 
             <BasicCard
                 icon="bxs-bar-chart-alt-2"
-                class=""
+                class="g-d"
                 title="Scraped data visualized" 
                 description="View the scraped data in a graph"
             >
@@ -116,7 +116,7 @@
             </BasicCard>
     
             <BasicCard
-                class="g-d"
+                class="g-e"
                 icon="bxs-data"
                 title="Scraped webpage data"
                 description="Inspect the data that has been scraped from the current webpage"
@@ -326,7 +326,8 @@ export default {
     grid-template-areas:
         "a a"
         "b c"
-        "d d";
+        "d d"
+        "e e";
 }
 @media (max-width: 1000px) {
     .webpage-details-grid {
@@ -335,7 +336,8 @@ export default {
             "a"
             "b"
             "c"
-            "d";
+            "d"
+            "e";
     }
 }
 </style>
