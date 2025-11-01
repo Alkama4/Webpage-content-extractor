@@ -3,7 +3,6 @@
         <h1>Element details</h1>
         <div class="flex-col gap-16">
             <BasicCard
-                class="g-a"
                 icon="bxs-info-circle"
                 title="Element info"
                 description="Inspect the details of the element"
@@ -47,7 +46,16 @@
             </BasicCard>
 
             <BasicCard
-                class="g-d"
+                icon="bxs-bar-chart-alt-2"
+                title="Scraped data visualized" 
+                description="View the scraped data in a graph"
+            >
+                <ChartLine
+                    :chartData="data"
+                />
+            </BasicCard>
+
+            <BasicCard
                 icon="bxs-data"
                 title="Scraped element data"
                 description="Inspect the data that has been scraped from the element"
@@ -90,6 +98,7 @@ import ModalElement from '@/components/ModalElement.vue'
 import ModalConfirmation from '@/components/ModalConfirmation.vue'
 import { fastApi } from '@/utils/fastApi';
 import { formatTimestamp } from '@/utils/utils';
+import ChartLine from '@/components/ChartLine.vue';
 
 export default {
     name: 'ElementDetails',
@@ -98,6 +107,7 @@ export default {
         FormElement,
         ModalElement,
         ModalConfirmation,
+        ChartLine,
     },
     data() {
         return {
@@ -116,7 +126,11 @@ export default {
         async getElementData() {
             const response = await fastApi.elements.data(this.$route.params.element_id);
             if (response) {
-                this.data = response;
+                this.data = response
+                    .map(entry => ({
+                        ...entry,
+                        metric_name: this.element.metric_name || '',
+                    }))
             }
         },
         async getParentWebpageInfo() {
