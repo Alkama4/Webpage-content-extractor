@@ -69,7 +69,7 @@
                         :item="element"
                         :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
                         icon="bx bxs-layer"
-                        :label="`${element.metric_name} (#${element.element_id})`"
+                        :label="element.metric_name"
                         :description="element.locator"
                         :actions="[
                             {
@@ -111,7 +111,14 @@
                 description="View the scraped data in a graph"
             >
                 <ChartLine
+                    v-if="data.length > 0"
                     :chartData="data"
+                />
+                <ListingPlaceholder 
+                    v-else
+                    icon="bxs-bar-chart-alt-2"
+                    text="No data found"
+                    desc="The data scraped from the current webpage will be used to create a chart here."
                 />
             </BasicCard>
     

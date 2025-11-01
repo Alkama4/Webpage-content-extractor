@@ -36,7 +36,7 @@ export default defineComponent({
             console.log(data)
             data.forEach(item => {
                 // Use metric_name + element_id as the key for grouping
-                const key = `${item.metric_name} (#${item.element_id})`;
+                const key = item.metric_name;   // const key = `${item.metric_name} (#${item.element_id})`;
                 if (!seriesMap[key]) seriesMap[key] = [];
                 seriesMap[key].push({ value: item.value, time: item.created_at });
             });
