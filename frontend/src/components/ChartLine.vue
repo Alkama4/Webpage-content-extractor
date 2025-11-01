@@ -49,12 +49,19 @@ export default defineComponent({
 
             data.forEach(item => {
                 const key = `${item.metric_name}#${item.element_id}`;
-                if (!seriesMap[key]) seriesMap[key] = { name: item.metric_name, points: [] };
+                if (!seriesMap[key]) {
+                    // remember the id for later
+                    seriesMap[key] = { 
+                    name: item.metric_name,          // metric only (for display)
+                    elementId: item.element_id,     // keep id separate
+                    points: [] 
+                    };
+                }
                 seriesMap[key].points.push({ value: item.value, time: item.created_at });
             });
 
             const series = Object.values(seriesMap).map((entry, idx) => ({
-                name: entry.name,
+                name: `${entry.name}#${entry.elementId}`,   // <-- unique per element
                 type: 'line',
                 smooth: true,
                 data: entry.points.map(p => [p.time, p.value]),
@@ -99,7 +106,11 @@ export default defineComponent({
                     fontWeight: "500"
                 },
 
-                legend: { data: legendMetrics, top: 0 },
+                legend: { 
+                    data: legendMetrics, 
+                    top: 0,
+                    formatter: (fullName) => fullName.split("#")[0]
+                },
                 
                 grid: { top: 32, bottom: 110, left: 0, right: 8 },
 
