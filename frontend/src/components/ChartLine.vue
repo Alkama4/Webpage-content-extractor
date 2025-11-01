@@ -61,7 +61,7 @@ export default defineComponent({
                 color: getColor(idx)
             }));
 
-            console.log(series)
+            const legendMetrics = [...new Set(series.map(s => s.name))];
 
             chartRef.value.setOption({
                 tooltip: {
@@ -99,7 +99,8 @@ export default defineComponent({
                     fontWeight: "500"
                 },
 
-                legend: { data: Object.keys(seriesMap), top: 0 },
+                legend: { data: legendMetrics, top: 0 },
+                
                 grid: { top: 32, bottom: 0, left: 0, right: 8 },
 
                 xAxis: {
