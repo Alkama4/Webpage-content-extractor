@@ -25,7 +25,6 @@ export default {
 
 <style scoped>
 .home-view {
-    max-width: 800px;
     margin: 0 auto;
     text-align: center;
     padding: 4rem 2rem;

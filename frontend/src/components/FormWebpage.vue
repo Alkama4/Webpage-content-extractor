@@ -92,7 +92,12 @@ export default {
                 if (response) {
                     this.$emit('success')
                     if (!this.existingWebpage) {
-                        this.newWebpageDetails = { url: '', page_name: '' };
+                        this.newWebpageDetails = {
+                            url: '',
+                            page_name: '',
+                            run_time: '04:00:00',
+                            is_enabled: false
+                        };
                     }
                     // Wipe errors
                     this.requestErrorMsg = '';

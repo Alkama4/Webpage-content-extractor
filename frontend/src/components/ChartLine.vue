@@ -1,4 +1,8 @@
 <template>
+    <ToggleInput
+        v-model="scaleAxisY"
+        label="Auto-scale Y-axis"
+    />
     <VChart
         ref="chartRef"
         class="chart"
@@ -15,12 +19,13 @@ import { TitleComponent, TooltipComponent, LegendComponent, GridComponent, DataZ
 import VChart from "vue-echarts";
 import { defineComponent, ref, watch, onMounted } from "vue";
 import { formatTimestamp, formatDate } from "@/utils/utils";
+import ToggleInput from "./ToggleInput.vue";
 
 use([SVGRenderer, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, DataZoomComponent]);
 
 export default defineComponent({
     name: "ChartLine",
-    components: { VChart },
+    components: { VChart, ToggleInput },
     props: {
         chartData: {
             type: Array,
@@ -29,6 +34,7 @@ export default defineComponent({
     },
     setup(props) {
         const chartRef = ref(null);
+        const scaleAxisY = ref(false);
 
         const updateChart = (data) => {
             // Group data by metric_name
@@ -128,6 +134,7 @@ export default defineComponent({
 
                 yAxis: {
                     type: "value",
+                    scale: scaleAxisY.value,
                     axisLabel: {
                         formatter: (v) => v.toLocaleString("fi-FI"),
                         fontSize: "0.75rem",
@@ -196,7 +203,14 @@ export default defineComponent({
             if (newData.length) updateChart(newData);
         });
 
-        return { chartRef };
+        // use the prop that contains the data array
+        watch(scaleAxisY, () => {
+          if (props.chartData.length) {
+            updateChart(props.chartData);
+          }
+        });
+
+        return { chartRef, scaleAxisY }
     }
 });
 </script>
@@ -205,5 +219,11 @@ export default defineComponent({
 .chart {
     height: 500px;
     width: 100%;
+}
+.toggle-input {
+    position: absolute;
+    right: 32px;
+    top: 45px;
+    gap: 12px;
 }
 </style>

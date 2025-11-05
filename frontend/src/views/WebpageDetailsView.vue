@@ -329,7 +329,7 @@ export default {
 .webpage-details-grid {
     display: grid;
     gap: 16px;
-    grid-template-columns: 4fr 3fr;
+    grid-template-columns: 4fr 4fr;
     grid-template-areas:
         "a a"
         "b c"

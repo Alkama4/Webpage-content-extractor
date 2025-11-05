@@ -65,9 +65,9 @@ export default {
 </script>
 
 <style scoped>
-.element-form {
+.form-element {
     min-width: 100%;
     width: 75vw;
-    max-width: 1000px;
+    max-width: 2000px;
 }
 </style>

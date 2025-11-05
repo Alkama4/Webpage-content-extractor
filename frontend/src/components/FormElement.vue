@@ -323,7 +323,7 @@ export default {
 <style scoped>
 .iframe-wrapper {
     width: 100%;
-    height: 400px;
+    height: 50vh;
     border-radius: var(--card-radius);
     border: 4px solid var(--color-neutral-300);
     box-sizing: border-box;

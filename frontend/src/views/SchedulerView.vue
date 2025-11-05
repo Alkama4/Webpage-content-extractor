@@ -176,7 +176,7 @@ export default {
 
 <style scoped>
 .scheduler-view {
-    max-width: 1200px;
+    /* max-width: 1200px; */
     margin: 0 auto;
 }
 

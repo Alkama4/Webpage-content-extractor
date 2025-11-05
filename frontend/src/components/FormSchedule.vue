@@ -24,7 +24,6 @@ import InlineMessage from './InlineMessage.vue';
 import LoadingIndicator from './LoadingIndicator.vue';
 import TextInput from './TextInput.vue';
 import TimeInput from './TimeInput.vue';
-import ToggleInput from './ToggleInput.vue';
 import { fastApi } from '@/utils/fastApi';
 
 export default {
@@ -49,7 +48,6 @@ export default {
     components: {
         TextInput,
         TimeInput,
-        ToggleInput,
         LoadingIndicator,
         InlineMessage,
     },
