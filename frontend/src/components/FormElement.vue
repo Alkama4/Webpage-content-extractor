@@ -89,7 +89,8 @@ export default {
             newElemenDetails: {
                 locator: '',
                 metric_name: ''
-            }
+            },
+            currentWebpageLocators: []
         }
     },
     components: {
@@ -110,12 +111,20 @@ export default {
         existingElement: {
             type: Object,
             default: null
+        },
+        otherElementsOnWebpage: {
+            type: Array,
+            default: () => []
         }
     },
     methods: {
         //////////////// Iframe stuff ////////////////
         async loadPageToIframe() {
             this.loading.iframe = true;
+
+            // Fetch current locators
+            this.getCurrentWebpageLocators()
+
             try {
                 this.previewHtml = await fastApi.preview.get({
                     url: this.webpageUrl
@@ -144,23 +153,49 @@ export default {
                         cursor: pointer;
                     }
                     :hover { 
-                        outline: 2px solid ${getCssVar('--color-primary-400')} !important;
+                        outline: 2px solid ${getCssVar('--color-primary-200')} !important;
                     }
+
+                    .scraper-previous-other-elements {
+                        outline: 3px dashed ${getCssVar('--color-primary-400')} !important;
+                    }
+                    .scraper-previous-other-elements:hover {
+                        outline: 3px dashed ${getCssVar('--color-error-light')} !important;
+                    }
+
+                    .scraper-previous-current-element {
+                        outline: 3px solid ${getCssVar('--color-primary-300')} !important;
+                    }
+                    .scraper-previous-current-element:hover {
+                        outline: 3px solid ${getCssVar('--color-primary-400')} !important;
+                    }
+
                     .scraper-located-element {
-                        outline: 2px solid ${getCssVar('--color-primary-500')} !important;
+                        outline: 3px solid ${getCssVar('--color-primary-400')} !important;
+                    }
+                    
+                    .scraper-located-element.scraper-previous-current-element:hover {
+                        outline: 3px solid ${getCssVar('--color-primary-500')} !important;
+                    }
+
+                    .scraper-located-element.scraper-previous-other-elements {
+                        outline: 3px solid ${getCssVar('--color-error')} !important;
+                    }
+                    .scraper-located-element.scraper-previous-other-elements:hover {
+                        outline: 3px solid ${getCssVar('--color-error-light')} !important;
                     }
                 `;
                 doc.head.appendChild(style);
 
-                // Disable all links
-                const anchors = doc.querySelectorAll('a');
-                anchors.forEach(a => a.removeAttribute('href'));
-
                 if (this.newElemenDetails.locator) this.findElementsWithLocator();
+                this.findExistingElements();
 
                 // Click handler – store the element & locator
                 doc.addEventListener('click', (e) => {
                     const target = e.target;
+                    
+                    const a = e.target.closest('a');
+                    if (a) e.preventDefault();          
 
                     // Set selected element and parse the value out of it
                     this.selectedElement = target;
@@ -174,6 +209,13 @@ export default {
             });
         },
         buildLocator(el) {
+            const IGNORED_CLASSES = [
+                'scraper-previous-other-elements',
+                'scraper-previous-current-element',
+                'scraper-located-element',
+                'vsc-initialized'
+            ];
+
             const parts = [];
             let current = el;
 
@@ -183,10 +225,10 @@ export default {
                 const tag = current.tagName.toLowerCase();
                 let part = `${tag}`;
 
-                // add classes (filtering ignored ones)
+                // add classes, skipping the ones we added
                 if (current.classList.length > 0) {
                     const allowed = Array.from(current.classList).filter(
-                        cls => !['vsc-initialized'].includes(cls)
+                        cls => !IGNORED_CLASSES.includes(cls)
                     );
                     if (allowed.length) part += `.${allowed.join('.')}`;
                 }
@@ -235,6 +277,32 @@ export default {
             this.failed.valueParse = false;
             return num;
         },
+        findExistingElements() {
+            const iframe = this.$refs.previewIframe;
+            if (!iframe) return;
+
+            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (!doc) return;
+            
+            // Remove any previous special highlights
+            const prevSpecial = doc.querySelectorAll('.scraper-previous-other-elements');
+            prevSpecial.forEach(el => el.classList.remove('scraper-previous-other-elements'));
+
+            // Highlight each locator
+            this.currentWebpageLocators.forEach(locator => {
+                const matchedEls = doc.querySelectorAll(locator);
+                matchedEls.forEach(el => el.classList.add('scraper-previous-other-elements'));
+            });
+
+            // Find the possible current element
+            if (this.newElemenDetails?.locator) {
+                const matchedEls = doc.querySelectorAll(this.newElemenDetails.locator);
+                matchedEls.forEach(el => {
+                    el.classList.remove('scraper-previous-other-elements')
+                    el.classList.add('scraper-previous-current-element')
+                });
+            };
+        },
         findElementsWithLocator() {
             const iframe = this.$refs.previewIframe;
             if (!iframe) return;
@@ -259,6 +327,12 @@ export default {
 
             // Store the count
             this.locatorMatchCount = matchedEls.length;
+        },
+        async getCurrentWebpageLocators() {
+            const response = await fastApi.webpages.elements.get(this.webpageId);
+            if (response) {
+                this.currentWebpageLocators = response.map(el => el.locator).filter(Boolean);
+            }
         },
 
         //////////////// Create/Edit element ////////////////
@@ -315,6 +389,9 @@ export default {
                     metric_name: newVal.metric_name || ''
                 }
             }
+        },
+        'newElemenDetails.locator'() {
+            this.findElementsWithLocator();
         }
     }
 }
@@ -342,6 +419,7 @@ iframe {
     min-width: none;
 }
 .iframe-wrapper .placeholder {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
