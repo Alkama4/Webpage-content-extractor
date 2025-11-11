@@ -164,7 +164,8 @@ p {
 
 
 /************** Inputs **************/
-input {
+input,
+select {
     font-family: var(--ff-sans);
     padding: 0.75rem 1rem;
     border-radius: var(--btn-radius);
@@ -175,17 +176,20 @@ input {
     font-size: var(--fs-2);
     color: var(--text-dark-primary);
 }
-input:hover {
+input:hover,
+select:hover {
     border-color: var(--color-neutral-400);
     background: var(--color-neutral-100);
 }
-input:focus {
+input:focus,
+select:focus {
     outline: none;
     border-color: var(--color-primary-500);
     box-shadow: 0 0 0 4px var(--color-primary-100), var(--shadow-sm);
     background: var(--color-neutral-100);
 }
-input::placeholder {
+input::placeholder,
+select::placeholder {
     color: var(--text-dark-tertiary);
 }
 

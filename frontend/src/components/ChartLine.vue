@@ -113,6 +113,8 @@ export default defineComponent({
                 },
 
                 legend: { 
+                    type: 'scroll',
+                    pageIconColor: 'var(--color-primary-500)',
                     data: legendMetrics, 
                     top: 0,
                     formatter: (fullName) => fullName.split("#")[0]

@@ -9,6 +9,6 @@ httpx
 apscheduler
 uvicorn
 fastapi
-playwright
+# selenium 
 pydantic
 pydantic_core

@@ -52,6 +52,14 @@
                     label="Locator string"
                     placeholder="div.class > section#id > ul > li:nth-of-type(3)"
                 />
+                <SelectInput
+                    v-model="locatorMethod"
+                    label="Locator style"
+                    :options="[
+                        { label: 'Class based (readable)', value: 'buildLocator' },
+                        { label: 'Nth-of-type based (exact)', value: 'buildLocatorWithNth' },
+                    ]"
+                />
                 <button :disabled="failed.valueParse" type="submit">
                     <LoadingIndicator v-if="loading.formSubmit"/>
                     <span v-else>{{ existingElement ? 'Update element' : 'Create element' }}</span>
@@ -64,6 +72,7 @@
 <script>
 import InlineMessage from './InlineMessage.vue';
 import LoadingIndicator from './LoadingIndicator.vue';
+import SelectInput from './SelectInput.vue';
 import TextInput from './TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
 import { getCssVar } from '@/utils/utils';
@@ -89,11 +98,14 @@ export default {
             newElemenDetails: {
                 locator: '',
                 metric_name: ''
-            }
+            },
+            currentWebpageLocators: [],
+            locatorMethod: 'buildLocator',
         }
     },
     components: {
         TextInput,
+        SelectInput,
         LoadingIndicator,
         InlineMessage,
     },
@@ -110,12 +122,20 @@ export default {
         existingElement: {
             type: Object,
             default: null
+        },
+        otherElementsOnWebpage: {
+            type: Array,
+            default: () => []
         }
     },
     methods: {
         //////////////// Iframe stuff ////////////////
         async loadPageToIframe() {
             this.loading.iframe = true;
+
+            // Fetch current locators
+            this.getCurrentWebpageLocators()
+
             try {
                 this.previewHtml = await fastApi.preview.get({
                     url: this.webpageUrl
@@ -144,23 +164,49 @@ export default {
                         cursor: pointer;
                     }
                     :hover { 
-                        outline: 2px solid ${getCssVar('--color-primary-400')} !important;
+                        outline: 2px solid ${getCssVar('--color-primary-200')} !important;
                     }
+
+                    .scraper-previous-other-elements {
+                        outline: 3px dashed ${getCssVar('--color-primary-400')} !important;
+                    }
+                    .scraper-previous-other-elements:hover {
+                        outline: 3px dashed ${getCssVar('--color-error-light')} !important;
+                    }
+
+                    .scraper-previous-current-element {
+                        outline: 3px solid ${getCssVar('--color-primary-300')} !important;
+                    }
+                    .scraper-previous-current-element:hover {
+                        outline: 3px solid ${getCssVar('--color-primary-400')} !important;
+                    }
+
                     .scraper-located-element {
-                        outline: 2px solid ${getCssVar('--color-primary-500')} !important;
+                        outline: 3px solid ${getCssVar('--color-primary-400')} !important;
+                    }
+                    
+                    .scraper-located-element.scraper-previous-current-element:hover {
+                        outline: 3px solid ${getCssVar('--color-primary-500')} !important;
+                    }
+
+                    .scraper-located-element.scraper-previous-other-elements {
+                        outline: 3px solid ${getCssVar('--color-error')} !important;
+                    }
+                    .scraper-located-element.scraper-previous-other-elements:hover {
+                        outline: 3px solid ${getCssVar('--color-error-light')} !important;
                     }
                 `;
                 doc.head.appendChild(style);
 
-                // Disable all links
-                const anchors = doc.querySelectorAll('a');
-                anchors.forEach(a => a.removeAttribute('href'));
-
                 if (this.newElemenDetails.locator) this.findElementsWithLocator();
+                this.findExistingElements();
 
                 // Click handler – store the element & locator
                 doc.addEventListener('click', (e) => {
                     const target = e.target;
+                    
+                    const a = e.target.closest('a');
+                    if (a) e.preventDefault();          
 
                     // Set selected element and parse the value out of it
                     this.selectedElement = target;
@@ -168,47 +214,108 @@ export default {
 
                     // Build the locator using the target, and using that locate the elements
                     // as a check that the locator works as intended.
-                    this.newElemenDetails.locator = this.buildLocator(target);
-                    this.findElementsWithLocator()
+                    if (this.locatorMethod === 'buildLocator') {
+                        this.newElemenDetails.locator = this.buildLocator(target);
+                    } else {
+                        this.newElemenDetails.locator = this.buildLocatorWithNth(target);
+                    }
+                    this.findElementsWithLocator();
+
                 });
             });
         },
         buildLocator(el) {
-            const parts = [];
-            let current = el;
+            const IGNORED_CLASSES = [
+                'scraper-previous-other-elements',
+                'scraper-previous-current-element',
+                'scraper-located-element',
+                'vsc-initialized'
+            ];
 
-            while (current && current.nodeName.toLowerCase() !== 'html') {
-                if (current === document.body) break;
+            function bestPart(node) {
+                const tag = node.tagName.toLowerCase();
+                const classes = [...node.classList].filter(c => !IGNORED_CLASSES.includes(c));
+                const id = node.id && node.id.trim();
+                const parent = node.parentElement;
 
-                const tag = current.tagName.toLowerCase();
-                let part = `${tag}`;
+                // If element has a unique ID, stop here — best anchor
+                if (id && document.querySelectorAll(`#${id}`).length === 1) {
+                    return `#${id}`;
+                }
 
-                // add classes (filtering ignored ones)
-                if (current.classList.length > 0) {
-                    const allowed = Array.from(current.classList).filter(
-                        cls => !['vsc-initialized'].includes(cls)
+                // Try tag + class combination (but only if unique among siblings)
+                if (classes.length && parent) {
+                    const classSel = `${tag}.${classes.join('.')}`;
+                    const siblingsMatch = [...parent.children].filter(n =>
+                        n.tagName === node.tagName &&
+                        classes.every(c => n.classList.contains(c))
                     );
-                    if (allowed.length) part += `.${allowed.join('.')}`;
+                    if (siblingsMatch.length === 1) return classSel;
                 }
 
-                // add id
-                if (current.id) {
-                    part += `#${current.id}`;
-                }
-
-                // add nth-of-type if needed
-                const parent = current.parentElement;
+                // Fallback: tag only (if it is unique among siblings)
                 if (parent) {
-                    const sameTagSiblings = Array.from(parent.children)
-                        .filter(c => c.tagName === current.tagName);
-                    if (sameTagSiblings.length > 1) {
-                        const idx = sameTagSiblings.indexOf(current) + 1;
-                        part += `:nth-of-type(${idx})`;
-                    }
+                    const sameTag = [...parent.children].filter(n => n.tagName === node.tagName);
+                    if (sameTag.length === 1) return tag;
                 }
 
+                // If not unique by class or structure, use nth-of-type
+                if (parent) {
+                    const sameTag = [...parent.children].filter(n => n.tagName === node.tagName);
+                    const index = sameTag.indexOf(node) + 1;
+                    return `${tag}:nth-of-type(${index})`;
+                }
+
+                return tag;
+            }
+
+            const parts = [];
+            let cur = el;
+
+            while (cur && cur.nodeName.toLowerCase() !== 'html' && cur !== document.body) {
+                const part = bestPart(cur);
                 parts.unshift(part);
-                current = current.parentElement;
+
+                // If part is a unique ID, we can stop climbing
+                if (part.startsWith('#')) break;
+
+                cur = cur.parentElement;
+            }
+
+            return parts.join(' > ');
+        },
+        buildLocatorWithNth(el) {
+            function getNthTag(node) {
+                const tag = node.tagName.toLowerCase();
+                const parent = node.parentElement;
+                if (!parent) return tag;
+
+                const siblings = [...parent.children].filter(n => n.tagName === node.tagName);
+                if (siblings.length === 1) return tag;
+
+                const index = siblings.indexOf(node) + 1;
+                return `${tag}:nth-of-type(${index})`;
+            }
+
+            // Step 1: Build full path with nth-of-type
+            const parts = [];
+            let cur = el;
+            while (cur && cur.nodeName.toLowerCase() !== 'html' && cur !== document.body) {
+                parts.unshift(getNthTag(cur));
+                cur = cur.parentElement;
+            }
+            let selector = parts.join(' > ');
+
+            // Step 2: Try simplifying
+            for (let i = 0; i < parts.length; i++) {
+                if (!parts[i].includes(':nth-of-type')) continue;
+
+                const trialParts = [...parts];
+                trialParts[i] = trialParts[i].replace(/:nth-of-type\(\d+\)/, '');
+                const trialSelector = trialParts.join(' > ');
+                if (document.querySelectorAll(trialSelector).length === 1) {
+                    parts[i] = trialParts[i]; // remove nth-of-type
+                }
             }
 
             return parts.join(' > ');
@@ -235,6 +342,32 @@ export default {
             this.failed.valueParse = false;
             return num;
         },
+        findExistingElements() {
+            const iframe = this.$refs.previewIframe;
+            if (!iframe) return;
+
+            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (!doc) return;
+            
+            // Remove any previous special highlights
+            const prevSpecial = doc.querySelectorAll('.scraper-previous-other-elements');
+            prevSpecial.forEach(el => el.classList.remove('scraper-previous-other-elements'));
+
+            // Highlight each locator
+            this.currentWebpageLocators.forEach(locator => {
+                const matchedEls = doc.querySelectorAll(locator);
+                matchedEls.forEach(el => el.classList.add('scraper-previous-other-elements'));
+            });
+
+            // Find the possible current element
+            if (this.newElemenDetails?.locator) {
+                const matchedEls = doc.querySelectorAll(this.newElemenDetails.locator);
+                matchedEls.forEach(el => {
+                    el.classList.remove('scraper-previous-other-elements')
+                    el.classList.add('scraper-previous-current-element')
+                });
+            };
+        },
         findElementsWithLocator() {
             const iframe = this.$refs.previewIframe;
             if (!iframe) return;
@@ -259,6 +392,12 @@ export default {
 
             // Store the count
             this.locatorMatchCount = matchedEls.length;
+        },
+        async getCurrentWebpageLocators() {
+            const response = await fastApi.webpages.elements.get(this.webpageId);
+            if (response) {
+                this.currentWebpageLocators = response.map(el => el.locator).filter(Boolean);
+            }
         },
 
         //////////////// Create/Edit element ////////////////
@@ -315,6 +454,19 @@ export default {
                     metric_name: newVal.metric_name || ''
                 }
             }
+        },
+        'newElemenDetails.locator'() {
+            this.findElementsWithLocator();
+        },
+        locatorMethod(newVal) {
+            // When the user changes the method we re‑build the current selector
+            if (this.selectedElement) {
+                this.newElemenDetails.locator =
+                    newVal === 'buildLocator'
+                        ? this.buildLocator(this.selectedElement)
+                        : this.buildLocatorWithNth(this.selectedElement);
+                this.findElementsWithLocator();
+            }
         }
     }
 }
@@ -342,6 +494,7 @@ iframe {
     min-width: none;
 }
 .iframe-wrapper .placeholder {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
