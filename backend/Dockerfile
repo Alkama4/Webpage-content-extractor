@@ -20,6 +20,10 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libpango-1.0-0 \
     libxfixes3 \
+    libxcursor1 \
+    libgtk-3-0 \
+    libgdk-pixbuf2.0-0 \
+    libcairo-gobject2 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
