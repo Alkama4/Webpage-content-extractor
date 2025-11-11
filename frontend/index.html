@@ -2,9 +2,19 @@
 <html lang="">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
+    <script>
+      function updateFavicon() {
+        const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const favicon = document.querySelector('link[rel="icon"]') || document.createElement('link');
+        favicon.rel = 'icon';
+        favicon.href = darkMode ? '/favicon_dark.svg' : '/favicon_light.svg';
+        document.head.appendChild(favicon);
+      }
+      updateFavicon();
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <title>Web Scraper Dashboard</title>
   </head>
   <body>
     <div id="app"></div>
