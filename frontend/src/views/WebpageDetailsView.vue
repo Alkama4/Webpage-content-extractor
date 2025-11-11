@@ -21,11 +21,11 @@
                                 <td><a :href="webpage.url">{{ webpage.url }}</a></td>
                             </tr>
                             <tr>
-                                <th>Schedule</th>
+                                <th>Schedule time</th>
                                 <td>{{ formatScheduleTime(webpage.run_time) }}</td>
                             </tr>
                             <tr>
-                                <th>Enabled</th>
+                                <th>Schedule enabled</th>
                                 <td>{{ webpage.is_enabled ? "Yes" : "No" }}</td>
                             </tr>
                             <!-- <tr>
@@ -50,6 +50,11 @@
                         <button @click="deleteWebpage" class="btn-with-icon btn-danger">
                             <i class="bx bxs-trash"></i>
                             <span>Delete</span>
+                        </button>
+                        <button @click="runManualScrape" :disabled="loading.manualScrape" class="btn-with-icon">
+                            <i class="bx bxs-right-arrow" :class="{'hidden': loading.manualScrape}"></i>
+                            <span :class="{'hidden': loading.manualScrape}">Manual scrape</span>
+                            <LoadingIndicator :hidden="!loading.manualScrape"/>
                         </button>
                     </div>
                 </div>
@@ -174,6 +179,12 @@
             optionPositive="Delete permanently"
             :redHover="true"
         />
+        <ModalConfirmation 
+            ref="modalManualScrapeConfirmationRef"
+            title="Run manual scrape"
+            description="Note that scraping is intended to be automated. Run manually anyway?"
+            optionPositive="Run scrape"
+        />
     </div>
 </template>
 
@@ -217,6 +228,7 @@ export default {
                 iframe: false,
                 validate: false,
                 elementCreate: false,
+                manualScrape: false,
             },
             failed: {
                 valueParse: false,
@@ -307,6 +319,17 @@ export default {
                 await this.getWebpageInfo();
             } 
             // Else we aborted returning success = false
+        },
+
+        async runManualScrape() {
+            if (await this.$refs.modalManualScrapeConfirmationRef.open()) {
+                this.loading.manualScrape = true;
+                const response = await fastApi.webpages.runScrape(this.webpage.webpage_id);
+                if (response) {
+                    this.loading.manualScrape = false;
+                    await this.getWebpageElementData();
+                }
+            }
         },
     },
     computed: {
