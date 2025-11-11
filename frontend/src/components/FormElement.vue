@@ -52,6 +52,14 @@
                     label="Locator string"
                     placeholder="div.class > section#id > ul > li:nth-of-type(3)"
                 />
+                <SelectInput
+                    v-model="locatorMethod"
+                    label="Locator format"
+                    :options="[
+                        { label: 'Class based', value: 'buildLocator' },
+                        { label: 'Nth-of-type based', value: 'buildLocatorWithNth' },
+                    ]"
+                />
                 <button :disabled="failed.valueParse" type="submit">
                     <LoadingIndicator v-if="loading.formSubmit"/>
                     <span v-else>{{ existingElement ? 'Update element' : 'Create element' }}</span>
@@ -64,6 +72,7 @@
 <script>
 import InlineMessage from './InlineMessage.vue';
 import LoadingIndicator from './LoadingIndicator.vue';
+import SelectInput from './SelectInput.vue';
 import TextInput from './TextInput.vue';
 import { fastApi } from '@/utils/fastApi';
 import { getCssVar } from '@/utils/utils';
@@ -90,11 +99,13 @@ export default {
                 locator: '',
                 metric_name: ''
             },
-            currentWebpageLocators: []
+            currentWebpageLocators: [],
+            locatorMethod: 'buildLocator',
         }
     },
     components: {
         TextInput,
+        SelectInput,
         LoadingIndicator,
         InlineMessage,
     },
@@ -203,8 +214,13 @@ export default {
 
                     // Build the locator using the target, and using that locate the elements
                     // as a check that the locator works as intended.
-                    this.newElemenDetails.locator = this.buildLocator(target);
-                    this.findElementsWithLocator()
+                    if (this.locatorMethod === 'buildLocator') {
+                        this.newElemenDetails.locator = this.buildLocator(target);
+                    } else {
+                        this.newElemenDetails.locator = this.buildLocatorWithNth(target);
+                    }
+                    this.findElementsWithLocator();
+
                 });
             });
         },
@@ -216,41 +232,90 @@ export default {
                 'vsc-initialized'
             ];
 
-            const parts = [];
-            let current = el;
+            function bestPart(node) {
+                const tag = node.tagName.toLowerCase();
+                const classes = [...node.classList].filter(c => !IGNORED_CLASSES.includes(c));
+                const id = node.id && node.id.trim();
+                const parent = node.parentElement;
 
-            while (current && current.nodeName.toLowerCase() !== 'html') {
-                if (current === document.body) break;
+                // If element has a unique ID, stop here — best anchor
+                if (id && document.querySelectorAll(`#${id}`).length === 1) {
+                    return `#${id}`;
+                }
 
-                const tag = current.tagName.toLowerCase();
-                let part = `${tag}`;
-
-                // add classes, skipping the ones we added
-                if (current.classList.length > 0) {
-                    const allowed = Array.from(current.classList).filter(
-                        cls => !IGNORED_CLASSES.includes(cls)
+                // Try tag + class combination (but only if unique among siblings)
+                if (classes.length && parent) {
+                    const classSel = `${tag}.${classes.join('.')}`;
+                    const siblingsMatch = [...parent.children].filter(n =>
+                        n.tagName === node.tagName &&
+                        classes.every(c => n.classList.contains(c))
                     );
-                    if (allowed.length) part += `.${allowed.join('.')}`;
+                    if (siblingsMatch.length === 1) return classSel;
                 }
 
-                // add id
-                if (current.id) {
-                    part += `#${current.id}`;
-                }
-
-                // add nth-of-type if needed
-                const parent = current.parentElement;
+                // Fallback: tag only (if it is unique among siblings)
                 if (parent) {
-                    const sameTagSiblings = Array.from(parent.children)
-                        .filter(c => c.tagName === current.tagName);
-                    if (sameTagSiblings.length > 1) {
-                        const idx = sameTagSiblings.indexOf(current) + 1;
-                        part += `:nth-of-type(${idx})`;
-                    }
+                    const sameTag = [...parent.children].filter(n => n.tagName === node.tagName);
+                    if (sameTag.length === 1) return tag;
                 }
 
+                // If not unique by class or structure, use nth-of-type
+                if (parent) {
+                    const sameTag = [...parent.children].filter(n => n.tagName === node.tagName);
+                    const index = sameTag.indexOf(node) + 1;
+                    return `${tag}:nth-of-type(${index})`;
+                }
+
+                return tag;
+            }
+
+            const parts = [];
+            let cur = el;
+
+            while (cur && cur.nodeName.toLowerCase() !== 'html' && cur !== document.body) {
+                const part = bestPart(cur);
                 parts.unshift(part);
-                current = current.parentElement;
+
+                // If part is a unique ID, we can stop climbing
+                if (part.startsWith('#')) break;
+
+                cur = cur.parentElement;
+            }
+
+            return parts.join(' > ');
+        },
+        buildLocatorWithNth(el) {
+            function getNthTag(node) {
+                const tag = node.tagName.toLowerCase();
+                const parent = node.parentElement;
+                if (!parent) return tag;
+
+                const siblings = [...parent.children].filter(n => n.tagName === node.tagName);
+                if (siblings.length === 1) return tag;
+
+                const index = siblings.indexOf(node) + 1;
+                return `${tag}:nth-of-type(${index})`;
+            }
+
+            // Step 1: Build full path with nth-of-type
+            const parts = [];
+            let cur = el;
+            while (cur && cur.nodeName.toLowerCase() !== 'html' && cur !== document.body) {
+                parts.unshift(getNthTag(cur));
+                cur = cur.parentElement;
+            }
+            let selector = parts.join(' > ');
+
+            // Step 2: Try simplifying
+            for (let i = 0; i < parts.length; i++) {
+                if (!parts[i].includes(':nth-of-type')) continue;
+
+                const trialParts = [...parts];
+                trialParts[i] = trialParts[i].replace(/:nth-of-type\(\d+\)/, '');
+                const trialSelector = trialParts.join(' > ');
+                if (document.querySelectorAll(trialSelector).length === 1) {
+                    parts[i] = trialParts[i]; // remove nth-of-type
+                }
             }
 
             return parts.join(' > ');
@@ -392,6 +457,16 @@ export default {
         },
         'newElemenDetails.locator'() {
             this.findElementsWithLocator();
+        },
+        locatorMethod(newVal) {
+            // When the user changes the method we re‑build the current selector
+            if (this.selectedElement) {
+                this.newElemenDetails.locator =
+                    newVal === 'buildLocator'
+                        ? this.buildLocator(this.selectedElement)
+                        : this.buildLocatorWithNth(this.selectedElement);
+                this.findElementsWithLocator();
+            }
         }
     }
 }
