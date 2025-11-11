@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM mcr.microsoft.com/playwright/python:v1.55.0-focal
 
 WORKDIR /app
 
@@ -6,8 +6,5 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-
-# Install Playwright browsers
-RUN playwright install
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
