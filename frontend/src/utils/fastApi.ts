@@ -30,6 +30,20 @@ export const fastApi = {
         }
     },
 
+    preview: {
+        get: async (params: { url: string }) => {
+            const request = apiClient.get('/preview', { params });
+            return fetchData(request);
+        }
+    },
+
+    runActiveScrapes: {
+        post: async (params: { url: string }) => {
+            const request = apiClient.post('/run_active_scrapes', { params });
+            return fetchData(request);
+        }
+    },
+
     webpages: {
         get: async (params?: Record<string, any>) => {
             const request = apiClient.get('/webpages/', { params });
@@ -58,6 +72,11 @@ export const fastApi = {
 
         delete: async (webpage_id: number) => {
             const request = apiClient.delete(`/webpages/${webpage_id}`);
+            return fetchData(request);
+        },
+
+        runScrape: async (webpage_id: number) => {
+            const request = apiClient.post(`/webpages/${webpage_id}/run_scrape`);
             return fetchData(request);
         },
 
@@ -120,11 +139,4 @@ export const fastApi = {
             return fetchData(request);
         }
     },
-
-    preview: {
-        get: async (params: { url: string }) => {
-            const request = apiClient.get('/preview', { params });
-            return fetchData(request);
-        }
-    }
 };
