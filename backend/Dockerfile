@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright/python:v1.55.0-focal
+FROM mcr.microsoft.com/playwright/python:v1.55.0-noble
 
 WORKDIR /app
 
