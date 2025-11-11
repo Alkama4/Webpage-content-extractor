@@ -205,6 +205,7 @@ nav[aria-label="breadcrumb"] {
 .breadcrumb-item a {
     font-size: var(--fs-1);
     padding: 5px 16px;
+    border-radius: 100px;
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid var(--color-neutral-300);
     box-shadow: var(--shadow-xs);
