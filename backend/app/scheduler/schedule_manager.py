@@ -79,4 +79,4 @@ class ScheduleManager:
 
     async def _run_webpage_job(self, row: dict):
         print(f"Running job for webpage: {row['page_name']} ({row['url']})")
-        await run_scrape(row['webpage_id'])        
+        await run_scrape(row['webpage_id'])

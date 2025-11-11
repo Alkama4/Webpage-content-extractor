@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Response
-import httpx
-from app.scraper.utils import ValidationData, ValidationRequest, validate_scrapes, run_scrape
+from app.scraper.utils import run_scrape
+from app.scraper.BrowserFetcher import BrowserFetcher
 
 router = APIRouter(prefix="", tags=["root"])
-
 
 @router.get("/")
 def root():
@@ -15,20 +14,25 @@ def root():
 
 @router.get("/preview")
 async def preview(url: str):
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, timeout=10)
-    return Response(content=resp.text, media_type="text/html")
+    fetcher = BrowserFetcher()
+    await fetcher.start()
+    
+    try:
+        html = await fetcher.fetch(url)
+    except PermissionError:
+        return Response(content="Blocked by robots.txt", status_code=403)
+    finally:
+        await fetcher.stop()
 
+    return Response(content=html, media_type="text/html")
 
-@router.get("/validate", response_model=ValidationData)
-async def validate_scrapes_endpoint(req: ValidationRequest):
-    """
-    Run the scraper against a single page URL using the supplied list of
-    CSS/XPath locators. No data is persisted - the result is returned
-    directly to the caller.
-    """
-    return validate_scrapes(req)
 
 @router.post("/run_active_scrapes")
 async def run_active_scrapes():
+    """
+    Scrape all of the active webpages.
+    """
     await run_scrape()
+    return {
+        "msg": "Scrapes completed for active webpages.",
+    }

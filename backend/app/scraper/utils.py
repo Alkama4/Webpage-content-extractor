@@ -2,8 +2,8 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, HttpUrl, Field
 import re
 from decimal import Decimal
-from fastapi import HTTPException
 from app.scraper.web_page_scraper import WebPageScraper
+from app.scraper.BrowserFetcher import BrowserFetcher
 from app.utils import get_aiomysql_connection, execute_mysql_query
 
 class ElementInfo(BaseModel):
@@ -32,55 +32,6 @@ class ValidationResult(BaseModel):
 
 class ValidationData(ValidationRequest):
     locators: list[ValidationResult]
-
-
-def validate_scrapes(req: ValidationRequest) -> List[ValidationResult]:
-    """
-    Work-horse for the `/validate` endpoint.
-
-    Parameters
-    ----------
-    req : ValidationRequest
-        The request payload containing a single URL and a list of CSS/XPath locators.
-    Returns
-    -------
-    List[ValidationResult]
-        A flat list of `{scrape_id, value}` objects.  `scrape_id` is set to ``0`` because
-        the validation step does not correspond to an actual database record.
-    """
-    results: List[ValidationResult] = []
-
-    # Instantiate a scraper for the given URL once and reuse it for all locators
-    scraper = WebPageScraper(str(req.url))
-
-    for idx, locator in enumerate(req.locators):
-        try:
-            raw_value = scraper.scrape(locator)
-        except Exception as exc:      # pragma: no cover - debugging helper
-            print(f"Failed to scrape locator {locator!r}: {exc}")
-            continue
-
-        if raw_value is None:
-            continue
-
-        try:
-            numeric = parse_number(raw_value, allow_percent=False, force_decimal=True)
-        except ValueError as exc:     # pragma: no cover - debugging helper
-            print(f"Could not parse value for locator {locator!r}: {exc}")
-            raise HTTPException(
-                status_code=400, 
-                detail={
-                    "detail": "A scraped elements value couldn't be converted to a number.",
-                    "field": "locator",
-                    "type": "value_error",
-                    "locator": locator,
-                    "value": raw_value
-                }
-            )
-
-        results.append(ValidationResult(locator=locator, value=numeric))
-
-    return ValidationData(url=req.url, locators=results)
 
 
 def parse_number(raw: str,
@@ -176,15 +127,18 @@ def _group_elements_by_webpage(rows: List[Dict]) -> List[PageWithElements]:
     return list(pages.values())
 
 
-def _run_scrapes_by_webpage(webpages: List[PageWithElements]) -> List[ScrapeResult]:
+async def _run_scrapes_by_webpage(webpages: List[PageWithElements]) -> List[ScrapeResult]:
     """
     Execute the scraper for every element listed under each webpage.
     Returns a flat list of dicts: {element_id, value}.
     """
     results: List[ScrapeResult] = []
+    fetcher = BrowserFetcher()
+    await fetcher.start()
+    scraper = WebPageScraper(fetcher)
 
     for page in webpages:
-        scraper = WebPageScraper(page.url)
+        await scraper.load(page.url)
 
         for element in page.elements:
             try:
@@ -203,6 +157,8 @@ def _run_scrapes_by_webpage(webpages: List[PageWithElements]) -> List[ScrapeResu
                 continue
 
             results.append(ScrapeResult(element_id=element.element_id, value=numeric))
+            
+    await fetcher.stop()
 
     return results
 
@@ -219,15 +175,27 @@ async def _fetch_all_webpage_and_element_rows(conn) -> List[Dict[str, Any]]:
     return await execute_mysql_query(conn, query)
 
 
-async def _fetch_webpage_and_elements_by_id(conn, webpage_id: int) -> List[Dict[str, Any]]:
-    query = """
-        SELECT
-            w.webpage_id, w.url, w.page_name,
-            s.element_id, s.locator, s.metric_name
-        FROM webpages AS w
-        LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
-        WHERE w.webpage_id = %s AND w.is_enabled = TRUE;
-    """
+async def _fetch_webpage_and_elements_by_id(
+    conn, webpage_id: int, ignore_is_enabled: bool
+) -> List[Dict[str, Any]]:
+    if ignore_is_enabled:
+        query = """
+            SELECT
+                w.webpage_id, w.url, w.page_name,
+                s.element_id, s.locator, s.metric_name
+            FROM webpages AS w
+            LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+            WHERE w.webpage_id = %s;
+        """
+    else:
+        query = """
+            SELECT
+                w.webpage_id, w.url, w.page_name,
+                s.element_id, s.locator, s.metric_name
+            FROM webpages AS w
+            LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+            WHERE w.webpage_id = %s AND w.is_enabled = TRUE;
+        """
     return await execute_mysql_query(conn, query, (webpage_id,))
 
 
@@ -244,19 +212,22 @@ async def _persist_element_data(conn, element_data: List[ScrapeResult]) -> None:
     await execute_mysql_query(conn, query, tuple(params), return_rowcount=True)
 
 
-async def run_scrape(webpage_id: int | None = None) -> str:
+async def run_scrape(
+    webpage_id: int | None = None, 
+    ignore_is_enabled: bool = False,
+) -> str:
     """
     Runs scrapes for either all active webpages or a single one if `webpage_id` is provided.
     Uses shared scraper utils for grouping, scraping, and persistence.
     """
     async with get_aiomysql_connection() as conn:
         if webpage_id:
-            rows = await _fetch_webpage_and_elements_by_id(conn, webpage_id)
+            rows = await _fetch_webpage_and_elements_by_id(conn, webpage_id, ignore_is_enabled)
         else:
             rows = await _fetch_all_webpage_and_element_rows(conn)
 
         webpages = _group_elements_by_webpage(rows)
-        results = _run_scrapes_by_webpage(webpages)
+        results = await _run_scrapes_by_webpage(webpages)
         await _persist_element_data(conn, results)
 
     scope = f"webpage_id={webpage_id}" if webpage_id else "all active webpages"

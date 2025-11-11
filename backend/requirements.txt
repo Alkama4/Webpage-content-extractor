@@ -9,3 +9,6 @@ httpx
 apscheduler
 uvicorn
 fastapi
+playwright
+pydantic
+pydantic_core
