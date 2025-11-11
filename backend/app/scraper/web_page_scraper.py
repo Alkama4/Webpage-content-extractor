@@ -13,10 +13,14 @@ class WebPageScraper:
     def scrape(self, selector: str):
         """
         Return the *text* of the first element that matches `selector`.
-        If nothing is found, returns None.
+        If nothing is found, prints a message and returns None.
         """
         if not self._html:
             raise RuntimeError("Page not loaded. Call 'await load()' first.")
         soup = BeautifulSoup(self._html, "html.parser")
         elem = soup.select_one(selector)
-        return elem.get_text(strip=True) if elem else None
+        if elem:
+            return elem.get_text(strip=True)
+        else:
+            print(f"Warning: No element found for selector '{selector}' on {self.url}")
+            return None
