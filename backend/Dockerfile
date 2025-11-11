@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     libgbm1 \
     libasound2 \
+    libcairo2 \
+    libpango-1.0-0 \
+    libxfixes3 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
