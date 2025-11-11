@@ -29,6 +29,13 @@ async def validate_scrapes_endpoint(req: ValidationRequest):
     """
     return validate_scrapes(req)
 
+
 @router.post("/run_active_scrapes")
 async def run_active_scrapes():
+    """
+    Scrape all of the active webpages.
+    """
     await run_scrape()
+    return {
+        "msg": "Scrapes completed for active webpages.",
+    }

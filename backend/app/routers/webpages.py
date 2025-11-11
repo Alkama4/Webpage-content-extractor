@@ -10,6 +10,7 @@ from app.models.element_data import ElementData
 # Project utils
 from app.utils import get_aiomysql_connection, execute_mysql_query
 from app.lifespan import scheduler_manager
+from app.scraper.utils import run_scrape
 
 router = APIRouter(prefix="/webpages", tags=["webpages"])
 
@@ -269,6 +270,18 @@ async def delete_webpage(webpage_id: int):
         await scheduler_manager.remove_schedule(webpage_id)
 
         return {"msg": "Webpage deleted"}
+
+
+@router.post("/{webpage_id}/run_scrape")
+async def run_scrape_for_webpage(webpage_id: int):
+    """
+    Manually run scrape for a webpage. Overrides enabled status.
+    """
+    await run_scrape(webpage_id=webpage_id, ignore_is_enabled=True)
+    return {
+        "msg": f"Scrape completed for webpage with id {webpage_id}.",
+        "webpage_id": webpage_id
+    }
 
 
 @router.get("/{webpage_id}/elements", response_model=List[ElementInDB])

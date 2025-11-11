@@ -219,15 +219,27 @@ async def _fetch_all_webpage_and_element_rows(conn) -> List[Dict[str, Any]]:
     return await execute_mysql_query(conn, query)
 
 
-async def _fetch_webpage_and_elements_by_id(conn, webpage_id: int) -> List[Dict[str, Any]]:
-    query = """
-        SELECT
-            w.webpage_id, w.url, w.page_name,
-            s.element_id, s.locator, s.metric_name
-        FROM webpages AS w
-        LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
-        WHERE w.webpage_id = %s AND w.is_enabled = TRUE;
-    """
+async def _fetch_webpage_and_elements_by_id(
+    conn, webpage_id: int, ignore_is_enabled: bool
+) -> List[Dict[str, Any]]:
+    if ignore_is_enabled:
+        query = """
+            SELECT
+                w.webpage_id, w.url, w.page_name,
+                s.element_id, s.locator, s.metric_name
+            FROM webpages AS w
+            LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+            WHERE w.webpage_id = %s;
+        """
+    else:
+        query = """
+            SELECT
+                w.webpage_id, w.url, w.page_name,
+                s.element_id, s.locator, s.metric_name
+            FROM webpages AS w
+            LEFT JOIN elements AS s ON w.webpage_id = s.webpage_id
+            WHERE w.webpage_id = %s AND w.is_enabled = TRUE;
+        """
     return await execute_mysql_query(conn, query, (webpage_id,))
 
 
@@ -244,14 +256,17 @@ async def _persist_element_data(conn, element_data: List[ScrapeResult]) -> None:
     await execute_mysql_query(conn, query, tuple(params), return_rowcount=True)
 
 
-async def run_scrape(webpage_id: int | None = None) -> str:
+async def run_scrape(
+    webpage_id: int | None = None, 
+    ignore_is_enabled: bool = False,
+) -> str:
     """
     Runs scrapes for either all active webpages or a single one if `webpage_id` is provided.
     Uses shared scraper utils for grouping, scraping, and persistence.
     """
     async with get_aiomysql_connection() as conn:
         if webpage_id:
-            rows = await _fetch_webpage_and_elements_by_id(conn, webpage_id)
+            rows = await _fetch_webpage_and_elements_by_id(conn, webpage_id, ignore_is_enabled)
         else:
             rows = await _fetch_all_webpage_and_element_rows(conn)
 
