@@ -56,6 +56,11 @@ export default {
                     icon: 'bx-time-five',
                     name: 'Scheduler',
                     path: '/scheduler'
+                },
+                {
+                    icon: 'bxs-file',
+                    name: 'Logs',
+                    path: '/logs'
                 }
             ]
         }
