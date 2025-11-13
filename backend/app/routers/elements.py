@@ -167,6 +167,16 @@ async def _fetch_element_data_by_element(conn: Connection, element_id: int) -> L
     return await execute_mysql_query(conn, query, (element_id,))
 
 
+async def _fetch_element_logs(conn: Connection, element_id: int) -> List[dict]:
+    query = """
+        SELECT element_log_id, webpage_log_id element_id, attempted_at, status, message
+        FROM element_logs
+        WHERE element_id = %s
+        ORDER BY attempted_at;
+    """
+    return await execute_mysql_query(conn, query, (element_id,))
+
+
 ########################  Endpoints  ########################
 
 @router.get("/", response_model=List[ElementInDB])
@@ -251,6 +261,16 @@ async def delete_element(element_id: int):
             raise HTTPException(status_code=404, detail="Element not found")
         return {"msg": "Element deleted"}
 
+
+@router.get("/{element_id}/logs")
+async def get_element_logs(element_id: int):
+    """
+    Get the logs for a element using its `element_id`.
+    """
+    async with get_aiomysql_connection() as conn:
+        rows = await _fetch_element_logs(conn, element_id)
+        return rows
+    
 
 @router.get("/{element_id}/data", response_model=List[ElementData])
 async def get_element_data(element_id: int):

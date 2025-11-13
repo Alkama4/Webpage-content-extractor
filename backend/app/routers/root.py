@@ -1,4 +1,7 @@
+from typing import List
+from aiomysql import Connection
 from fastapi import APIRouter, Response
+from app.utils import get_aiomysql_connection, execute_mysql_query
 from app.scraper.utils import run_scrape
 from app.scraper.BrowserFetcher import BrowserFetcher
 
@@ -36,3 +39,61 @@ async def run_active_scrapes():
     return {
         "msg": "Scrapes completed for active webpages.",
     }
+
+
+@router.get("/logs")
+async def get_logs():
+    """
+    Get the logs.
+    """
+    async with get_aiomysql_connection() as conn:
+        rows = await _fetch_logs(conn)
+        return rows
+
+
+
+####################### Helpers #######################
+
+async def _fetch_logs(conn: Connection) -> List[dict]:
+    query = """
+        SELECT 
+            wl.webpage_log_id,
+            wl.webpage_id,
+            wl.attempted_at AS webpage_attempted_at,
+            wl.status AS webpage_status,
+            wl.message AS webpage_message,
+            el.element_log_id,
+            el.element_id,
+            el.attempted_at AS element_attempted_at,
+            el.status AS element_status,
+            el.message AS element_message
+        FROM webpage_logs wl
+        LEFT JOIN element_logs el ON wl.webpage_log_id = el.webpage_log_id
+        ORDER BY wl.attempted_at DESC, el.attempted_at ASC;
+    """
+
+    rows = await execute_mysql_query(conn, query)
+
+    grouped = {}
+    for row in rows:
+        wid = row["webpage_log_id"]
+        if wid not in grouped:
+            grouped[wid] = {
+                "webpage_log_id": wid,
+                "webpage_id": row["webpage_id"],
+                "attempted_at": row["webpage_attempted_at"],
+                "status": row["webpage_status"],
+                "message": row["webpage_message"],
+                "elements": []
+            }
+
+        if row["element_log_id"]:
+            grouped[wid]["elements"].append({
+                "element_log_id": row["element_log_id"],
+                "element_id": row["element_id"],
+                "attempted_at": row["element_attempted_at"],
+                "status": row["element_status"],
+                "message": row["element_message"]
+            })
+
+    return list(grouped.values())
