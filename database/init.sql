@@ -25,3 +25,25 @@ CREATE TABLE IF NOT EXISTS element_data (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (element_id) REFERENCES elements(element_id) ON DELETE CASCADE
 );
+
+-- Webpage level log. Logs the attempt itself.
+CREATE TABLE IF NOT EXISTS webpage_logs (
+    webpage_log_id INT AUTO_INCREMENT PRIMARY KEY,
+    webpage_id INT NOT NULL,
+    attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('success', 'failure', 'partial') NOT NULL,
+    message TEXT,
+    FOREIGN KEY (webpage_id) REFERENCES webpages(webpage_id) ON DELETE CASCADE
+);
+
+-- Element level log. Logs what happened to each element.
+CREATE TABLE IF NOT EXISTS element_logs (
+    element_log_id INT AUTO_INCREMENT PRIMARY KEY,
+    webpage_log_id INT NOT NULL,
+    element_id INT NOT NULL,
+    attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('success', 'failure') NOT NULL,
+    message TEXT,
+    FOREIGN KEY (webpage_log_id) REFERENCES webpage_logs(webpage_log_id) ON DELETE CASCADE,
+    FOREIGN KEY (element_id) REFERENCES elements(element_id) ON DELETE CASCADE
+);
