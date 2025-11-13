@@ -1,5 +1,11 @@
 # Vue.js README
 
+Open frontend directory
+
+```sh
+cd .\frontend\
+```
+
 Download node_modules
 
 ```sh
