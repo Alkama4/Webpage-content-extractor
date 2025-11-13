@@ -154,13 +154,13 @@ async def _run_scrapes_by_webpage(conn: Connection, webpages: List[PageWithEleme
                 numeric = parse_number(raw_value)
                 results.append(ScrapeResult(element_id=element.element_id, value=numeric))
                 await _insert_element_log(conn, webpage_log_id, element.element_id, "success", "Scraped successfully")
-            except ElementNotFoundError:
+            except ElementNotFoundError as e:
                 error_groups["ElementNotFoundError"].append(element.element_id)
-                await _insert_element_log(conn, webpage_log_id, element.element_id, "failure", "Element not found")
+                await _insert_element_log(conn, webpage_log_id, element.element_id, "failure", str(e))
                 webpage_status = "partial"
-            except ValueError:
+            except ValueError as e:
                 error_groups["ValueError"].append(element.element_id)
-                await _insert_element_log(conn, webpage_log_id, element.element_id, "failure", "Parsing failed")
+                await _insert_element_log(conn, webpage_log_id, element.element_id, "failure", str(e))
                 webpage_status = "partial"
             except Exception as exc:
                 error_groups["UnexpectedError"].append(element.element_id)
@@ -236,7 +236,7 @@ async def _persist_element_data(conn: Connection, element_data: List[ScrapeResul
 async def _initialize_webpage_log(
     conn: Connection,
     webpage_id: int,
-    message: str = "Scrape started"
+    message: str = "Scrape ran into an unexpected error and did not finish gracefully."
 ) -> int:
     """
     Inserts a new webpage log with status 'running' and returns its ID.
