@@ -169,10 +169,18 @@ async def _fetch_element_data_by_element(conn: Connection, element_id: int) -> L
 
 async def _fetch_element_logs(conn: Connection, element_id: int) -> List[dict]:
     query = """
-        SELECT element_log_id, webpage_log_id element_id, attempted_at, status, message
-        FROM element_logs
-        WHERE element_id = %s
-        ORDER BY attempted_at;
+        SELECT 
+            el.element_log_id,
+            el.webpage_log_id,
+            el.element_id,
+            e.metric_name,
+            el.attempted_at,
+            el.status,
+            el.message
+        FROM element_logs el
+        JOIN elements e ON el.element_id = e.element_id
+        WHERE el.element_id = %s
+        ORDER BY el.attempted_at;
     """
     return await execute_mysql_query(conn, query, (element_id,))
 
