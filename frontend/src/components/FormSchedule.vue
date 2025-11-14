@@ -11,9 +11,12 @@
                 v-model="newWebpageDetails.run_time"
                 label="Scheduled scrape time"
             />
-            <button type="submit">
-                <LoadingIndicator v-if="loading.formSubmit"/>
-                <span v-else>Update webpage</span>
+
+            <button type="submit" :disabled="loading.formSubmit">
+                <LoadingIndicator :hidden="!loading.formSubmit"/>
+                <span :class="{'hidden': loading.formSubmit}">
+                    Update webpage
+                </span>
             </button>
         </form>
     </div>

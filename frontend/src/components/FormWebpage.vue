@@ -31,9 +31,11 @@
                 v-model="newWebpageDetails.is_enabled"
                 label="Scraping enabled"
             />
-            <button type="submit">
-                <LoadingIndicator v-if="loading.formSubmit"/>
-                <span v-else>{{ existingWebpage ? 'Update webpage' : 'Create webpage' }}</span>
+            <button type="submit" :disabled="loading.formSubmit">
+                <LoadingIndicator :hidden="!loading.formSubmit"/>
+                <span :class="{'hidden': loading.formSubmit}">
+                    {{ existingWebpage ? 'Update webpage' : 'Create webpage' }}
+                </span>
             </button>
         </form>
     </div>

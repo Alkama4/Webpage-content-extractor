@@ -326,9 +326,9 @@ export default {
                 this.loading.manualScrape = true;
                 const response = await fastApi.webpages.runScrape(this.webpage.webpage_id);
                 if (response) {
-                    this.loading.manualScrape = false;
                     await this.getWebpageElementData();
                 }
+                this.loading.manualScrape = false;
             }
         },
     },
