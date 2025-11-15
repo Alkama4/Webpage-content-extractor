@@ -132,7 +132,7 @@ export default {
     /* gap: 8px; */
     width: 100%;
     box-sizing: border-box;
-    padding: 12px 16px;
+    padding: 16px;
     transition: all var(--t-fast);
 }
 
@@ -149,9 +149,9 @@ export default {
     transform: translateY(var(--btn-translate));
 }
 
-.log-entry.element {
-    /* border-top: 2px solid var(--color-neutral-300); */
-}
+/* .log-entry.element {
+    border-top: 2px solid var(--color-neutral-300);
+} */
 
 
 div.status {
@@ -204,10 +204,10 @@ label {
 }
 
 .log-entry-wrapper {
-    margin-top: 8px;
+    margin-top: 16px;
     /* margin: 0px -16px; */
     background-color: hsla(0, 0%, 0%, 0.065);
-    border-radius: 16px;
+    border-radius: 8px;
 }
 
 .listing-placeholder-wrapper {

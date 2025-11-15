@@ -42,21 +42,21 @@
                             </tr>
                         </tbody>
                     </table>
-                    <div class="flex-row gap-8">
-                        <button @click="editWebpage" class="btn-with-icon">
-                            <i class="bx bxs-edit"></i>
-                            <span>Edit</span>
-                        </button>
-                        <button @click="deleteWebpage" class="btn-with-icon btn-danger">
-                            <i class="bx bxs-trash"></i>
-                            <span>Delete</span>
-                        </button>
-                        <button @click="runManualScrape" :disabled="loading.manualScrape" class="btn-with-icon">
-                            <i class="bx bxs-right-arrow" :class="{'hidden': loading.manualScrape}"></i>
-                            <span :class="{'hidden': loading.manualScrape}">Manual scrape</span>
-                            <LoadingIndicator :hidden="!loading.manualScrape"/>
-                        </button>
-                    </div>
+                        <div class="flex-row gap-8">
+                            <button @click="editWebpage" class="btn-with-icon">
+                                <i class="bx bxs-edit"></i>
+                                <span>Edit</span>
+                            </button>
+                            <button @click="deleteWebpage" class="btn-with-icon btn-danger">
+                                <i class="bx bxs-trash"></i>
+                                <span>Delete</span>
+                            </button>
+                            <button @click="runManualScrape" :disabled="loading.manualScrape" class="btn-with-icon">
+                                <i class="bx bxs-right-arrow" :class="{'hidden': loading.manualScrape}"></i>
+                                <span :class="{'hidden': loading.manualScrape}">Manual scrape</span>
+                                <LoadingIndicator :hidden="!loading.manualScrape"/>
+                            </button>
+                        </div>
                 </div>
             </CardBasic>
     
@@ -67,48 +67,38 @@
                 title="Webpage elements"
                 description="Elements that are scraped from the webpage"
             >
-                <div v-if="elements?.length > 0" class="entry-list-wrapper">
-                    <ListEntry
-                        v-for="element in elements"
-                        :key="element.element_id"
-                        :item="element"
-                        :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
-                        icon="bx bxs-layer"
-                        :label="element.metric_name"
-                        :description="element.locator"
-                        :actions="[
-                            {
-                                icon: 'bx bxs-edit',
-                                method: editElement
-                            },
-                            {
-                                icon: 'bx bxs-trash',
-                                method: deleteElement
-                            }
-                        ]"
+                <div class="flex-col gap-8">
+                    <div v-if="elements?.length > 0" class="entry-list-wrapper">
+                        <ListEntry
+                            v-for="element in elements"
+                            :key="element.element_id"
+                            :item="element"
+                            :to="`/webpages/${webpage.webpage_id}/elements/${element.element_id}`"
+                            icon="bx bxs-layer"
+                            :label="element.metric_name"
+                            :description="element.locator"
+                            :actions="[
+                                {
+                                    icon: 'bx bxs-edit',
+                                    method: editElement
+                                },
+                                {
+                                    icon: 'bx bxs-trash',
+                                    method: deleteElement
+                                }
+                            ]"
+                        />
+                    </div>
+                    <ListingPlaceholder 
+                        v-else
+                        icon="bxs-layer"
+                        text="No elements found"
+                        desc="You can create a new element using the button below."
                     />
+                    <button @click="createElement">Create a new element</button>
                 </div>
-                <ListingPlaceholder 
-                    v-else
-                    icon="bxs-layer"
-                    text="No elements found"
-                    desc="Create a new element using the form on the right."
-                />
             </CardBasic>
     
-            <CardBasic
-                class="g-c"
-                icon="bx-list-plus"
-                title="Create a new element"
-                description="Set up a new element to be scraped from the page"
-            >
-                <FormElement
-                    :webpageUrl="webpage.url"
-                    :webpageId="webpage.webpage_id"
-                    @success="getWebpageElements"
-                />
-            </CardBasic>
-
             <CardBasic
                 icon="bxs-bar-chart-alt-2"
                 class="g-d"
@@ -316,6 +306,13 @@ export default {
             const element = this.elements.find(s => s.element_id === elementId);
             return element ? element.metric_name : '';
         },
+        async createElement() {
+            const response = await this.$refs.modalElementRef.open(this.webpage.url, this.webpage.webpage_id);
+            if (response && response.success) {
+                await this.getWebpageElements();
+            } 
+            // Else we aborted returning success = false
+        },
         async editElement(element) {
             const response = await this.$refs.modalElementRef.open(this.webpage.url, this.webpage.webpage_id, element);
             if (response && response.success) {
@@ -380,27 +377,9 @@ export default {
 
 <style scoped>
 .webpage-details-grid {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 16px;
-    grid-template-columns: 4fr 4fr;
-    grid-template-areas:
-        "a a"
-        "b c"
-        "d d"
-        "e e"
-        "f f";
-}
-@media (max-width: 1000px) {
-    .webpage-details-grid {
-        grid-template-columns: 1fr;
-            grid-template-areas:
-            "a"
-            "b"
-            "c"
-            "d"
-            "e"
-            "f";
-    }
 }
 
 .logs-wrapper {
@@ -409,7 +388,7 @@ export default {
     padding: 4px;
     gap: 8px;
     height: fit-content;
-    max-height: min(50vh, 1000px);
+    max-height: min(70vh, 1250px);
     overflow: scroll;
 }
 </style>
