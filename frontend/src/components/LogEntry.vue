@@ -25,7 +25,7 @@
                         {{ log.message }}
                     </div>
                 </div>
-                <div class="controls flex-row">
+                <div class="controls flex-row" v-if="enableTopLevelLinks">
                     <a 
                         :href="log.webpage_id 
                             ? `/webpages/${log.webpage_id}`
@@ -66,7 +66,6 @@
                 </div>
             </transition>
         </div>
-
     </div>
 </template>
 
@@ -84,6 +83,10 @@ export default {
         parentWebpageId: {
             type: Number,
             required: false
+        },
+        enableTopLevelLinks: {
+            type: Boolean,
+            default: true
         }
     },
     components: {
@@ -176,7 +179,6 @@ label {
 }
 
 .details {
-    gap: 1rem;
     color: var(--text-dark-secondary);
     font-size: var(--fs-1);
 }
@@ -210,6 +212,5 @@ label {
 
 .listing-placeholder-wrapper {
     margin: 16px 0;
-    filter: grayscale(1);
 }
 </style>

@@ -87,6 +87,13 @@ export const fastApi = {
             return fetchData(request);
         },
 
+        logs: {
+            get: async (webpage_id: number) => {
+                const request = apiClient.get(`/webpages/${webpage_id}/logs`);
+                return fetchData(request);
+            },
+        },
+
         elements: {
             get: async (webpage_id: number) => {
                 const request = apiClient.get(`/webpages/${webpage_id}/elements`);
