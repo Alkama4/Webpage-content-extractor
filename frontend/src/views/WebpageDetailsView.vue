@@ -68,7 +68,7 @@
                 description="Elements that are scraped from the webpage"
             >
                 <div class="flex-col gap-8">
-                    <div v-if="elements?.length > 0" class="entry-list-wrapper">
+                    <div v-if="elements?.length > 0" class="vertical-scroll-list">
                         <ListEntry
                             v-for="element in elements"
                             :key="element.element_id"
@@ -121,9 +121,9 @@
                 icon="bx bxs-file"
                 class="g-e"
                 title="Webpage logs"
-                description="The logs for this webpages scrapes."
+                description="The logs from this webpages scrapes."
             >
-                <div class="logs-wrapper">
+                <div class="vertical-scroll-list">
                     <LogEntry 
                         v-for="(log, index) in logs"
                         :key="index"
@@ -380,15 +380,5 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 16px;
-}
-
-.logs-wrapper {
-    display: flex;
-    flex-direction: column;
-    padding: 4px;
-    gap: 8px;
-    height: fit-content;
-    max-height: min(70vh, 1250px);
-    overflow: scroll;
 }
 </style>

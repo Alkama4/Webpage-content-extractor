@@ -134,24 +134,29 @@ export default {
     box-sizing: border-box;
     padding: 16px;
     transition: all var(--t-fast);
+    border-radius: var(--btn-radius);
+    background: var(--color-neutral-100);
+    box-shadow: var(--shadow-sm);
 }
 
 .log-entry.webpage {
-    background: var(--color-neutral-100);
     cursor: pointer;
-    border: 1px solid transparent;
-    box-shadow: var(--shadow-xs);
-    border-radius: var(--btn-radius);
 }
 .log-entry.webpage:hover {
     background: var(--color-neutral-50);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     transform: translateY(var(--btn-translate));
 }
 
+
 /* .log-entry.element {
-    border-top: 2px solid var(--color-neutral-300);
+    background-color: red;
 } */
+.log-entry .log-entry.element {
+    /* border-top: 2px solid var(--color-neutral-300); */
+    background-color: hsla(0, 0%, 0%, 0.045);
+    box-shadow: unset;
+}
 
 
 div.status {
@@ -206,8 +211,11 @@ label {
 .log-entry-wrapper {
     margin-top: 16px;
     /* margin: 0px -16px; */
-    background-color: hsla(0, 0%, 0%, 0.065);
+    /* background-color: hsla(0, 0%, 0%, 0.065); */
     border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .listing-placeholder-wrapper {

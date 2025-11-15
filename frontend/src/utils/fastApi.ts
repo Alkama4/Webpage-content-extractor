@@ -151,6 +151,13 @@ export const fastApi = {
         data: async (element_id: number) => {
             const request = apiClient.get(`/elements/${element_id}/data`);
             return fetchData(request);
-        }
+        },
+
+        logs: {
+            get: async (element_id: number) => {
+                const request = apiClient.get(`/elements/${element_id}/logs`);
+                return fetchData(request);
+            },
+        },
     },
 };

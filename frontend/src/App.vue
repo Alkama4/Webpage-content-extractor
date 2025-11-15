@@ -192,6 +192,7 @@ nav[aria-label="breadcrumb"] {
     list-style: none;
     padding: 0;
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin: 0;
     align-items: center;
@@ -210,6 +211,7 @@ nav[aria-label="breadcrumb"] {
 }
 .breadcrumb-item a {
     font-size: var(--fs-1);
+    white-space: nowrap;
     padding: 5px 16px;
     border-radius: 100px;
     background: rgba(255, 255, 255, 0.8);
@@ -237,6 +239,7 @@ nav[aria-label="breadcrumb"] {
 
 .nav-btn {
     padding: 8px 16px;
+    height: 30px;
 }
 
 .nav-btn.router-link-active {
@@ -251,8 +254,8 @@ nav[aria-label="breadcrumb"] {
 }
 
 @media(max-width: 800px) {
-    .nav-btn {
-        padding: 14px 16px;
+    .nav-btn i {
+        font-size: var(--fs-3);
     }
     .nav-btn span {
         display: none;
