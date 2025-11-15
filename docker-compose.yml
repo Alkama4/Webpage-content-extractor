@@ -19,7 +19,7 @@ services:
     networks:
       - internal-scraper-network
     env_file:
-      # For portainer, adjust to point to your .env file. The .env.example
+      # For portainer, adjust to point to your .env file. The stack.env.example
       # can be found on the repo's root.
       - stack.env
     depends_on:
@@ -39,7 +39,7 @@ services:
     container_name: scraper-database
     restart: unless-stopped
     env_file:
-      # For portainer, adjust to point to your .env file. The .env.example
+      # For portainer, adjust to point to your .env file. The stack.env.example
       # can be found on the repo's root.
       - stack.env
     environment:

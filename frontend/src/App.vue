@@ -3,7 +3,8 @@
         <div class="name">
             <router-link to="/" class="no-deco vertical-align gap-6">
                 <i class="bx bxs-server"></i>
-                <span>Web Scraper Dashboard</span>
+                <span class="long">Web Scraper Dashboard</span>
+                <span class="short">Dashboard</span>
             </router-link>
         </div>
         <nav class="flex-row gap-8">
@@ -56,6 +57,11 @@ export default {
                     icon: 'bx-time-five',
                     name: 'Scheduler',
                     path: '/scheduler'
+                },
+                {
+                    icon: 'bxs-file',
+                    name: 'Logs',
+                    path: '/logs'
                 }
             ]
         }
@@ -186,6 +192,7 @@ nav[aria-label="breadcrumb"] {
     list-style: none;
     padding: 0;
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin: 0;
     align-items: center;
@@ -204,6 +211,7 @@ nav[aria-label="breadcrumb"] {
 }
 .breadcrumb-item a {
     font-size: var(--fs-1);
+    white-space: nowrap;
     padding: 5px 16px;
     border-radius: 100px;
     background: rgba(255, 255, 255, 0.8);
@@ -231,6 +239,7 @@ nav[aria-label="breadcrumb"] {
 
 .nav-btn {
     padding: 8px 16px;
+    height: 30px;
 }
 
 .nav-btn.router-link-active {
@@ -244,4 +253,24 @@ nav[aria-label="breadcrumb"] {
     box-shadow: var(--shadow-lg);
 }
 
+@media(max-width: 800px) {
+    .nav-btn i {
+        font-size: var(--fs-3);
+    }
+    .nav-btn span {
+        display: none;
+    }
+}
+
+.name span.short {
+    display: none;
+}
+@media(max-width: 550px) {
+    .name span.long {
+        display: none;
+    }
+    .name span.short {
+        display: unset;
+    }
+}
 </style>

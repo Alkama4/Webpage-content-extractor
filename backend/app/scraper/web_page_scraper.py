@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from .BrowserFetcher import BrowserFetcher
+from .ErrorClasses import PageNotLoadedError, ElementNotFoundError
 
 class WebPageScraper:
     def __init__(self, fetcher: BrowserFetcher):
@@ -10,17 +11,17 @@ class WebPageScraper:
         self.url = url.rstrip('/')
         self._html = await self.fetcher.fetch(self.url)
 
-    def scrape(self, selector: str):
+    def scrape(self, selector: str) -> str:
         """
         Return the *text* of the first element that matches `selector`.
-        If nothing is found, prints a message and returns None.
+        Raises an ElementNotFoundError if the element doesn't exist.
         """
         if not self._html:
-            raise RuntimeError("Page not loaded. Call 'await load()' first.")
+            raise PageNotLoadedError("Call 'await load()' before scraping.")
+
         soup = BeautifulSoup(self._html, "html.parser")
         elem = soup.select_one(selector)
         if elem:
             return elem.get_text(strip=True)
         else:
-            print(f"Warning: No element found for selector '{selector}' on {self.url}")
-            return None
+            raise ElementNotFoundError(selector, self.url)

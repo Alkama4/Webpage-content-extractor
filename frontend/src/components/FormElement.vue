@@ -60,9 +60,11 @@
                         { label: 'Nth-of-type based (exact)', value: 'buildLocatorWithNth' },
                     ]"
                 />
-                <button :disabled="failed.valueParse" type="submit">
-                    <LoadingIndicator v-if="loading.formSubmit"/>
-                    <span v-else>{{ existingElement ? 'Update element' : 'Create element' }}</span>
+                <button type="submit" :disabled="loading.formSubmit || failed.valueParse">
+                    <LoadingIndicator :hidden="!loading.formSubmit"/>
+                    <span :class="{'hidden': loading.formSubmit}">
+                        {{ existingWebpage ? 'Update element' : 'Create element' }}
+                    </span>
                 </button>
             </form>
         </div>

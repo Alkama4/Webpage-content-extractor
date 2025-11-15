@@ -168,6 +168,63 @@ async def _fetch_element_data_by_webpage(conn: Connection, webpage_id: int) -> L
     return await execute_mysql_query(conn, query, (webpage_id,))
 
 
+async def _fetch_webpage_logs(conn: Connection, webpage_id: int) -> List[dict]:
+    query = """
+        SELECT 
+            wl.webpage_log_id,
+            wl.webpage_id,
+            w.page_name,
+            wl.attempted_at AS webpage_attempted_at,
+            wl.status AS webpage_status,
+            wl.message AS webpage_message,
+
+            el.element_log_id,
+            el.element_id,
+            e.metric_name,
+            el.attempted_at AS element_attempted_at,
+            el.status AS element_status,
+            el.message AS element_message
+
+        FROM webpage_logs wl
+        JOIN webpages w ON wl.webpage_id = w.webpage_id
+        LEFT JOIN element_logs el ON wl.webpage_log_id = el.webpage_log_id
+        LEFT JOIN elements e ON el.element_id = e.element_id
+        WHERE wl.webpage_id = %s
+        ORDER BY wl.attempted_at DESC, el.attempted_at ASC;
+    """
+
+    rows = await execute_mysql_query(conn, query, (webpage_id,))
+
+    grouped = {}
+    for row in rows:
+        wid = row["webpage_log_id"]
+        if wid not in grouped:
+            grouped[wid] = {
+                "webpage_log_id": wid,
+                "webpage_id": row["webpage_id"],
+                "page_name": row["page_name"],
+                "attempted_at": row["webpage_attempted_at"],
+                "status": row["webpage_status"],
+                "message": row["webpage_message"],
+                "elements": []
+            }
+
+        if row["element_log_id"]:
+            grouped[wid]["elements"].append({
+                "element_log_id": row["element_log_id"],
+                "element_id": row["element_id"],
+                "metric_name": row["metric_name"],
+                "attempted_at": row["element_attempted_at"],
+                "status": row["element_status"],
+                "message": row["element_message"]
+            })
+
+    for entry in grouped.values():
+        entry["elements"].sort(key=lambda x: x["element_id"] or 0)
+
+    return list(grouped.values())
+
+
 ################ Endpoints ################
 
 @router.get("/", response_model=List[WebpageInDB])
@@ -282,6 +339,16 @@ async def run_scrape_for_webpage(webpage_id: int):
         "msg": f"Scrape completed for webpage with id {webpage_id}.",
         "webpage_id": webpage_id
     }
+
+
+@router.get("/{webpage_id}/logs")
+async def get_webpage_logs(webpage_id: int):
+    """
+    Get the logs for a webpage using its `webpage_id`.
+    """
+    async with get_aiomysql_connection() as conn:
+        rows = await _fetch_webpage_logs(conn, webpage_id)
+        return rows
 
 
 @router.get("/{webpage_id}/elements", response_model=List[ElementInDB])

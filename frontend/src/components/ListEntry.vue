@@ -57,16 +57,15 @@ const isLink = (value) => {
     box-sizing: border-box;
     padding: 12px 16px;
     background: var(--color-neutral-100);
-    border: 1px solid var(--color-neutral-200);
+    border: 1px solid transparent;
     border-radius: var(--btn-radius);
     cursor: pointer;
     transition: all var(--t-fast);
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-sm);
 }
 .list-entry:hover {
     background: var(--color-neutral-50);
-    /* border-color: var(--color-primary-200); */
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     transform: translateY(var(--btn-translate));
 }
 /* .list-entry:hover label {

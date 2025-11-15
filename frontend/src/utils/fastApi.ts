@@ -44,6 +44,13 @@ export const fastApi = {
         }
     },
 
+    logs: {
+        get: async (params: { url: string }) => {
+            const request = apiClient.get('/logs', { params });
+            return fetchData(request);
+        }
+    },
+
     webpages: {
         get: async (params?: Record<string, any>) => {
             const request = apiClient.get('/webpages/', { params });
@@ -78,6 +85,13 @@ export const fastApi = {
         runScrape: async (webpage_id: number) => {
             const request = apiClient.post(`/webpages/${webpage_id}/run_scrape`);
             return fetchData(request);
+        },
+
+        logs: {
+            get: async (webpage_id: number) => {
+                const request = apiClient.get(`/webpages/${webpage_id}/logs`);
+                return fetchData(request);
+            },
         },
 
         elements: {
@@ -137,6 +151,13 @@ export const fastApi = {
         data: async (element_id: number) => {
             const request = apiClient.get(`/elements/${element_id}/data`);
             return fetchData(request);
-        }
+        },
+
+        logs: {
+            get: async (element_id: number) => {
+                const request = apiClient.get(`/elements/${element_id}/logs`);
+                return fetchData(request);
+            },
+        },
     },
 };

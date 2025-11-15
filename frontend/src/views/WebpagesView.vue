@@ -8,7 +8,7 @@
                 title="Webpages" 
                 description="Manage pages from which you scrape content"
             >
-                <div class="entry-list-wrapper" v-if="webpages.length > 0">
+                <div class="vertical-scroll-list" v-if="webpages.length > 0">
                     <ListEntry
                         v-for="webpage in webpages"
                         :key="webpage.webpage_id"

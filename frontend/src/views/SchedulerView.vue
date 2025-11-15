@@ -7,7 +7,7 @@
                 title="Disabled Webpages" 
                 description="Webpages that aren't currently set to scrape."
             >
-                <div class="entry-list-wrapper" v-if="availableWebpages.length > 0">
+                <div class="vertical-scroll-list" v-if="availableWebpages.length > 0">
                     <ListEntry
                         v-for="webpage in availableWebpages"
                         :key="webpage.webpage_id"
@@ -41,7 +41,7 @@
                 title="Scheduled Webpages" 
                 description="Webpages that will be scraped at the scheduled time."
             >
-                <div class="entry-list-wrapper" v-if="scheduledWebpages.length > 0">
+                <div class="vertical-scroll-list" v-if="scheduledWebpages.length > 0">
                     <ListEntry
                         v-for="webpage in scheduledWebpages"
                         :key="webpage.webpage_id"
