@@ -3,7 +3,8 @@
         <div class="name">
             <router-link to="/" class="no-deco vertical-align gap-6">
                 <i class="bx bxs-server"></i>
-                <span>Web Scraper Dashboard</span>
+                <span class="long">Web Scraper Dashboard</span>
+                <span class="short">Dashboard</span>
             </router-link>
         </div>
         <nav class="flex-row gap-8">
@@ -249,4 +250,24 @@ nav[aria-label="breadcrumb"] {
     box-shadow: var(--shadow-lg);
 }
 
+@media(max-width: 800px) {
+    .nav-btn {
+        padding: 14px 16px;
+    }
+    .nav-btn span {
+        display: none;
+    }
+}
+
+.name span.short {
+    display: none;
+}
+@media(max-width: 550px) {
+    .name span.long {
+        display: none;
+    }
+    .name span.short {
+        display: unset;
+    }
+}
 </style>
