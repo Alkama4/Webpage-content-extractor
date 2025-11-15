@@ -9,14 +9,20 @@
                 <div class="flex-col">
                     <div class="flex-row vertical-align gap-8">
                         <div class="status" :class="log?.status">{{ toTitleCase(log.status) }}</div>
-                        <div>
-                            {{ log.webpage_id ? 'Webpage' : 'Element'}}
-                            #{{ log.webpage_id || log.element_id }}
-                        </div>
-                        <div>({{ formatTimestamp(log.attempted_at) }})</div>
+                        <label>
+                            {{ log.page_name ?? log.metric_name }}
+                        </label>
                     </div>
+                    <span class="details">
+                        <span class="type-id">
+                            {{ log.webpage_id ? 'Webpage ID' : 'Element ID'}}
+                            #{{ log.webpage_id || log.element_id }}
+                        </span>
+                        -
+                        <span>{{ formatTimestamp(log.attempted_at) }}</span>
+                    </span>
                     <div class="message">
-                        {{ log.message.replace("; ", "\n") }}
+                        {{ log.message }}
                     </div>
                 </div>
                 <div class="controls flex-row">
@@ -31,35 +37,36 @@
                     </a>
                 </div>
             </div>
+            <transition
+                name="element-fade"
+                @enter="enter"
+                @leave="leave"
+            >
+                <div
+                    v-if="showElementListing && log.webpage_id"
+                    ref="elementWrapper"
+                    class="element-wrapper"
+                >
+                    <!-- <div class="seperator"></div> -->
+                    <div v-if="log.elements.length > 0" class="log-entry-wrapper">
+                        <LogEntry
+                            v-for="elementLog in log.elements"
+                            :log="elementLog"
+                            :parentWebpageId="log.webpage_id"
+                            :key="elementLog.element_log_id"
+                        />
+                    </div>
+                    <div v-else class="listing-placeholder-wrapper">
+                        <ListingPlaceholder
+                            icon="bx bxs-file"
+                            text="No element logs found"
+                            desc="There were no elements scraped during the scrape."
+                        />
+                    </div>
+                </div>
+            </transition>
         </div>
 
-        <transition
-            name="element-fade"
-            @enter="enter"
-            @leave="leave"
-        >
-            <div
-                v-if="showElementListing && log.webpage_id"
-                ref="elementWrapper"
-                class="element-wrapper"
-            >
-                <div v-if="log.elements.length > 0" class="log-entry-wrapper">
-                    <LogEntry
-                        v-for="elementLog in log.elements"
-                        :log="elementLog"
-                        :parentWebpageId="log.webpage_id"
-                        :key="elementLog.element_log_id"
-                    />
-                </div>
-                <div v-else class="listing-placeholder-wrapper">
-                    <ListingPlaceholder
-                        icon="bx bxs-file"
-                        text="No element logs found"
-                        desc="There were no elements scraped during the scrape."
-                    />
-                </div>
-            </div>
-        </transition>
     </div>
 </template>
 
@@ -117,8 +124,9 @@ export default {
 <style scoped>
 .log-entry {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    /* align-items: center; */
+    /* gap: 8px; */
     width: 100%;
     box-sizing: border-box;
     padding: 12px 16px;
@@ -160,19 +168,44 @@ div.status.failure {
     background-color: var(--color-error);
 }
 
-.message {
-    padding-top: 8px;
+label {
+    cursor: pointer;
+    font-weight: var(--fw-medium);
+    font-size: var(--fs-2);
+    color: var(--text-dark-primary);
+}
+
+.details {
+    gap: 1rem;
     color: var(--text-dark-secondary);
+    font-size: var(--fs-1);
+}
+
+.message {
+    padding-top: 4px;
     white-space: pre-line; 
     line-height: 2ch;
 }
 
 .element-wrapper {
     overflow: hidden;
+    /* margin-left: 32px; */
+
+}
+
+.element-wrapper .seperator {
+    height: 2px;
+    margin: 8px 0;
+    width: 100%;
+    background-color: var(--color-neutral-300);
+    border-radius: 100px;
 }
 
 .log-entry-wrapper {
-    margin: 8px 0;
+    margin-top: 8px;
+    /* margin: 0px -16px; */
+    background-color: hsla(0, 0%, 0%, 0.065);
+    border-radius: 16px;
 }
 
 .listing-placeholder-wrapper {

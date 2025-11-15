@@ -169,7 +169,7 @@ async def _run_scrapes_by_webpage(conn: Connection, webpages: List[PageWithEleme
 
         if error_groups:
             # Build a concise summary like "ValueError for elements 4,5; ElementNotFoundError for 6,7"
-            message = "; ".join(
+            message = "\n".join(
                 f"{err} for element {ids[0]}" if len(ids) == 1 else f"{err} for elements {', '.join(map(str, ids))}"
                 for err, ids in error_groups.items()
             )
