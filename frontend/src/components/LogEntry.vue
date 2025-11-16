@@ -162,8 +162,8 @@ export default {
 div.status {
     border-radius: 12px;
     color: var(--text-light-primary);
-    padding: 1px 8px;
-    font-size: var(--fs-1);
+    padding: 0px 8px;
+    font-size: var(--fs-0);
 
 }
 div.status.success {
@@ -189,7 +189,7 @@ label {
 }
 
 .message {
-    padding-top: 4px;
+    padding-top: 0px;
     white-space: pre-line; 
     line-height: 2ch;
 }

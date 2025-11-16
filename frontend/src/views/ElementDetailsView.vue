@@ -1,7 +1,7 @@
 <template>
     <div class="element-details-view">
         <h1>Element details</h1>
-        <div class="flex-col gap-16">
+        <div class="element-details-wrapper">
             <CardBasic
                 icon="bxs-info-circle"
                 title="Element info"
@@ -215,3 +215,12 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.element-details-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--card-gap);   
+}
+
+</style>

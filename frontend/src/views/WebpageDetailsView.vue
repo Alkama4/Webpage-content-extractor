@@ -10,7 +10,7 @@
                 description="Inspect the details of a webpage"
             >
                 <div class="flex-col gap-16">
-                    <table>
+                    <table class="listing-table">
                         <tbody>
                             <tr>
                                 <th>Name</th>
@@ -62,13 +62,12 @@
     
             <CardBasic
                 class="g-b"
-                style="min-width: 500px;"
                 icon="bx-list-ul"
                 title="Webpage elements"
                 description="Elements that are scraped from the webpage"
             >
-                <div class="flex-col gap-8">
-                    <div v-if="elements?.length > 0" class="vertical-scroll-list">
+                <div class="flex-col gap-16">
+                    <div v-if="elements?.length > 0" class="flex-col gap-8">
                         <ListEntry
                             v-for="element in elements"
                             :key="element.element_id"
@@ -101,7 +100,7 @@
     
             <CardBasic
                 icon="bxs-bar-chart-alt-2"
-                class="g-d"
+                class="g-c"
                 title="Scraped data visualized" 
                 description="View the scraped data in a graph"
             >
@@ -119,7 +118,7 @@
 
             <CardBasic
                 icon="bx bxs-file"
-                class="g-e"
+                class="g-d"
                 title="Webpage logs"
                 description="The logs from this webpages scrapes."
             >
@@ -140,29 +139,33 @@
             </CardBasic>
     
             <CardBasic
-                class="g-f"
+                class="g-e"
                 icon="bxs-data"
                 title="Scraped webpage data"
                 description="Inspect the data that has been scraped from the current webpage"
             >
-                <table v-if="data?.length > 0">
-                    <tbody>
-                        <tr>
-                            <th>Data ID</th>
-                            <th>Element ID</th>
-                            <th>Metric</th>
-                            <th>Value</th>
-                            <th>Timestamp</th>
-                        </tr>
-                        <tr v-for="entry in data">
-                            <td>{{ entry.data_id }}</td>
-                            <td>{{ entry.element_id }}</td>
-                            <td>{{ entry.metric_name }}</td>
-                            <td>{{ entry.value }}</td>
-                            <td>{{ formatTimestamp(entry.created_at) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div v-if="data?.length > 0" class="vertical-scroll-list sticky-headers-fix">
+                    <table class="sticky-headers">
+                        <thead>
+                            <tr>
+                                <th>Data ID</th>
+                                <th>Element ID</th>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="entry in data">
+                                <td>{{ entry.data_id }}</td>
+                                <td>{{ entry.element_id }}</td>
+                                <td>{{ entry.metric_name }}</td>
+                                <td>{{ entry.value }}</td>
+                                <td>{{ formatTimestamp(entry.created_at) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <ListingPlaceholder 
                     v-else
                     icon="bxs-data"
@@ -377,8 +380,23 @@ export default {
 
 <style scoped>
 .webpage-details-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    display: grid;
+    gap: var(--card-gap);
+    grid-template-columns: 500px 2fr 5fr;
+    grid-template-areas:
+        "a b b"
+        "c c c"
+        "e e d";
+}
+@media (max-width: 1400px) {
+    .webpage-details-grid {
+        grid-template-columns: 1fr;
+            grid-template-areas:
+            "a"
+            "b"
+            "c"
+            "d"
+            "e";
+    }
 }
 </style>

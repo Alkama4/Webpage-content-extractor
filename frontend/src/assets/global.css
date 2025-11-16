@@ -257,12 +257,28 @@ table {
 table th,
 table td {
     vertical-align: top;
+    white-space: nowrap;
+    padding-right: 4px;
 }
 table th {
     font-weight: var(--fw-semibold);
     white-space: nowrap;
     padding-right: 8px;
     width: 0px; /* For tables with th column sets with to min possible */
+    position: sticky;
+}
+
+
+table.sticky-headers th {
+    top: 0px;
+    background-color: var(--color-neutral-50);
+}
+.vertical-scroll-list.sticky-headers-fix {
+    padding: 0 8px;
+}
+
+table.listing-table td {
+    white-space: unset;
 }
 
 /************** Tags **************/

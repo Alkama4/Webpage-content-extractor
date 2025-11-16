@@ -1,29 +1,32 @@
 <template>
     <div class="data-view">
         <h1>Data analysis</h1>
-
-        <!-- A card for each webpage -->
-        <CardBasic
-            v-for="webpage in webpages"
-            :key="webpage.webpage_id"
-            icon="bx bx-globe"
-            class="card-wrapper"
-            :title="webpage.page_name"
-            description="Scraped data visualized"
-            :link="`/webpages/${webpage.webpage_id}`"
-        >
-            <!-- Pass the enriched array to ChartLine -->
-            <ChartLine
-                v-if="pageData[webpage.webpage_id]?.length > 0"
-                :chartData="pageData[webpage.webpage_id]"
-            />
-            <ListingPlaceholder
-                v-else
-                icon="bx-globe"
-                text="No data found"
-                desc="The data scraped from this webpage will be used to create a chart here."
-            />
-        </CardBasic>
+        <div class="chart-card-wrapper">
+            <!-- A card for eac display: flex;
+             flex-direction: column;
+             gap: var(--card-gap);h webpage -->
+            <CardBasic
+                v-for="webpage in webpages"
+                :key="webpage.webpage_id"
+                icon="bx bx-globe"
+                class="card-wrapper"
+                :title="webpage.page_name"
+                description="Scraped data visualized"
+                :link="`/webpages/${webpage.webpage_id}`"
+            >
+                <!-- Pass the enriched array to ChartLine -->
+                <ChartLine
+                    v-if="pageData[webpage.webpage_id]?.length > 0"
+                    :chartData="pageData[webpage.webpage_id]"
+                />
+                <ListingPlaceholder
+                    v-else
+                    icon="bx-globe"
+                    text="No data found"
+                    desc="The data scraped from this webpage will be used to create a chart here."
+                />
+            </CardBasic>
+        </div>
 
         <!-- If there are no webpages at all, show one global placeholder -->
         <ListingPlaceholder
@@ -115,7 +118,10 @@ export default {
     /* max-width: 1200px; */
     margin: 0 auto;
 }
-.card-wrapper + .card-wrapper {
-    margin-top: 1.5rem;
+
+.chart-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--card-gap);
 }
 </style>

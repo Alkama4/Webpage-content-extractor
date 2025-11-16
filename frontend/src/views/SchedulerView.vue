@@ -181,16 +181,18 @@ export default {
 }
 
 .scheduler-view-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-top: 2rem;
+    display: flex;
+    flex-direction: row;
+    gap: var(--card-gap);
+    width: 100%;
+}
+.scheduler-view-grid > * {
+    width: 100%;
 }
 
 @media(max-width: 1000px) {
     .scheduler-view-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+        flex-direction: column-reverse;
     }
 }
 

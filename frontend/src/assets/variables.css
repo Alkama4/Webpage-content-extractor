@@ -78,7 +78,9 @@
 /* ---------- Spacing & Layout ---------- */
 :root {
   /* Gutter (horizontal spacing) */
-  --gutter-width: 1.5rem;
+  --gutter-width: 5vw;
+
+  --card-gap: 24px;
 
   /* Container max‑widths */
   --container-sm: 640px;

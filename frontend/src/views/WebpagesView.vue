@@ -1,7 +1,7 @@
 <template>
     <div class="webpages-view">
         <h1>Webpages</h1>
-        <div class="webpages-view-grid gap-16">
+        <div class="webpages-view-grid">
             <CardBasic
                 icon="bx-list-ul"
                 class=""
@@ -127,13 +127,11 @@ export default {
 .webpages-view-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 2rem;
-    margin-top: 2rem;
+    gap: var(--card-gap);
 }
 @media(max-width: 1000px) {
     .webpages-view-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
     }
 }
 </style>

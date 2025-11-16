@@ -154,7 +154,7 @@ header {
 }
 
 main {
-    padding: 1rem var(--gutter-width) 4rem;
+    padding: 0 0 4rem;
     max-width: max(2000px, 70vw);
     margin: 0 auto;
     width: 100%;
