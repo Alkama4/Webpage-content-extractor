@@ -100,7 +100,7 @@ export default {
                 }
             }
 
-            crumbs.unshift({ text: 'Home', to: '/' })
+            // crumbs.unshift({ text: 'Home', to: '/' })
 
             return crumbs
         }

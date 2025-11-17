@@ -1,8 +1,9 @@
 <template>
     <div class="element-details-view">
         <h1>Element details</h1>
-        <div class="element-details-wrapper">
+        <div class="element-details-grid">
             <CardBasic
+                class="g-a"
                 icon="bxs-info-circle"
                 title="Element info"
                 description="Inspect the details of the element"
@@ -46,6 +47,7 @@
             </CardBasic>
 
             <CardBasic
+                class="g-b"
                 icon="bxs-bar-chart-alt-2"
                 title="Scraped data visualized" 
                 description="View the scraped data in a graph"
@@ -63,8 +65,8 @@
             </CardBasic>
 
             <CardBasic
+                class="g-c"
                 icon="bx bxs-file"
-                class="g-e"
                 title="Element logs"
                 description="The logs from this elements scrapes."
             >
@@ -85,6 +87,7 @@
             </CardBasic>
 
             <CardBasic
+                class="g-d"
                 icon="bxs-data"
                 title="Scraped element data"
                 description="Inspect the data that has been scraped from the element"
@@ -217,10 +220,24 @@ export default {
 </script>
 
 <style scoped>
-.element-details-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: var(--card-gap);   
+.element-details-grid {
+    display: grid;
+    gap: var(--card-gap);
+    grid-template-columns: 400px 1fr 3fr;
+    grid-template-areas:
+        "a a a"
+        "b b b"
+        "d d c";
+}
+@media (max-width: 1400px) {
+    .element-details-grid {
+        grid-template-columns: 1fr;
+            grid-template-areas:
+            "a"
+            "b"
+            "c"
+            "d";
+    }
 }
 
 </style>

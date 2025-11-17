@@ -55,6 +55,7 @@
                 <SelectInput
                     v-model="locatorMethod"
                     label="Locator style"
+                    :disabled="!selectedElement"
                     :options="[
                         { label: 'Class based (readable)', value: 'buildLocator' },
                         { label: 'Nth-of-type based (exact)', value: 'buildLocatorWithNth' },
@@ -63,7 +64,7 @@
                 <button type="submit" :disabled="loading.formSubmit || failed.valueParse">
                     <LoadingIndicator :hidden="!loading.formSubmit"/>
                     <span :class="{'hidden': loading.formSubmit}">
-                        {{ existingWebpage ? 'Update element' : 'Create element' }}
+                        {{ existingElement ? 'Update element' : 'Create element' }}
                     </span>
                 </button>
             </form>

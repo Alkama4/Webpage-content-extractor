@@ -382,11 +382,11 @@ export default {
 .webpage-details-grid {
     display: grid;
     gap: var(--card-gap);
-    grid-template-columns: 500px 2fr 5fr;
+    grid-template-columns: 400px 1fr 100px 3fr;
     grid-template-areas:
-        "a b b"
-        "c c c"
-        "e e d";
+        "a a b b"
+        "c c c c"
+        "e e e d";
 }
 @media (max-width: 1400px) {
     .webpage-details-grid {

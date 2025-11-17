@@ -4,6 +4,7 @@
         <div :class="['rel-wrapper', { open: isOpen }]">
             <select
                 :value="modelValue"
+                :disabled="disabled"
                 @change="$emit('update:modelValue', $event.target.value)"
             >
                 <option v-for="option in options" :key="option.value" :value="option.value">
@@ -34,6 +35,10 @@ export default {
         id: {
             type: String,
             default: () => `select-${Math.random().toString(36).substr(2, 9)}`
+        },
+        disabled: {
+            type: Boolean,
+            default: false
         }
     },
     emits: ["update:modelValue"]
