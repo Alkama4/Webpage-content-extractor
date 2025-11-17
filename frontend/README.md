@@ -1,4 +1,4 @@
-# Vue.js README
+# Setup development environment
 
 Open frontend directory
 
@@ -18,12 +18,6 @@ Compile and Hot-Reload for Development
 npm run dev
 ```
 
-Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
 ## Quick start
 
 Quickly startup the server with one command
@@ -31,4 +25,12 @@ Quickly startup the server with one command
 ```sh
 cd .\frontend\
 npm run dev
+```
+
+## Building
+
+If you want to build the image just navigate to the frontend directory and run this
+
+```sh
+npm run build
 ```
