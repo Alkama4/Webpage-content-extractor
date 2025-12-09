@@ -1,7 +1,47 @@
-
 # Webpage Content Extractor
 
-## Workflow & Collaboration
+*This project was created as part of a university course.*
+
+## About
+
+This application lets you run a web-based scraper management system for collecting numeric values from webpages daily. It’s designed for simple setup and easy monitoring through a single WebUI.
+
+![Dashboard screenshot](images/webpages_page.png)
+
+## Key features
+
+### WebUI features
+- Full management through a WebUI
+  - Easy element picker
+  - Enable/disable webpages
+- Run manual scrapes
+- View data visualizations
+- View webpage- and element-level logs
+
+### Automation
+- Internal scheduling system
+  - Custom scrape time per webpage
+- robots.txt detection
+
+### External triggers
+- Optional POST-based scrape triggering for:
+  - A specific webpage
+  - All active webpages
+
+## Local development
+
+Each component has its own `README.md` with setup instructions.
+
+## Deployment
+
+Docker is used for deployment. The repository includes a template [`docker-compose.yml`](docker-compose.yml) and a [`stack.env.example`](stack.env.example) file. Copy the example to `.env` and adjust the settings before starting the stack.
+
+## License
+
+This project is licensed under the Apache License. See the [`LICENSE`](LICENSE) file for details.
+
+
+<!-- ## Workflow & Collaboration
 
 This project uses GitHub Issues and Branches to organize work and track progress. Follow these guidelines for effective collaboration:
 
@@ -22,10 +62,4 @@ This project uses GitHub Issues and Branches to organize work and track progress
 ### 3. General Best Practices
 - Keep your branches up to date with `main` by regularly pulling changes.
 - Communicate in issues and PRs for transparency.
-- Use clear commit messages and PR descriptions.
-
----
-
-## Local project development
-
-**Update** this section after the initial setup is done. Write clear instructions on how you can run the project locally on your computer.
+- Use clear commit messages and PR descriptions. -->

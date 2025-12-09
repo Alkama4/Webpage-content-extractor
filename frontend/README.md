@@ -1,5 +1,7 @@
 # Setup development environment
 
+## First time setup
+
 Open frontend directory
 
 ```sh
@@ -18,7 +20,7 @@ Compile and Hot-Reload for Development
 npm run dev
 ```
 
-## Quick start
+## After initial setup
 
 Quickly startup the server with one command
 
@@ -27,10 +29,3 @@ cd .\frontend\
 npm run dev
 ```
 
-## Building
-
-If you want to build the image just navigate to the frontend directory and run this
-
-```sh
-npm run build
-```
