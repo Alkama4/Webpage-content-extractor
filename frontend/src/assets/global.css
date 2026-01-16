@@ -12,7 +12,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 #app {
-    padding-top: var(--header-height);
     box-sizing: border-box;
     min-height: 100vh;
     display: flex;
