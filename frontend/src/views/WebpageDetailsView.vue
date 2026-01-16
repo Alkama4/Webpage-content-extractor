@@ -351,12 +351,15 @@ export default {
         },
 
         async runManualScrape() {
-            if (await this.$refs.modalManualScrapeConfirmationRef.open()) {
-                this.loading.manualScrape = true;
-                const response = await fastApi.webpages.runScrape(this.webpage.webpage_id);
-                if (response) {
-                    await this.getWebpageElementData();
+            try {
+                if (await this.$refs.modalManualScrapeConfirmationRef.open()) {
+                    this.loading.manualScrape = true;
+                    const response = await fastApi.webpages.runScrape(this.webpage.webpage_id);
+                    if (response) {
+                        await this.getWebpageElementData();
+                    }
                 }
+            } finally {
                 this.loading.manualScrape = false;
             }
         },

@@ -105,6 +105,7 @@ export default {
                     this.requestErrorMsg = '';
                 }
             } catch(e) {
+                console.info(e)
                 this.requestErrorMsg = e.response?.data?.detail?.[0]?.msg 
                     ?? e.response?.data?.detail?.detail 
                     ?? e.message

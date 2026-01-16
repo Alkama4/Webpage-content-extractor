@@ -9,6 +9,8 @@ services:
       - internal-scraper-network
     depends_on:
       - scraper-backend
+    environment:
+      # READ_ONLY_MODE: "${READ_ONLY_MODE}"
 
   scraper-backend:
     image: ghcr.io/alkama4/web-scraper/backend:latest
@@ -27,12 +29,13 @@ services:
     environment:
       DB_USER: "${DB_USER}"
       DB_PASSWORD: "${DB_PASSWORD}"
+      # READ_ONLY_MODE: "${READ_ONLY_MODE}"
 
       # If you aren't using the provided db setup, you can use your
       # own by adjusting these:      
-      #- DB_NAME: "scraper_db"
-      #- DB_HOST: "scraper-database"
-      #- DB_PORT: "3306"
+      # DB_NAME: "scraper_db"
+      # DB_HOST: "scraper-database"
+      # DB_PORT: "3306"
 
   scraper-database:
     image: mysql:latest

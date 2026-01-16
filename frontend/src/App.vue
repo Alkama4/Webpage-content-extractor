@@ -1,24 +1,38 @@
 <template>
-    <header>
-        <div class="name">
-            <router-link to="/" class="no-deco vertical-align gap-6">
-                <i class="bx bxs-server"></i>
-                <span class="long">Web Scraper Dashboard</span>
-                <span class="short">Dashboard</span>
-            </router-link>
+    <header id="height-sync-source">
+        <div class="read-only-notice" v-if="readOnlyMode">
+            <span>
+                <strong>Notice:</strong>
+                You are in read-only mode. You can view content, but cannot modify it.
+            </span>
+            <i 
+                class="bx bx-x"
+                @click="readOnlyMode = false"
+            ></i>
         </div>
-        <nav class="flex-row gap-8">
-            <router-link 
-                v-for="(link, index) in links"
-                :key="index"
-                class="btn btn-transp nav-btn no-deco vertical-align gap-6" 
-                :to="link.path"
-            >
-                <i class="bx" :class="link.icon"></i>
-                <span>{{ link.name }}</span>
-            </router-link>
-        </nav>
+        <div class="nav-bar">
+            <div class="name">
+                <router-link to="/" class="no-deco vertical-align gap-6">
+                    <i class="bx bxs-server"></i>
+                    <span class="long">Web Scraper Dashboard</span>
+                    <span class="short">Dashboard</span>
+                </router-link>
+            </div>
+            <nav class="flex-row gap-8">
+                <router-link 
+                    v-for="(link, index) in links"
+                    :key="index"
+                    class="btn btn-transp nav-btn no-deco vertical-align gap-6" 
+                    :to="link.path"
+                >
+                    <i class="bx" :class="link.icon"></i>
+                    <span>{{ link.name }}</span>
+                </router-link>
+            </nav>
+        </div>
     </header>
+
+    <div id="height-sync-target"></div>
 
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -38,10 +52,12 @@
 </template>
 
 <script>
+import { READ_ONLY_MODE } from './utils/config';
+
 export default {
-    name: 'sdfsdf',
     data() {
         return {
+            readOnlyMode: READ_ONLY_MODE,
             links: [
                 {
                     icon: 'bx-globe',
@@ -103,28 +119,55 @@ export default {
             // crumbs.unshift({ text: 'Home', to: '/' })
 
             return crumbs
+        },
+    },
+    mounted() {
+        const header = document.querySelector("#height-sync-source");
+        const placeholder = document.querySelector("#height-sync-target");
+
+        if (header && placeholder) {
+            const updatePlaceholder = () => {
+                placeholder.style.height = `${header.offsetHeight}px`;
+            };
+
+            // Initial sync
+            updatePlaceholder();
+
+            // Watch for header size changes
+            this._headerObserver = new ResizeObserver(updatePlaceholder);
+            this._headerObserver.observe(header);
+        }
+    },
+    unmounted() {
+        // Disconnect observer to avoid memory leaks
+        if (this._headerObserver) {
+            this._headerObserver.disconnect();
         }
     }
 }
 </script>
 
 <style scoped>
-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+header  {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: var(--z-header);
+    box-shadow: var(--shadow-sm);
+}
+.nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
     background: linear-gradient(135deg, hsla(0, 0%, 100%, 0.9) 0%, hsla(214, 20%, 98%, 0.9) 100%);
     padding-inline: var(--gutter-width);
     border-bottom: 1px solid var(--color-neutral-200);
     height: var(--header-height);
     backdrop-filter: blur(20px);
-    box-shadow: var(--shadow-sm);
-    z-index: var(--z-header);
 }
 
 .name {
@@ -272,5 +315,36 @@ nav[aria-label="breadcrumb"] {
     .name span.short {
         display: unset;
     }
+}
+
+
+.read-only-notice {
+    background-color: var(--color-primary-500);
+    color: var(--text-light-primary);
+
+    width: 100vw;
+    box-sizing: border-box;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    gap: 4px;
+    padding: 8px 16px;
+}
+.read-only-notice i {
+    font-size: var(--fs-4);
+    transition: background-color var(--t-fast);
+    border-radius: 100px;
+    padding: 4px;
+    cursor: pointer;
+}
+.read-only-notice i:hover {
+    background-color: #ffffff34;
+}
+.read-only-notice ::selection {
+    background: var(--text-light-primary) !important;
+    color: var(--color-primary-500) !important;
 }
 </style>
