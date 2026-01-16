@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { READ_ONLY_MODE } from './config';
 
 // Axios client
 const apiClient = axios.create({
@@ -17,6 +18,12 @@ async function fetchData<T>(request: Promise<any>): Promise<T> {
         console.debug(`${method} ${url}`, response);
         return response.data;
     } catch (error: any) {
+        // Custom message if in read-only mode and server returned Network Error
+        if (READ_ONLY_MODE && error?.message === "Network Error") {
+            throw new Error(
+                'Read-Only Mode: Modifications are disabled. Cannot create or update data.'
+            );
+        }
         console.error('API error:', error);
         throw error;
     }
