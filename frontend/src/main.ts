@@ -14,4 +14,8 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(router);
 
+app.config.globalProperties.$notify = (msg: string) => {
+    window.dispatchEvent(new CustomEvent('notify', { detail: msg }));
+};
+
 app.mount('#app')

@@ -49,12 +49,18 @@
     <footer>
         Footer placeholder
     </footer>
+
+    <Toast/>
 </template>
 
 <script>
 import { useConfigStore } from './stores/config';
+import Toast from './components/Toast.vue'
 
 export default {
+    components: {
+        Toast
+    },
     data() {
         return {
             readOnlyMode: false,
