@@ -326,10 +326,15 @@ export default {
         },
         async deleteElement(element) {
             if (await this.$refs.modalDeleteElementConfirmationRef.open()) {
-                const response = await fastApi.elements.delete(element.element_id);
-                if (response) {
-                    await this.getWebpageElements();
-                    await this.getWebpageElementData();
+                try {
+                    const response = await fastApi.elements.delete(element.element_id);
+                    if (response) {
+                        await this.getWebpageElements();
+                        await this.getWebpageElementData();
+                    }
+                } catch {
+                    const configStore = useConfigStore();
+                    this.$notify(`Failed to delete element: ${configStore.read_only_mode ? 'Read-only mode' : 'Unknown error'}`);
                 }
             }
         },
