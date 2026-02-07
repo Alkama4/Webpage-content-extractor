@@ -38,9 +38,10 @@ onUnmounted(() => window.removeEventListener('notify', addToast));
 .toast-container {
     position: fixed;
     bottom: 32px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    width: 100vw;
     display: flex;
+    align-items: center;
     flex-direction: column-reverse;
     gap: 10px;
     z-index: 9999;
@@ -63,15 +64,23 @@ onUnmounted(() => window.removeEventListener('notify', addToast));
     min-width: 200px;
 }
 
-.toast-fade-enter-active, .toast-fade-leave-active {
-    transition: all 0.3s ease;
+.toast-fade-move {
+  transition: transform 0.3s ease;
+}
+.toast-fade-leave-active {
+  position: absolute;
+  transition: all 0.3s ease;
+}
+.toast-fade-enter-active {
+  transition: all 0.3s ease;
 }
 .toast-fade-enter-from {
-    opacity: 0;
-    transform: translateY(20px);
+  opacity: 0;
+  transform: translateY(20px);
 }
 .toast-fade-leave-to {
-    opacity: 0;
+  opacity: 0;
+  transform: scale(0.9); 
 }
 
 i {
