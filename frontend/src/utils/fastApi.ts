@@ -58,6 +58,13 @@ export const fastApi = {
         }
     },
 
+    config: {
+        get: async () => {
+            const request = apiClient.get('/config');
+            return fetchData(request);
+        }
+    },
+
     webpages: {
         get: async (params?: Record<string, any>) => {
             const request = apiClient.get('/webpages/', { params });
