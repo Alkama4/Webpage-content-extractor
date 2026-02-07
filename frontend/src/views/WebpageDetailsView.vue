@@ -218,6 +218,7 @@ import { fastApi } from '@/utils/fastApi';
 import { formatTimestamp, formatScheduleTime } from '@/utils/utils';
 import ChartLine from '@/components/ChartLine.vue';
 import LogEntry from '@/components/LogEntry.vue';
+import { useConfigStore } from '@/stores/config';
 
 export default {
     name: 'WebpageDetails',
@@ -336,9 +337,14 @@ export default {
         ////////////// Webpage modification //////////////
         async deleteWebpage() {
             if (await this.$refs.modalDeleteWebpageConfirmationRef.open()) {
-                const response = await fastApi.webpages.delete(this.webpage.webpage_id);
-                if (response) {
-                    this.$router.push("/webpages");
+                try {
+                    const response = await fastApi.webpages.delete(this.webpage.webpage_id);
+                    if (response) {
+                        this.$router.push("/webpages");
+                    }
+                } catch {
+                    const configStore = useConfigStore();
+                    this.$notify(`Failed to delete webpage: ${configStore.read_only_mode ? 'Read-only mode' : 'Unknown error'}`);
                 }
             }
         },
@@ -359,6 +365,9 @@ export default {
                         await this.getWebpageElementData();
                     }
                 }
+            } catch {
+                const configStore = useConfigStore();
+                this.$notify(`Failed to run manual scrape: ${configStore.read_only_mode ? 'Read-only mode' : 'Unknown error'}`);
             } finally {
                 this.loading.manualScrape = false;
             }

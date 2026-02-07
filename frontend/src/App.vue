@@ -46,18 +46,24 @@
         <RouterView/>
     </main>
 
-    <footer>
+    <!-- <footer>
         Footer placeholder
-    </footer>
+    </footer> -->
+
+    <Toast/>
 </template>
 
 <script>
-import { READ_ONLY_MODE } from './utils/config';
+import { useConfigStore } from './stores/config';
+import Toast from './components/Toast.vue'
 
 export default {
+    components: {
+        Toast
+    },
     data() {
         return {
-            readOnlyMode: READ_ONLY_MODE,
+            readOnlyMode: false,
             links: [
                 {
                     icon: 'bx-globe',
@@ -121,22 +127,31 @@ export default {
             return crumbs
         },
     },
-    mounted() {
-        const header = document.querySelector("#height-sync-source");
-        const placeholder = document.querySelector("#height-sync-target");
+    methods: {
+        initHeightSync() {
+            const header = document.querySelector("#height-sync-source");
+            const placeholder = document.querySelector("#height-sync-target");
 
-        if (header && placeholder) {
-            const updatePlaceholder = () => {
-                placeholder.style.height = `${header.offsetHeight}px`;
-            };
+            if (header && placeholder) {
+                const updatePlaceholder = () => {
+                    placeholder.style.height = `${header.offsetHeight}px`;
+                };
 
-            // Initial sync
-            updatePlaceholder();
+                // Initial sync
+                updatePlaceholder();
 
-            // Watch for header size changes
-            this._headerObserver = new ResizeObserver(updatePlaceholder);
-            this._headerObserver.observe(header);
-        }
+                // Watch for header size changes
+                this._headerObserver = new ResizeObserver(updatePlaceholder);
+                this._headerObserver.observe(header);
+            }
+        },
+    },
+    async mounted() {
+        this.initHeightSync();
+        
+        const configStore = useConfigStore()
+        await configStore.fetchConfig()
+        this.readOnlyMode = configStore.read_only_mode;
     },
     unmounted() {
         // Disconnect observer to avoid memory leaks

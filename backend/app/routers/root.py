@@ -1,3 +1,4 @@
+import os
 from typing import List
 from aiomysql import Connection
 from fastapi import APIRouter, Response
@@ -6,6 +7,8 @@ from app.scraper.utils import run_scrape
 from app.scraper.BrowserFetcher import BrowserFetcher
 
 router = APIRouter(prefix="", tags=["root"])
+
+READ_ONLY_MODE = os.getenv("READ_ONLY_MODE", "").lower() == "true"
 
 @router.get("/")
 def root():
@@ -49,7 +52,16 @@ async def get_logs():
     async with get_aiomysql_connection() as conn:
         rows = await _fetch_logs(conn)
         return rows
+    
 
+@router.get("/config")
+async def get_config():
+    """
+    Get the config of the application like if the it is set to read only mode.
+    """
+    return {
+        "read_only_mode": READ_ONLY_MODE
+    }
 
 
 ####################### Helpers #######################

@@ -69,6 +69,7 @@ import { fastApi } from '@/utils/fastApi';
 import FormWebpage from '@/components/FormWebpage.vue'
 import ModalWebpage from '@/components/ModalWebpage.vue'
 import ModalConfirmation from '@/components/ModalConfirmation.vue'
+import { useConfigStore } from '@/stores/config';
 
 export default {
     name: 'App',
@@ -89,9 +90,14 @@ export default {
     methods: {
         async deleteWebpage(webpage) {
             if (await this.$refs.modalDeleteWebpageConfirmationRef.open()) {
-                const response = await fastApi.webpages.delete(webpage.webpage_id);
-                if (response) {
-                    await this.fetchWebpages();
+                try {
+                    const response = await fastApi.webpages.delete(webpage.webpage_id);
+                    if (response) {
+                        await this.fetchWebpages();
+                    }
+                } catch {
+                    const configStore = useConfigStore();
+                    this.$notify(`Failed to delete webpage: ${configStore.read_only_mode ? 'Read-only mode' : 'Unknown error'}`);
                 }
             }
         },

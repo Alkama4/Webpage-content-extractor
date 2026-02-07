@@ -139,6 +139,7 @@ import { formatTimestamp } from '@/utils/utils';
 import ChartLine from '@/components/ChartLine.vue';
 import ListingPlaceholder from '@/components/ListingPlaceholder.vue';
 import LogEntry from '@/components/LogEntry.vue';
+import { useConfigStore } from '@/stores/config';
 
 export default {
     name: 'ElementDetails',
@@ -198,9 +199,14 @@ export default {
         },
         async deleteElement() {
             if (await this.$refs.modalDeleteElementConfirmationRef.open()) {
-                const response = await fastApi.elements.delete(this.element.element_id);
-                if (response) {
-                    this.$router.push(`/webpages/${this.parentWebpage.webpage_id}`);
+                try {
+                    const response = await fastApi.elements.delete(this.element.element_id);
+                    if (response) {
+                        this.$router.push(`/webpages/${this.parentWebpage.webpage_id}`);
+                    }
+                } catch {
+                    const configStore = useConfigStore();
+                    this.$notify(`Failed to delete element: ${configStore.read_only_mode ? 'Read-only mode' : 'Unknown error'}`);
                 }
             }
         },
