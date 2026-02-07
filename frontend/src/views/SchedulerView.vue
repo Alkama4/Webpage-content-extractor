@@ -83,6 +83,7 @@ import { fastApi } from '@/utils/fastApi';
 import ModalBasic from '@/components/ModalBasic.vue';
 import ModalSchedule from '@/components/ModalSchedule.vue';
 import { formatScheduleTime } from '@/utils/utils';
+import { useConfigStore } from '@/stores/config';
 
 export default {
     name: 'SchedulerView',
@@ -145,6 +146,8 @@ export default {
                         await this.fetchWebpages();
                     } catch (error) {
                         console.error('Error scheduling webpage:', error);
+                        const configStore = useConfigStore();
+                        this.$notify(`Failed to schedule webpage: ${configStore.read_only_mode ? 'Read-only mode' : 'Unknown error'}`);
                     }
                 },
                 async unscheduleWebpage(webpage) {
@@ -159,6 +162,8 @@ export default {
                         await this.fetchWebpages();
                     } catch (error) {
                         console.error('Error unscheduling webpage:', error);
+                        const configStore = useConfigStore();
+                        this.$notify(`Failed to schedule webpage: ${configStore.read_only_mode ? 'Read-only mode' : 'Unknown error'}`);
                     }
                 },
                 async adjustSchedule(webpage) {
