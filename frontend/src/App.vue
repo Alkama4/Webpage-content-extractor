@@ -46,9 +46,9 @@
         <RouterView/>
     </main>
 
-    <footer>
+    <!-- <footer>
         Footer placeholder
-    </footer>
+    </footer> -->
 
     <Toast/>
 </template>
