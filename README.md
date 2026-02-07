@@ -4,7 +4,7 @@
 
 ## About
 
-This application lets you run a web-based scraper management system for collecting numeric values from webpages daily. It’s designed for simple setup and easy monitoring through a single WebUI.
+This application lets you run a web-based scraper management system for collecting numeric values from webpages daily. It’s designed for simple setup and easy monitoring through a single WebUI. **You try out a demo of the application [here](https://scraper-demo.alkama.dev/).**
 
 ![Dashboard screenshot](images/webpages_page.png)
 
