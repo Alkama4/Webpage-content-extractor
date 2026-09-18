@@ -1,7 +1,7 @@
 -- Insert Generic Webpages
 INSERT INTO webpages (url, page_name, run_time, is_enabled) VALUES
-('https://example.com/page1', 'Website 1', '01:00:00', TRUE),  -- webpage_id: 1 (Healthy)
-('https://example.com/page2', 'Website 2', '02:00:00', TRUE),  -- webpage_id: 2 (Has bad locators)
+('https://example.com/page1', 'Website 1', '01:00:00', FALSE), -- webpage_id: 1 (Healthy)
+('https://example.com/page2', 'Website 2', '02:00:00', FALSE), -- webpage_id: 2 (Has bad locators)
 ('https://example.com/page3', 'Website 3', '03:00:00', FALSE); -- webpage_id: 3 (Failing page load)
 
 -- Insert Generic Target Elements
